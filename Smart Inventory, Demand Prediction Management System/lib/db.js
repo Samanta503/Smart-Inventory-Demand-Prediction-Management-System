@@ -17,42 +17,41 @@ import sql from 'mssql';
  * Database configuration object
  * Values are read from environment variables for security
  * Never hardcode credentials in your code!
+ * 
+ * NOTE: For Windows Authentication (Trusted Connection), you need to 
+ * create a SQL Server login with username/password instead.
  */
+
 const config = {
-  // Server address (localhost for local development)
+  // Server address (e.g., LUCIFER\SQLEXPRESS for named instance)
   server: process.env.DB_SERVER || 'localhost',
   
   // Database name
   database: process.env.DB_DATABASE || 'SmartInventoryDB',
   
-  // SQL Server authentication
+  // SQL Server Authentication
   user: process.env.DB_USER || 'sa',
   password: process.env.DB_PASSWORD || '',
   
-  // Port (default SQL Server port is 1433)
-  port: parseInt(process.env.DB_PORT || '1433'),
-  
-  // Additional options
+  // Options
   options: {
-    // Required for Azure SQL and recommended for local
-    encrypt: false,
+    // Encrypt connection
+    encrypt: process.env.DB_ENCRYPT === 'true',
     
-    // Trust the server certificate (for local development)
+    // Trust server certificate (required for self-signed certs)
     trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true',
     
-    // Enable Multiple Active Result Sets
+    // Enable arithmetic abort
     enableArithAbort: true,
+    
+    // Instance name is parsed from server string automatically
+    // If server is "LUCIFER\SQLEXPRESS", it handles the instance name
   },
   
   // Connection pool settings
   pool: {
-    // Maximum connections in the pool
     max: 10,
-    
-    // Minimum connections to keep open
     min: 0,
-    
-    // How long to wait for a connection (in milliseconds)
     idleTimeoutMillis: 30000,
   },
 };
