@@ -3,49 +3,38 @@
  * ==========================
  * 
  * This file handles all database connections using the mssql package.
- * It creates a connection pool that can be reused across API routes.
- * 
- * WHY USE A CONNECTION POOL?
- * - Creating a new connection for each request is slow and resource-intensive
- * - A pool maintains multiple connections that can be reused
- * - This improves performance significantly
+ * Using SQL Server Authentication for reliable connection.
  */
 
 import sql from 'mssql';
 
 /**
  * Database configuration object
- * Values are read from environment variables for security
- * Never hardcode credentials in your code!
- * 
- * NOTE: For Windows Authentication (Trusted Connection), you need to 
- * create a SQL Server login with username/password instead.
  */
-
 const config = {
-  // Server address (e.g., LUCIFER\SQLEXPRESS for named instance)
-  server: process.env.DB_SERVER || 'localhost',
+  // Server name
+  server: process.env.DB_SERVER || "LUCIFER",
   
   // Database name
-  database: process.env.DB_DATABASE || 'SmartInventoryDB',
+  database: process.env.DB_DATABASE || "SmartInventoryDB",
   
   // SQL Server Authentication
-  user: process.env.DB_USER || 'sa',
-  password: process.env.DB_PASSWORD || '',
+  user: process.env.DB_USER || "inventory_user",
+  password: process.env.DB_PASSWORD || "Inv@2025#Db",
   
-  // Options
+  // Connection options
   options: {
-    // Encrypt connection
-    encrypt: process.env.DB_ENCRYPT === 'true',
+    // Instance name - SQL Browser service resolves this
+    instanceName: process.env.DB_INSTANCE || "SQLEXPRESS",
     
-    // Trust server certificate (required for self-signed certs)
-    trustServerCertificate: process.env.DB_TRUST_SERVER_CERTIFICATE === 'true',
+    // Encryption settings - false for local development
+    encrypt: false,
+    
+    // Trust server certificate
+    trustServerCertificate: true,
     
     // Enable arithmetic abort
     enableArithAbort: true,
-    
-    // Instance name is parsed from server string automatically
-    // If server is "LUCIFER\SQLEXPRESS", it handles the instance name
   },
   
   // Connection pool settings
@@ -54,6 +43,10 @@ const config = {
     min: 0,
     idleTimeoutMillis: 30000,
   },
+  
+  // Connection timeout
+  connectionTimeout: 30000,
+  requestTimeout: 30000,
 };
 
 /**
@@ -81,6 +74,9 @@ export async function getConnection() {
 
     // Create a new pool and connect
     console.log('Creating new database connection pool...');
+    console.log('Connecting to:', config.server, '\\', config.options.instanceName);
+    console.log('Database:', config.database);
+    
     globalPool = await sql.connect(config);
     
     // Store in globalThis for persistence across hot reloads
@@ -152,7 +148,7 @@ export async function executeStoredProcedure(procedureName, params = {}) {
     for (const [key, value] of Object.entries(params)) {
       request.input(key, value);
     }
-    
+
     // Execute stored procedure
     const result = await request.execute(procedureName);
     return result;
