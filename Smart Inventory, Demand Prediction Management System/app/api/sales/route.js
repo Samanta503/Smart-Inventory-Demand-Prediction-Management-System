@@ -42,7 +42,8 @@ export async function GET() {
       ORDER BY sh.SaleDate DESC, sh.SaleID DESC
     `;
 
-    const headers = await executeQuery(headersQuery);
+    const headersResult = await executeQuery(headersQuery);
+    const headers = headersResult.recordset;
 
     // Get all items for these sales
     const itemsQuery = `
@@ -63,7 +64,8 @@ export async function GET() {
       ORDER BY si.SaleID, si.SaleItemID
     `;
 
-    const items = await executeQuery(itemsQuery);
+    const itemsResult = await executeQuery(itemsQuery);
+    const items = itemsResult.recordset;
 
     // Group items by SaleID
     const itemsBySaleId = {};

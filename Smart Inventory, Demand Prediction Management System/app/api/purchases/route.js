@@ -42,7 +42,8 @@ export async function GET() {
       ORDER BY ph.PurchaseDate DESC, ph.PurchaseID DESC
     `;
 
-    const headers = await executeQuery(headersQuery);
+    const headersResult = await executeQuery(headersQuery);
+    const headers = headersResult.recordset;
 
     // Get all items for these purchases
     const itemsQuery = `
@@ -61,7 +62,8 @@ export async function GET() {
       ORDER BY pi.PurchaseID, pi.PurchaseItemID
     `;
 
-    const items = await executeQuery(itemsQuery);
+    const itemsResult = await executeQuery(itemsQuery);
+    const items = itemsResult.recordset;
 
     // Group items by PurchaseID
     const itemsByPurchaseId = {};

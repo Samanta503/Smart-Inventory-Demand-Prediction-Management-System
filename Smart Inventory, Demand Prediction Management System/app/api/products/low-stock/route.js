@@ -61,13 +61,14 @@ export async function GET() {
     `;
 
     const result = await executeQuery(query);
+    const data = result.recordset;
 
     // Calculate summary statistics
     const summary = {
-      totalLowStockProducts: result.length,
-      outOfStockCount: result.filter(p => p.CurrentStock === 0).length,
-      criticalCount: result.filter(p => p.Priority === 1 || p.Priority === 2).length,
-      totalEstimatedRestockCost: result.reduce(
+      totalLowStockProducts: data.length,
+      outOfStockCount: data.filter(p => p.CurrentStock === 0).length,
+      criticalCount: data.filter(p => p.Priority === 1 || p.Priority === 2).length,
+      totalEstimatedRestockCost: data.reduce(
         (sum, p) => sum + parseFloat(p.EstimatedRestockCost || 0),
         0
       ).toFixed(2),
@@ -77,7 +78,7 @@ export async function GET() {
       success: true,
       message: 'Low stock products fetched successfully',
       summary,
-      data: result,
+      data: data,
     });
   } catch (error) {
     console.error('Error fetching low stock products:', error);

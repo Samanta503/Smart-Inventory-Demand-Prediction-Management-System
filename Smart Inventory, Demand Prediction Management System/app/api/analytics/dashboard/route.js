@@ -164,14 +164,14 @@ export async function GET() {
       success: true,
       message: 'Dashboard data fetched successfully',
       data: {
-        inventory: inventory[0] || {},
-        sales: sales[0] || {},
-        purchases: purchases[0] || {},
-        alerts: alerts[0] || {},
-        recentSales: recentSales || [],
-        topProducts: topProducts || [],
-        categories: categories || [],
-        warehouses: warehouses || [],
+        inventory: inventory.recordset[0] || {},
+        sales: sales.recordset[0] || {},
+        purchases: purchases.recordset[0] || {},
+        alerts: alerts.recordset[0] || {},
+        recentSales: recentSales.recordset || [],
+        topProducts: topProducts.recordset || [],
+        categories: categories.recordset || [],
+        warehouses: warehouses.recordset || [],
       },
     });
   } catch (error) {

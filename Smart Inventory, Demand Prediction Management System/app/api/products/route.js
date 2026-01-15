@@ -62,8 +62,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: 'Products fetched successfully',
-      count: result.length,
-      data: result,
+      count: result.recordset.length,
+      data: result.recordset,
     });
   } catch (error) {
     // Log the error for debugging

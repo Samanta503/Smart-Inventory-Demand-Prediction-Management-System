@@ -138,6 +138,12 @@ export async function GET(request) {
 
     const dailyTrend = await executeQuery(dailyTrendQuery, { year, month });
 
+    // Get the recordset arrays
+    const monthlySummaryData = monthlySummary.recordset;
+    const topProductsData = topProducts.recordset;
+    const categoryPerformanceData = categoryPerformance.recordset;
+    const dailyTrendData = dailyTrend.recordset;
+
     // ===============================
     // CALCULATE OVERALL STATISTICS
     // ===============================
@@ -145,27 +151,27 @@ export async function GET(request) {
     const overallStats = {
       year,
       month: month || 'All',
-      totalRevenue: monthlySummary.reduce(
+      totalRevenue: monthlySummaryData.reduce(
         (sum, m) => sum + parseFloat(m.TotalRevenue || 0),
         0
       ).toFixed(2),
-      totalProfit: monthlySummary.reduce(
+      totalProfit: monthlySummaryData.reduce(
         (sum, m) => sum + parseFloat(m.TotalProfit || 0),
         0
       ).toFixed(2),
-      totalTransactions: monthlySummary.reduce(
+      totalTransactions: monthlySummaryData.reduce(
         (sum, m) => sum + parseInt(m.TotalTransactions || 0),
         0
       ),
-      totalUnitsSold: monthlySummary.reduce(
+      totalUnitsSold: monthlySummaryData.reduce(
         (sum, m) => sum + parseInt(m.TotalUnitsSold || 0),
         0
       ),
-      averageMonthlyRevenue: monthlySummary.length > 0
-        ? (monthlySummary.reduce(
+      averageMonthlyRevenue: monthlySummaryData.length > 0
+        ? (monthlySummaryData.reduce(
             (sum, m) => sum + parseFloat(m.TotalRevenue || 0),
             0
-          ) / monthlySummary.length).toFixed(2)
+          ) / monthlySummaryData.length).toFixed(2)
         : '0.00',
     };
 
@@ -173,10 +179,10 @@ export async function GET(request) {
       success: true,
       message: 'Monthly sales analytics fetched successfully',
       overallStats,
-      monthlySummary: monthlySummary,
-      topProducts: topProducts,
-      categoryPerformance: categoryPerformance,
-      dailyTrend: dailyTrend,
+      monthlySummary: monthlySummaryData,
+      topProducts: topProductsData,
+      categoryPerformance: categoryPerformanceData,
+      dailyTrend: dailyTrendData,
     });
   } catch (error) {
     console.error('Error fetching monthly sales analytics:', error);

@@ -31,8 +31,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: 'Users fetched successfully',
-      count: result.length,
-      data: result,
+      count: result.recordset.length,
+      data: result.recordset,
     });
   } catch (error) {
     console.error('Error fetching users:', error);

@@ -79,15 +79,16 @@ export async function GET(request) {
     `;
 
     const result = await executeQuery(query);
+    const data = result.recordset;
 
     // Summary statistics
     const summary = {
-      totalAlerts: result.length,
-      criticalCount: result.filter(a => a.Urgency === 'CRITICAL').length,
-      highCount: result.filter(a => a.Urgency === 'HIGH').length,
-      mediumCount: result.filter(a => a.Urgency === 'MEDIUM').length,
-      outOfStockCount: result.filter(a => a.AlertType === 'OUT_OF_STOCK').length,
-      lowStockCount: result.filter(a => a.AlertType === 'LOW_STOCK').length,
+      totalAlerts: data.length,
+      criticalCount: data.filter(a => a.Urgency === 'CRITICAL').length,
+      highCount: data.filter(a => a.Urgency === 'HIGH').length,
+      mediumCount: data.filter(a => a.Urgency === 'MEDIUM').length,
+      outOfStockCount: data.filter(a => a.AlertType === 'OUT_OF_STOCK').length,
+      lowStockCount: data.filter(a => a.AlertType === 'LOW_STOCK').length,
     };
 
     return NextResponse.json({
@@ -95,7 +96,7 @@ export async function GET(request) {
       message: 'Alerts fetched successfully',
       filter: status,
       summary,
-      data: result,
+      data: data,
     });
   } catch (error) {
     console.error('Error fetching alerts:', error);

@@ -21,8 +21,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: 'Supplier performance data fetched successfully',
-      count: result.length,
-      data: result,
+      count: result.recordset.length,
+      data: result.recordset,
     });
   } catch (error) {
     console.error('Error fetching supplier performance:', error);
@@ -59,8 +59,8 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         message: 'Supplier performance data fetched successfully (fallback)',
-        count: fallbackResult.length,
-        data: fallbackResult,
+        count: fallbackResult.recordset.length,
+        data: fallbackResult.recordset,
       });
     } catch (fallbackError) {
       return NextResponse.json(

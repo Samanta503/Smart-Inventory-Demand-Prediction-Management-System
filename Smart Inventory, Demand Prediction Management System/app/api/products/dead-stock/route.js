@@ -100,23 +100,24 @@ export async function GET(request) {
     `;
 
     const result = await executeQuery(query, { daysWithoutSale });
+    const data = result.recordset;
 
     // Calculate summary statistics
     const summary = {
       daysThreshold: daysWithoutSale,
-      totalDeadStockProducts: result.length,
-      neverSoldCount: result.filter(p => p.DaysSinceLastSale === 'Never Sold').length,
-      totalDeadStockValue: result.reduce(
+      totalDeadStockProducts: data.length,
+      neverSoldCount: data.filter(p => p.DaysSinceLastSale === 'Never Sold').length,
+      totalDeadStockValue: data.reduce(
         (sum, p) => sum + parseFloat(p.DeadStockValue || 0),
         0
       ).toFixed(2),
       // Potential recovery if sold at cost
-      potentialRecoveryAtCost: result.reduce(
+      potentialRecoveryAtCost: data.reduce(
         (sum, p) => sum + parseFloat(p.DeadStockValue || 0),
         0
       ).toFixed(2),
       // Potential revenue if sold at full price
-      potentialRevenueAtFullPrice: result.reduce(
+      potentialRevenueAtFullPrice: data.reduce(
         (sum, p) => sum + (parseFloat(p.CurrentStock) * parseFloat(p.SellingPrice)),
         0
       ).toFixed(2),
@@ -126,7 +127,7 @@ export async function GET(request) {
       success: true,
       message: `Dead stock products (no sales in ${daysWithoutSale}+ days) fetched successfully`,
       summary,
-      data: result,
+      data: data,
     });
   } catch (error) {
     console.error('Error fetching dead stock products:', error);

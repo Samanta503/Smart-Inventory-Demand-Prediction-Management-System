@@ -33,8 +33,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: 'Categories fetched successfully',
-      count: result.length,
-      data: result,
+      count: result.recordset.length,
+      data: result.recordset,
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
