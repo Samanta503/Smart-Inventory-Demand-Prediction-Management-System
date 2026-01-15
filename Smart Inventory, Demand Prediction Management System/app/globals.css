@@ -1,9 +1,15 @@
+/* Tailwind CSS Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /**
  * Global CSS Styles
  * =================
  * 
  * This file contains all global styles for the application.
  * Using CSS custom properties (variables) for consistent theming.
+ * Tailwind CSS is now configured for utility-first styling.
  */
 
 /* ================================
