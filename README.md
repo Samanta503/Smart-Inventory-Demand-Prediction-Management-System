@@ -1,10 +1,10 @@
 # 🏭 Smart Inventory & Demand Prediction Management System
 
-A comprehensive full-stack web application for managing inventory, tracking sales, and predicting demand patterns. Built with **Next.js 14**, **MS SQL Server**, and modern React patterns.
+A comprehensive full-stack web application for managing inventory across multiple warehouses, tracking sales and purchases with multi-item support, and monitoring stock levels. Built with **Next.js 14**, **MySQL 8.0+**, and modern React patterns.
 
 ![Next.js](https://img.shields.io/badge/Next.js-14.2.0-black?style=flat-square&logo=next.js)
 ![React](https://img.shields.io/badge/React-18.2.0-blue?style=flat-square&logo=react)
-![MS SQL Server](https://img.shields.io/badge/MS%20SQL%20Server-2019+-red?style=flat-square&logo=microsoft-sql-server)
+![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange?style=flat-square&logo=mysql)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 ---
@@ -21,8 +21,6 @@ A comprehensive full-stack web application for managing inventory, tracking sale
 - [Configuration](#-configuration)
 - [Running the Application](#-running-the-application)
 - [API Reference](#-api-reference)
-- [Screenshots](#-screenshots)
-- [Contributing](#-contributing)
 
 ---
 
@@ -30,39 +28,44 @@ A comprehensive full-stack web application for managing inventory, tracking sale
 
 The **Smart Inventory & Demand Prediction Management System** is designed to help businesses:
 
-- 📦 Track products and inventory levels in real-time
-- 📊 Analyze sales patterns and predict demand
-- ⚠️ Receive automated alerts for low stock and dead stock
-- 🤝 Manage supplier relationships and track performance
-- 💰 Monitor revenue and cost analytics
+- 📦 Track products and inventory levels across **multiple warehouses**
+- 🛒 Process **multi-item sales and purchases** with cart functionality
+- 👥 Manage customers, suppliers, and users
+- ⚠️ Receive automated alerts for low stock and out-of-stock items
+- 📊 View real-time dashboard analytics and reports
+- 📈 Monitor stock movements with complete audit trail
 
-This system is perfect for **small to medium businesses** looking for an efficient way to manage their inventory without the complexity of enterprise solutions.
+This system is perfect for **small to medium businesses** looking for an efficient way to manage their inventory across multiple locations.
 
 ---
 
 ## ✨ Features
 
-### Core Inventory Management
-- **Product Management** - Add, view, and manage products with detailed information
-- **Category Organization** - Organize products into logical categories
-- **Supplier Management** - Track supplier details and contact information
-- **Stock Tracking** - Real-time stock level monitoring with automatic updates
+### Multi-Warehouse Inventory Management
+- **Product Management** - Add products with warehouse-specific stock allocation
+- **Warehouse Stock Tracking** - View stock levels per warehouse for each product
+- **Real-time Stock Updates** - Automatic stock adjustments via database triggers
 
-### Stock Transactions
-- **Purchases (Stock In)** - Record incoming inventory from suppliers
-- **Sales (Stock Out)** - Process sales with automatic stock deduction
-- **Stock Ledger** - Complete audit trail of all stock movements
+### Multi-Item Transactions
+- **Sales with Cart** - Add multiple products to a sale, select customer and warehouse
+- **Purchases with Cart** - Record multi-item purchases from suppliers
+- **Invoice Generation** - Automatic invoice/reference number generation
+
+### Customer & Supplier Management
+- **Customer Database** - Manage customer information for sales
+- **Supplier Database** - Track supplier details and contacts
+- **User Management** - Role-based users (Admin, Manager, Sales, Warehouse)
 
 ### Smart Alerts System
-- **Low Stock Alerts** - Automatic notifications when stock falls below threshold
-- **Dead Stock Detection** - Identify products with no sales in 90+ days
-- **Alert Management** - Mark alerts as resolved and track resolution
+- **Low Stock Alerts** - Automatic notifications when stock falls below reorder level
+- **Out of Stock Alerts** - Immediate alerts when warehouse stock reaches zero
+- **Alert Resolution** - Mark alerts as resolved and track who resolved them
 
-### Analytics & Reporting
-- **Dashboard Overview** - At-a-glance metrics and KPIs
-- **Monthly Sales Analysis** - Track revenue trends over time
-- **Supplier Performance Scoring** - Evaluate suppliers based on orders and volume
-- **Demand Prediction** - Identify fast-moving and slow-moving products
+### Analytics Dashboard
+- **Real-time Metrics** - Total products, inventory value, sales overview
+- **Recent Activity** - Latest sales and top-selling products
+- **Warehouse Summary** - Stock distribution across warehouses
+- **Category Breakdown** - Inventory organized by category
 
 ---
 
@@ -72,86 +75,99 @@ This system is perfect for **small to medium businesses** looking for an efficie
 |----------|------------|
 | **Frontend** | React 18.2, Next.js 14 (App Router) |
 | **Backend** | Next.js API Routes (Node.js) |
-| **Database** | Microsoft SQL Server |
-| **DB Connection** | `mssql` npm package (No ORM) |
+| **Database** | MySQL 8.0+ |
+| **DB Connection** | `mysql2` npm package with Connection Pooling |
 | **Styling** | Custom CSS with CSS Variables |
 | **Icons** | Emoji-based icons |
 
 ### Why This Stack?
 
-- **Next.js App Router** - Modern React patterns with server components and file-based routing
-- **MS SQL Server** - Enterprise-grade reliability with advanced features (triggers, stored procedures)
+- **Next.js App Router** - Modern React patterns with file-based routing
+- **MySQL 8.0+** - Reliable, open-source database with triggers and stored procedures
+- **mysql2 Package** - Fast MySQL driver with Promise support and connection pooling
 - **No ORM** - Direct SQL queries for full control and learning purposes
-- **mssql Package** - Efficient connection pooling and parameterized queries for security
 
 ---
 
 ## 🗄 Database Design
 
-### Entity Relationship Diagram
+### 13 Tables Architecture
 
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│  Categories │     │  Suppliers  │     │  Products   │
-├─────────────┤     ├─────────────┤     ├─────────────┤
-│ CategoryID  │◄────│ SupplierID  │◄────│ ProductID   │
-│ Name        │     │ Name        │     │ Name        │
-│ Description │     │ Contact     │     │ CategoryID  │
-│ CreatedAt   │     │ Email       │     │ SupplierID  │
-└─────────────┘     │ Phone       │     │ CurrentStock│
-                    │ Address     │     │ ReorderLevel│
-                    └─────────────┘     │ UnitPrice   │
-                                        └──────┬──────┘
-                                               │
-                    ┌──────────────────────────┴──────────────────────────┐
-                    │                                                     │
-              ┌─────▼─────┐                                        ┌──────▼─────┐
-              │ Purchases │                                        │   Sales    │
-              ├───────────┤                                        ├────────────┤
-              │PurchaseID │                                        │ SaleID     │
-              │ProductID  │──────┐                      ┌──────────│ProductID   │
-              │SupplierID │      │                      │          │ Quantity   │
-              │ Quantity  │      │    ┌─────────────┐   │          │ UnitPrice  │
-              │ UnitCost  │      └────►StockLedger  ◄───┘          │ TotalPrice │
-              └───────────┘           ├─────────────┤              └────────────┘
-                                      │ LedgerID    │
-                                      │ ProductID   │
-                                      │ Type (IN/OUT│
-                                      │ Quantity    │
-                                      │ Reference   │
-                                      └─────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           MASTER TABLES                                  │
+├─────────────┬─────────────┬─────────────┬─────────────┬─────────────────┤
+│ Categories  │  Suppliers  │  Products   │  Customers  │  Warehouses     │
+│             │             │             │             │                 │
+│ CategoryID  │ SupplierID  │ ProductID   │ CustomerID  │ WarehouseID     │
+│ Name        │ Name        │ ProductCode │ Name        │ Name            │
+│ Description │ Contact     │ Name        │ Email       │ Address         │
+└─────────────┴─────────────┴──────┬──────┴─────────────┴────────┬────────┘
+                                   │                              │
+                    ┌──────────────┴──────────────┐              │
+                    ▼                             ▼              ▼
+         ┌─────────────────┐           ┌─────────────────────────────┐
+         │  ProductStocks  │           │        Users                │
+         │  (M:N Junction) │           │                             │
+         ├─────────────────┤           │ UserID, FullName, Username  │
+         │ ProductID (PK)  │           │ Role (ADMIN/MANAGER/SALES)  │
+         │ WarehouseID(PK) │           └─────────────────────────────┘
+         │ OnHandQty       │
+         │ ReservedQty     │
+         └────────┬────────┘
+                  │
+    ┌─────────────┴─────────────┐
+    ▼                           ▼
+┌───────────────┐       ┌───────────────┐
+│PurchaseHeaders│       │ SalesHeaders  │
+├───────────────┤       ├───────────────┤
+│ PurchaseID    │       │ SaleID        │
+│ SupplierID    │       │ CustomerID    │
+│ WarehouseID   │       │ WarehouseID   │
+│ ReferenceNo   │       │ InvoiceNumber │
+│ CreatedByUser │       │ CreatedByUser │
+└───────┬───────┘       └───────┬───────┘
+        │                       │
+        ▼                       ▼
+┌───────────────┐       ┌───────────────┐
+│ PurchaseItems │       │  SalesItems   │
+├───────────────┤       ├───────────────┤
+│ PurchaseID    │       │ SaleID        │
+│ ProductID     │       │ ProductID     │
+│ Quantity      │       │ Quantity      │
+│ UnitCost      │       │ UnitPrice     │
+│ LineTotal     │       │ LineTotal     │
+└───────────────┘       └───────────────┘
 
-              ┌─────────────────┐
-              │InventoryAlerts │
-              ├─────────────────┤
-              │ AlertID         │
-              │ ProductID       │
-              │ AlertType       │
-              │ Message         │
-              │ IsResolved      │
-              └─────────────────┘
+┌─────────────────┐     ┌─────────────────┐
+│  StockLedger    │     │InventoryAlerts  │
+├─────────────────┤     ├─────────────────┤
+│ LedgerID        │     │ AlertID         │
+│ ProductID       │     │ ProductID       │
+│ WarehouseID     │     │ WarehouseID     │
+│ Type (IN/OUT)   │     │ AlertType       │
+│ Quantity        │     │ Message         │
+│ PreviousStock   │     │ IsResolved      │
+│ NewStock        │     │ ResolvedByUser  │
+└─────────────────┘     └─────────────────┘
 ```
 
-### Database Objects
+### Database Objects Summary
 
-| Object Type | Name | Purpose |
-|-------------|------|---------|
-| **Table** | Categories | Product categories |
-| **Table** | Suppliers | Supplier information |
-| **Table** | Products | Product details and stock |
-| **Table** | Purchases | Stock-in transactions |
-| **Table** | Sales | Stock-out transactions |
-| **Table** | StockLedger | Audit trail of movements |
-| **Table** | InventoryAlerts | System alerts |
-| **Trigger** | trg_AfterPurchaseInsert | Auto-update stock on purchase |
-| **Trigger** | trg_AfterSaleInsert | Auto-update stock on sale |
-| **View** | vw_LowStockProducts | Products below reorder level |
-| **View** | vw_ProductInventorySummary | Product summary with category |
-| **View** | vw_MonthlySalesSummary | Monthly sales aggregation |
-| **View** | vw_SupplierPerformance | Supplier metrics |
-| **Procedure** | sp_GetDeadStock | Find products with no recent sales |
-| **Procedure** | sp_GetMonthlySalesAnalysis | Sales trend analysis |
-| **Procedure** | sp_GetSupplierPerformanceScore | Supplier scoring |
+| Object Type | Count | Examples |
+|-------------|-------|----------|
+| **Tables** | 13 | Categories, Products, SalesHeaders, SalesItems, ProductStocks, etc. |
+| **Views** | 2 | vw_LowStockProducts, vw_ProductInventorySummary |
+| **Triggers** | 5 | Auto stock updates, ledger entries, alert generation |
+| **Indexes** | 10 | Performance optimization indexes |
+
+### Key Features
+
+- **Multi-Item Transactions** - Sales and Purchases support multiple items per transaction
+- **Warehouse-Level Stock** - ProductStocks tracks inventory per warehouse
+- **Auto Stock Updates** - Triggers automatically update stock on purchase/sale
+- **Stock Validation** - Prevents sales exceeding available warehouse stock
+- **Complete Audit Trail** - StockLedger records every stock movement
 
 ---
 
@@ -160,59 +176,66 @@ This system is perfect for **small to medium businesses** looking for an efficie
 ```
 Smart-Inventory-Demand-Prediction-Management-System/
 │
-├── 📂 app/                          # Next.js App Router
-│   ├── 📂 api/                      # API Routes
+├── 📂 Smart Inventory, Demand Prediction Management System/
+│   │
+│   ├── 📂 app/                          # Next.js App Router
+│   │   ├── 📂 api/                      # API Routes
+│   │   │   ├── 📂 products/
+│   │   │   │   ├── route.js             # GET/POST products
+│   │   │   │   ├── 📂 low-stock/
+│   │   │   │   └── 📂 dead-stock/
+│   │   │   ├── 📂 categories/
+│   │   │   ├── 📂 suppliers/
+│   │   │   ├── 📂 customers/
+│   │   │   ├── 📂 warehouses/
+│   │   │   ├── 📂 users/
+│   │   │   ├── 📂 purchases/            # Multi-item purchases
+│   │   │   ├── 📂 sales/                # Multi-item sales
+│   │   │   ├── 📂 alerts/
+│   │   │   └── 📂 analytics/
+│   │   │       ├── 📂 dashboard/
+│   │   │       ├── 📂 monthly-sales/
+│   │   │       └── 📂 supplier-performance/
+│   │   │
 │   │   ├── 📂 products/
-│   │   │   ├── route.js             # GET/POST products
-│   │   │   ├── 📂 low-stock/route.js
-│   │   │   └── 📂 dead-stock/route.js
-│   │   ├── 📂 categories/route.js
-│   │   ├── 📂 suppliers/route.js
-│   │   ├── 📂 purchases/route.js
-│   │   ├── 📂 sales/route.js
-│   │   ├── 📂 alerts/route.js
-│   │   └── 📂 analytics/
-│   │       ├── 📂 dashboard/route.js
-│   │       ├── 📂 monthly-sales/route.js
-│   │       └── 📂 supplier-performance/route.js
+│   │   │   ├── page.js                  # Products list with warehouse stock
+│   │   │   └── 📂 add/page.js           # Add product with warehouse selection
+│   │   │
+│   │   ├── 📂 categories/page.js
+│   │   ├── 📂 suppliers/page.js
+│   │   ├── 📂 customers/page.js
+│   │   ├── 📂 warehouses/page.js
+│   │   │
+│   │   ├── 📂 purchases/
+│   │   │   ├── page.js                  # Purchases list
+│   │   │   └── 📂 add/page.js           # Add purchase (multi-item cart)
+│   │   │
+│   │   ├── 📂 sales/
+│   │   │   ├── page.js                  # Sales list
+│   │   │   └── 📂 add/page.js           # New sale (multi-item cart)
+│   │   │
+│   │   ├── 📂 alerts/
+│   │   │   ├── page.js                  # All alerts
+│   │   │   ├── 📂 low-stock/page.js
+│   │   │   └── 📂 dead-stock/page.js
+│   │   │
+│   │   ├── 📂 analytics/
+│   │   │   └── 📂 sales/page.js         # Sales analytics
+│   │   │
+│   │   ├── globals.css                  # Global styles
+│   │   ├── layout.js                    # Root layout with sidebar
+│   │   └── page.js                      # Dashboard
 │   │
-│   ├── 📂 products/
-│   │   ├── page.js                  # Products list
-│   │   └── 📂 add/page.js           # Add product
+│   ├── 📂 lib/
+│   │   └── db.js                        # MySQL connection utility
 │   │
-│   ├── 📂 categories/page.js        # Categories management
-│   ├── 📂 suppliers/page.js         # Suppliers management
+│   ├── 📂 sql/
+│   │   └── database_mysql.sql           # Complete MySQL database schema
 │   │
-│   ├── 📂 purchases/
-│   │   ├── page.js                  # Purchases list
-│   │   └── 📂 add/page.js           # Add purchase
-│   │
-│   ├── 📂 sales/
-│   │   ├── page.js                  # Sales list
-│   │   └── 📂 add/page.js           # New sale
-│   │
-│   ├── 📂 alerts/
-│   │   ├── page.js                  # All alerts
-│   │   ├── 📂 low-stock/page.js
-│   │   └── 📂 dead-stock/page.js
-│   │
-│   ├── 📂 analytics/
-│   │   └── 📂 sales/page.js         # Sales analytics
-│   │
-│   ├── globals.css                  # Global styles
-│   ├── layout.js                    # Root layout with sidebar
-│   └── page.js                      # Dashboard
+│   ├── .env.local                       # Environment variables
+│   ├── next.config.js
+│   └── package.json
 │
-├── 📂 lib/
-│   └── db.js                        # Database connection utility
-│
-├── 📂 sql/
-│   └── database.sql                 # Complete database schema
-│
-├── .env.local.example               # Environment variables template
-├── .gitignore
-├── next.config.js
-├── package.json
 └── README.md
 ```
 
@@ -225,16 +248,13 @@ Before you begin, ensure you have the following installed:
 1. **Node.js** (v18.0.0 or higher)
    - Download from: https://nodejs.org/
 
-2. **Microsoft SQL Server** (2019 or higher)
+2. **MySQL Server** (8.0 or higher)
    - Options:
-     - [SQL Server Express](https://www.microsoft.com/sql-server/sql-server-downloads) (Free)
-     - [SQL Server Developer Edition](https://www.microsoft.com/sql-server/sql-server-downloads) (Free for development)
-     - Azure SQL Database
+     - [MySQL Community Server](https://dev.mysql.com/downloads/mysql/) (Free)
+     - [XAMPP](https://www.apachefriends.org/) (Includes MySQL)
+     - [MySQL Workbench](https://dev.mysql.com/downloads/workbench/) (GUI Tool)
 
-3. **SQL Server Management Studio (SSMS)** (Recommended)
-   - Download from: https://docs.microsoft.com/sql/ssms/download-sql-server-management-studio-ssms
-
-4. **Git** (for cloning the repository)
+3. **Git** (for cloning the repository)
    - Download from: https://git-scm.com/
 
 ---
@@ -246,6 +266,7 @@ Before you begin, ensure you have the following installed:
 ```bash
 git clone https://github.com/yourusername/smart-inventory-management.git
 cd smart-inventory-management
+cd "Smart Inventory, Demand Prediction Management System"
 ```
 
 ### Step 2: Install Dependencies
@@ -256,37 +277,34 @@ npm install
 
 ### Step 3: Set Up the Database
 
-1. **Open SQL Server Management Studio (SSMS)**
+1. **Open MySQL Workbench or Command Line**
 
-2. **Connect to your SQL Server instance**
-
-3. **Create a new database:**
-   ```sql
-   CREATE DATABASE SmartInventoryDB;
+2. **Run the database script:**
+   ```bash
+   mysql -u root -p < sql/database_mysql.sql
    ```
+   
+   Or open `sql/database_mysql.sql` in MySQL Workbench and execute.
 
-4. **Run the database script:**
-   - Open the file `sql/database.sql`
-   - Execute the entire script in SSMS
-   - This will create all tables, triggers, views, stored procedures, and sample data
+   This will:
+   - Create the `SmartInventoryDB` database
+   - Create all 13 tables with proper relationships
+   - Set up triggers for automatic stock management
+   - Insert sample data (categories, products, warehouses, etc.)
 
 ### Step 4: Configure Environment Variables
 
-1. **Copy the example environment file:**
-   ```bash
-   copy .env.local.example .env.local
-   ```
+1. **Create `.env.local` file** with your database credentials:
 
-2. **Edit `.env.local` with your database credentials:**
    ```env
-   DB_SERVER=localhost
-   DB_NAME=SmartInventoryDB
-   DB_USER=your_username
+   # MySQL Database Configuration
+   DB_HOST=localhost
+   DB_PORT=3306
+   DB_DATABASE=SmartInventoryDB
+   DB_USER=root
    DB_PASSWORD=your_password
-   DB_PORT=1433
+   DB_CONNECTION_LIMIT=10
    ```
-
-   > **Note:** If using Windows Authentication, you may need to modify the connection settings in `lib/db.js`
 
 ---
 
@@ -298,22 +316,21 @@ The database connection is configured in `lib/db.js`. Key settings:
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| `server` | SQL Server hostname | `localhost` |
+| `host` | MySQL server hostname | `localhost` |
+| `port` | MySQL server port | `3306` |
 | `database` | Database name | `SmartInventoryDB` |
-| `port` | SQL Server port | `1433` |
-| `pool.max` | Max connection pool size | `10` |
-| `pool.min` | Min connection pool size | `0` |
-| `pool.idleTimeoutMillis` | Idle connection timeout | `30000` |
+| `connectionLimit` | Max pool connections | `10` |
 
 ### Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `DB_SERVER` | SQL Server host | Yes |
-| `DB_NAME` | Database name | Yes |
+| `DB_HOST` | MySQL server host | Yes |
+| `DB_PORT` | MySQL server port | No (default: 3306) |
+| `DB_DATABASE` | Database name | Yes |
 | `DB_USER` | Database username | Yes |
 | `DB_PASSWORD` | Database password | Yes |
-| `DB_PORT` | SQL Server port | No (default: 1433) |
+| `DB_CONNECTION_LIMIT` | Connection pool size | No (default: 10) |
 
 ---
 
@@ -350,123 +367,72 @@ npm start
 
 ## 📡 API Reference
 
-### Products
+### Products API
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/products` | GET | Get all products |
-| `/api/products` | POST | Create new product |
-| `/api/products/low-stock` | GET | Get low stock products |
-| `/api/products/dead-stock` | GET | Get dead stock (no sales in 90 days) |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/products` | Get all products with warehouse stock |
+| POST | `/api/products` | Create new product with warehouse allocation |
+| GET | `/api/products/low-stock` | Get low stock products |
+| GET | `/api/products/dead-stock` | Get dead stock (no sales in 90+ days) |
 
-### Categories
+### Sales API
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/categories` | GET | Get all categories |
-| `/api/categories` | POST | Create new category |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/sales` | Get all sales with items |
+| POST | `/api/sales` | Create new sale (multi-item) |
 
-### Suppliers
+### Purchases API
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/suppliers` | GET | Get all suppliers |
-| `/api/suppliers` | POST | Create new supplier |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/purchases` | Get all purchases with items |
+| POST | `/api/purchases` | Create new purchase (multi-item) |
 
-### Purchases
+### Other APIs
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/purchases` | GET | Get all purchases |
-| `/api/purchases` | POST | Record new purchase |
-
-### Sales
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/sales` | GET | Get all sales |
-| `/api/sales` | POST | Record new sale |
-
-### Alerts
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/alerts` | GET | Get all alerts |
-| `/api/alerts` | PATCH | Update alert status |
-
-### Analytics
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/analytics/dashboard` | GET | Get dashboard statistics |
-| `/api/analytics/monthly-sales` | GET | Get monthly sales data |
-| `/api/analytics/supplier-performance` | GET | Get supplier performance scores |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET/POST | `/api/categories` | Manage categories |
+| GET/POST | `/api/suppliers` | Manage suppliers |
+| GET/POST | `/api/customers` | Manage customers |
+| GET/POST | `/api/warehouses` | Manage warehouses |
+| GET/PATCH | `/api/alerts` | Get and resolve alerts |
+| GET | `/api/analytics/dashboard` | Dashboard statistics |
+| GET | `/api/analytics/monthly-sales` | Monthly sales data |
 
 ---
 
 ## 🖼 Screenshots
 
 ### Dashboard
-The main dashboard provides an overview of key metrics:
-- Total Products, Categories, Suppliers
-- Low Stock Items count
-- Recent Sales
-- Top Selling Products
+- Real-time inventory statistics
+- Sales overview for current month
+- Recent sales and top products
+- Warehouse stock distribution
 
-### Products Management
-- View all products with search and filtering
-- Add new products with category and supplier selection
-- Track stock levels with visual indicators
+### Products Page
+- Product listing with warehouse stock breakdown
+- Stock status indicators (In Stock, Low Stock, Out of Stock)
+- Quick add product functionality
 
-### Alerts System
-- Low stock warnings with urgency levels
-- Dead stock identification
-- One-click alert resolution
-
-### Analytics
-- Monthly revenue trends
-- Sales velocity metrics
-- Supplier performance scoring
+### New Sale Page
+- Customer and warehouse selection
+- Multi-item cart with product search
+- Real-time total calculation
+- Stock validation per warehouse
 
 ---
 
-## 🤝 Contributing
+## 📝 License
 
-Contributions are welcome! Here's how you can help:
-
-1. **Fork the repository**
-2. **Create a feature branch:** `git checkout -b feature/amazing-feature`
-3. **Commit changes:** `git commit -m 'Add amazing feature'`
-4. **Push to branch:** `git push origin feature/amazing-feature`
-5. **Open a Pull Request**
-
-### Code Style Guidelines
-
-- Use meaningful variable and function names
-- Add comments explaining complex logic
-- Follow existing code patterns
-- Test your changes before submitting
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
 
 ---
 
 ## 🙏 Acknowledgments
 
 - Built with [Next.js](https://nextjs.org/)
-- Database powered by [Microsoft SQL Server](https://www.microsoft.com/sql-server)
-- Icons from [Emoji](https://emojipedia.org/)
-
----
-
-<div align="center">
-
-**⭐ Star this repo if you found it helpful!**
-
-Made with ❤️ for learning backend development
-
-</div>
+- Database powered by [MySQL](https://www.mysql.com/)
+- Icons from Emoji
