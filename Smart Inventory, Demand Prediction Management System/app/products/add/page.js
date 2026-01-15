@@ -23,6 +23,7 @@ export default function AddProductPage() {
     description: '',
     categoryId: '',
     supplierId: '',
+    warehouseId: '',
     unit: 'pieces',
     costPrice: '',
     sellingPrice: '',
@@ -30,9 +31,10 @@ export default function AddProductPage() {
     reorderLevel: '10',
   });
 
-  // State for categories and suppliers (dropdown options)
+  // State for categories, suppliers, and warehouses (dropdown options)
   const [categories, setCategories] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const [warehouses, setWarehouses] = useState([]);
 
   // Loading and error states
   const [loading, setLoading] = useState(false);
@@ -46,20 +48,25 @@ export default function AddProductPage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch both categories and suppliers in parallel
-        const [categoriesRes, suppliersRes] = await Promise.all([
+        // Fetch categories, suppliers, and warehouses in parallel
+        const [categoriesRes, suppliersRes, warehousesRes] = await Promise.all([
           fetch('/api/categories'),
           fetch('/api/suppliers'),
+          fetch('/api/warehouses'),
         ]);
 
         const categoriesData = await categoriesRes.json();
         const suppliersData = await suppliersRes.json();
+        const warehousesData = await warehousesRes.json();
 
         if (categoriesData.success && categoriesData.data) {
           setCategories(categoriesData.data);
         }
         if (suppliersData.success && suppliersData.data) {
           setSuppliers(suppliersData.data);
+        }
+        if (warehousesData.success && warehousesData.data) {
+          setWarehouses(warehousesData.data);
         }
       } catch (err) {
         console.error('Error fetching dropdown data:', err);
@@ -98,6 +105,12 @@ export default function AddProductPage() {
         throw new Error('Please fill in all required fields');
       }
 
+      // Validate warehouse if initial stock is provided
+      const initialStock = parseInt(formData.currentStock) || 0;
+      if (initialStock > 0 && !formData.warehouseId) {
+        throw new Error('Please select a warehouse for the initial stock');
+      }
+
       // Validate prices
       const costPrice = parseFloat(formData.costPrice);
       const sellingPrice = parseFloat(formData.sellingPrice);
@@ -118,6 +131,7 @@ export default function AddProductPage() {
           description: formData.description,
           categoryId: parseInt(formData.categoryId),
           supplierId: parseInt(formData.supplierId),
+          warehouseId: formData.warehouseId ? parseInt(formData.warehouseId) : null,
           unit: formData.unit,
           costPrice: costPrice,
           sellingPrice: sellingPrice,
@@ -344,6 +358,27 @@ export default function AddProductPage() {
 
           {/* Stock Settings */}
           <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">
+                Warehouse *
+              </label>
+              <select
+                name="warehouseId"
+                className="form-select"
+                value={formData.warehouseId}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Select a warehouse</option>
+                {warehouses.map(wh => (
+                  <option key={wh.WarehouseID} value={wh.WarehouseID}>
+                    {wh.WarehouseName}
+                  </option>
+                ))}
+              </select>
+              <span className="form-help">Where will the initial stock be stored</span>
+            </div>
+
             <div className="form-group">
               <label className="form-label">
                 Initial Stock

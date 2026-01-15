@@ -143,7 +143,8 @@ export default function ProductsPage() {
                   <th>Supplier</th>
                   <th>Cost</th>
                   <th>Price</th>
-                  <th>Stock</th>
+                  <th>Total Stock</th>
+                  <th>Warehouse Stock</th>
                   <th>Status</th>
                   <th>Value</th>
                 </tr>
@@ -176,6 +177,28 @@ export default function ProductsPage() {
                     <td>
                       <strong>{product.CurrentStock}</strong>
                       <span className="text-muted"> / {product.ReorderLevel}</span>
+                    </td>
+                    <td>
+                      {product.warehouseStocks && product.warehouseStocks.length > 0 ? (
+                        <div style={{ fontSize: '12px' }}>
+                          {product.warehouseStocks.map((ws, idx) => (
+                            <div key={idx} style={{ marginBottom: '2px' }}>
+                              <span style={{ 
+                                backgroundColor: 'var(--primary-light)', 
+                                color: 'var(--primary)',
+                                padding: '2px 6px', 
+                                borderRadius: '4px',
+                                marginRight: '4px'
+                              }}>
+                                {ws.warehouseName}
+                              </span>
+                              <strong>{ws.quantity}</strong>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '12px' }}>Not allocated</span>
+                      )}
                     </td>
                     <td>
                       <span className={getStockBadge(product.StockStatus)}>

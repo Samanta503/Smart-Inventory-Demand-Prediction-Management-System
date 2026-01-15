@@ -74,7 +74,7 @@ export async function POST(request) {
     const checkQuery = `SELECT CategoryID FROM Categories WHERE CategoryName = @categoryName`;
     const checkResult = await executeQuery(checkQuery, { categoryName });
 
-    if (checkResult.length > 0) {
+    if (checkResult.recordset.length > 0) {
       return NextResponse.json(
         {
           success: false,
@@ -103,7 +103,7 @@ export async function POST(request) {
       {
         success: true,
         message: 'Category created successfully',
-        data: result[0],
+        data: result.recordset[0],
       },
       { status: 201 }
     );

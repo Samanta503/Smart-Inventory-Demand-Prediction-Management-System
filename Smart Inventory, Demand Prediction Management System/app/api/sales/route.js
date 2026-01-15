@@ -146,13 +146,13 @@ export async function POST(request) {
         FROM ProductStocks 
         WHERE ProductID = ? AND WarehouseID = ?
       `;
-      const stockResult = await executeQuery(stockQuery, { productId: item.productId, warehouseId });
-      const available = stockResult[0]?.OnHandQty || 0;
+      const stockResult = await executeQuery(stockQuery, [item.productId, warehouseId]);
+      const available = stockResult.recordset[0]?.OnHandQty || 0;
       
       if (available < item.quantity) {
         const prodQuery = `SELECT ProductName FROM Products WHERE ProductID = ?`;
-        const prodResult = await executeQuery(prodQuery, { productId: item.productId });
-        const productName = prodResult[0]?.ProductName || 'Unknown';
+        const prodResult = await executeQuery(prodQuery, [item.productId]);
+        const productName = prodResult.recordset[0]?.ProductName || 'Unknown';
         return NextResponse.json(
           { success: false, message: `Insufficient stock for "${productName}". Available: ${available}` },
           { status: 400 }
@@ -168,17 +168,11 @@ export async function POST(request) {
       INSERT INTO SalesHeaders (CustomerID, WarehouseID, InvoiceNumber, CreatedByUserID, Notes)
       VALUES (?, ?, ?, ?, ?)
     `;
-    await executeQuery(headerQuery, {
-      customerId,
-      warehouseId,
-      invoiceNumber,
-      createdByUserId,
-      notes: notes || null
-    });
+    await executeQuery(headerQuery, [customerId, warehouseId, invoiceNumber, createdByUserId, notes || null]);
 
     // Get the inserted SaleID
     const saleIdResult = await executeQuery('SELECT LAST_INSERT_ID() AS SaleID');
-    const saleId = saleIdResult[0].SaleID;
+    const saleId = saleIdResult.recordset[0].SaleID;
 
     // Insert items (triggers will handle stock updates)
     for (const item of items) {
@@ -186,21 +180,15 @@ export async function POST(request) {
       let unitPrice = item.unitPrice;
       if (!unitPrice) {
         const priceQuery = `SELECT SellingPrice FROM Products WHERE ProductID = ?`;
-        const priceResult = await executeQuery(priceQuery, { productId: item.productId });
-        unitPrice = priceResult[0]?.SellingPrice || 0;
+        const priceResult = await executeQuery(priceQuery, [item.productId]);
+        unitPrice = priceResult.recordset[0]?.SellingPrice || 0;
       }
 
       const itemQuery = `
         INSERT INTO SalesItems (SaleID, ProductID, Quantity, UnitPrice, Notes)
         VALUES (?, ?, ?, ?, ?)
       `;
-      await executeQuery(itemQuery, {
-        saleId,
-        productId: item.productId,
-        quantity: item.quantity,
-        unitPrice,
-        notes: item.notes || null
-      });
+      await executeQuery(itemQuery, [saleId, item.productId, item.quantity, unitPrice, item.notes || null]);
     }
 
     // Get the complete sale
@@ -215,12 +203,12 @@ export async function POST(request) {
       INNER JOIN Warehouses w ON sh.WarehouseID = w.WarehouseID
       WHERE sh.SaleID = ?
     `;
-    const result = await executeQuery(resultQuery, { saleId });
+    const result = await executeQuery(resultQuery, [saleId]);
 
     return NextResponse.json({
       success: true,
       message: 'Sale created successfully',
-      data: result[0],
+      data: result.recordset[0],
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating sale:', error);

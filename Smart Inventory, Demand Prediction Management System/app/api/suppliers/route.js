@@ -115,7 +115,7 @@ export async function POST(request) {
       {
         success: true,
         message: 'Supplier created successfully',
-        data: result[0],
+        data: result.recordset[0],
       },
       { status: 201 }
     );

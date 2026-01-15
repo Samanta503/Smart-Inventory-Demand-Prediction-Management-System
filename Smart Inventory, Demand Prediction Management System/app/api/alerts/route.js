@@ -133,16 +133,13 @@ export async function PATCH(request) {
       WHERE AlertID = ?
     `;
 
-    await executeQuery(updateQuery, {
-      resolvedByUserId: resolvedByUserId || 1,
-      alertId,
-    });
+    await executeQuery(updateQuery, [resolvedByUserId || 1, alertId]);
 
     // Get updated alert
     const selectQuery = `SELECT * FROM InventoryAlerts WHERE AlertID = ?`;
-    const result = await executeQuery(selectQuery, { alertId });
+    const result = await executeQuery(selectQuery, [alertId]);
 
-    if (result.length === 0) {
+    if (result.recordset.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Alert not found' },
         { status: 404 }
@@ -152,7 +149,7 @@ export async function PATCH(request) {
     return NextResponse.json({
       success: true,
       message: 'Alert resolved successfully',
-      data: result[0],
+      data: result.recordset[0],
     });
   } catch (error) {
     console.error('Error resolving alert:', error);

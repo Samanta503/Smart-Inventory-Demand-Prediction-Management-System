@@ -56,14 +56,49 @@ export async function GET() {
 
     // Execute the query
     const result = await executeQuery(query);
+    const products = result.recordset;
+
+    // Get warehouse stock for all products
+    const warehouseStockQuery = `
+      SELECT 
+        ps.ProductID,
+        ps.WarehouseID,
+        w.WarehouseName,
+        ps.OnHandQty
+      FROM ProductStocks ps
+      INNER JOIN Warehouses w ON ps.WarehouseID = w.WarehouseID
+      WHERE ps.OnHandQty > 0
+      ORDER BY ps.ProductID, w.WarehouseName
+    `;
+    const warehouseStockResult = await executeQuery(warehouseStockQuery);
+    const warehouseStocks = warehouseStockResult.recordset;
+
+    // Group warehouse stocks by ProductID
+    const stockByProduct = {};
+    warehouseStocks.forEach(stock => {
+      if (!stockByProduct[stock.ProductID]) {
+        stockByProduct[stock.ProductID] = [];
+      }
+      stockByProduct[stock.ProductID].push({
+        warehouseId: stock.WarehouseID,
+        warehouseName: stock.WarehouseName,
+        quantity: stock.OnHandQty
+      });
+    });
+
+    // Attach warehouse stock info to each product
+    const productsWithWarehouseStock = products.map(product => ({
+      ...product,
+      warehouseStocks: stockByProduct[product.ProductID] || []
+    }));
 
     // Return the products as JSON
     // result is an array of rows in MySQL
     return NextResponse.json({
       success: true,
       message: 'Products fetched successfully',
-      count: result.recordset.length,
-      data: result.recordset,
+      count: productsWithWarehouseStock.length,
+      data: productsWithWarehouseStock,
     });
   } catch (error) {
     // Log the error for debugging
@@ -92,6 +127,7 @@ export async function GET() {
  * - description: string (optional)
  * - categoryId: number (required)
  * - supplierId: number (required)
+ * - warehouseId: number (optional) - warehouse to store initial stock
  * - unit: string (optional, default: 'pieces')
  * - costPrice: number (required)
  * - sellingPrice: number (required)
@@ -108,6 +144,7 @@ export async function POST(request) {
       productCode,
       productName,
       description,
+      warehouseId,
       categoryId,
       supplierId,
       unit = 'pieces',
@@ -164,7 +201,7 @@ export async function POST(request) {
     `;
     const checkResult = await executeQuery(checkQuery, { productCode });
     
-    if (checkResult.length > 0) {
+    if (checkResult.recordset.length > 0) {
       return NextResponse.json(
         {
           success: false,
@@ -224,15 +261,31 @@ export async function POST(request) {
     // Get the inserted product
     const getInsertedQuery = `SELECT * FROM Products WHERE ProductCode = @productCode`;
     const result = await executeQuery(getInsertedQuery, { productCode });
+    const insertedProduct = result.recordset[0];
 
-    
+    // If warehouseId is provided and currentStock > 0, create ProductStocks entry
+    if (warehouseId && currentStock > 0) {
+      // First, create entries for all warehouses with 0 stock
+      const allWarehousesQuery = `SELECT WarehouseID FROM Warehouses WHERE IsActive = 1`;
+      const allWarehousesResult = await executeQuery(allWarehousesQuery);
+      
+      for (const wh of allWarehousesResult.recordset) {
+        const stockQty = wh.WarehouseID === warehouseId ? currentStock : 0;
+        const insertStockQuery = `
+          INSERT INTO ProductStocks (ProductID, WarehouseID, OnHandQty, ReservedQty)
+          VALUES (?, ?, ?, 0)
+          ON DUPLICATE KEY UPDATE OnHandQty = VALUES(OnHandQty)
+        `;
+        await executeQuery(insertStockQuery, [insertedProduct.ProductID, wh.WarehouseID, stockQty]);
+      }
+    }
 
     // Return the created product
     return NextResponse.json(
       {
         success: true,
         message: 'Product created successfully',
-        data: result[0],
+        data: insertedProduct,
       },
       { status: 201 } // 201 Created
     );

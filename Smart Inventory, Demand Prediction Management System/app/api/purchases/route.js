@@ -146,17 +146,11 @@ export async function POST(request) {
       INSERT INTO PurchaseHeaders (SupplierID, WarehouseID, ReferenceNumber, CreatedByUserID, Notes)
       VALUES (?, ?, ?, ?, ?)
     `;
-    await executeQuery(headerQuery, {
-      supplierId,
-      warehouseId,
-      referenceNumber,
-      createdByUserId,
-      notes: notes || null
-    });
+    await executeQuery(headerQuery, [supplierId, warehouseId, referenceNumber, createdByUserId, notes || null]);
 
     // Get the inserted PurchaseID
     const purchaseIdResult = await executeQuery('SELECT LAST_INSERT_ID() AS PurchaseID');
-    const purchaseId = purchaseIdResult[0].PurchaseID;
+    const purchaseId = purchaseIdResult.recordset[0].PurchaseID;
 
     // Insert items (triggers will handle stock updates)
     for (const item of items) {
@@ -164,13 +158,7 @@ export async function POST(request) {
         INSERT INTO PurchaseItems (PurchaseID, ProductID, Quantity, UnitCost, Notes)
         VALUES (?, ?, ?, ?, ?)
       `;
-      await executeQuery(itemQuery, {
-        purchaseId,
-        productId: item.productId,
-        quantity: item.quantity,
-        unitCost: item.unitCost,
-        notes: item.notes || null
-      });
+      await executeQuery(itemQuery, [purchaseId, item.productId, item.quantity, item.unitCost, item.notes || null]);
     }
 
     // Get the complete purchase
@@ -185,12 +173,12 @@ export async function POST(request) {
       INNER JOIN Warehouses w ON ph.WarehouseID = w.WarehouseID
       WHERE ph.PurchaseID = ?
     `;
-    const result = await executeQuery(resultQuery, { purchaseId });
+    const result = await executeQuery(resultQuery, [purchaseId]);
 
     return NextResponse.json({
       success: true,
       message: 'Purchase created successfully',
-      data: result[0],
+      data: result.recordset[0],
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating purchase:', error);

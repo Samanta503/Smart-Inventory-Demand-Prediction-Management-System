@@ -81,7 +81,7 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       message: 'Warehouse created successfully',
-      data: result[0],
+      data: result.recordset[0],
     }, { status: 201 });
   } catch (error) {
     console.error('Error creating warehouse:', error);
