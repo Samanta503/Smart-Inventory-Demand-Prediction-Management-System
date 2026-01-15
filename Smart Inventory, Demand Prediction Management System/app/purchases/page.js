@@ -138,7 +138,7 @@ export default function PurchasesPage() {
                           {purchase.items?.length || 0} items
                         </span>
                       </td>
-                      <td><strong>{formatCurrency(purchase.TotalAmount)}</strong></td>
+                      <td><strong>{formatCurrency(purchase.TotalCost)}</strong></td>
                       <td className="text-muted" style={{ fontSize: '12px', maxWidth: '150px' }}>
                         {purchase.Notes || '-'}
                       </td>
