@@ -25,7 +25,7 @@ export default function SalesAnalyticsPage() {
       const response = await fetch('/api/analytics/monthly-sales');
       const result = await response.json();
       if (result.success) {
-        setMonthlyData(result.data);
+        setMonthlyData(result.data || []);
       } else {
         throw new Error(result.message);
       }

@@ -4,10 +4,11 @@
  * Sales List Page
  * ===============
  * 
- * Displays all sales transactions with filtering and summary.
+ * Displays all sales transactions with multi-item support.
  */
 
 import { useState, useEffect } from 'react';
+import React from 'react';
 import Link from 'next/link';
 
 export default function SalesPage() {
@@ -16,14 +17,12 @@ export default function SalesPage() {
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedSale, setExpandedSale] = useState(null);
 
   useEffect(() => {
     fetchSales();
   }, []);
 
-  /**
-   * Fetch sales from API
-   */
   async function fetchSales() {
     try {
       setLoading(true);
@@ -36,8 +35,8 @@ export default function SalesPage() {
         throw new Error(result.message);
       }
 
-      setSales(result.data);
-      setSummary(result.summary);
+      setSales(result.data || []);
+      setSummary(result.summary || null);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -45,9 +44,6 @@ export default function SalesPage() {
     }
   }
 
-  /**
-   * Format currency
-   */
   function formatCurrency(value) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -55,13 +51,10 @@ export default function SalesPage() {
     }).format(value || 0);
   }
 
-  /**
-   * Filter sales based on search
-   */
   const filteredSales = sales.filter(sale =>
-    sale.ProductName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     sale.InvoiceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.CustomerName?.toLowerCase().includes(searchTerm.toLowerCase())
+    sale.CustomerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    sale.WarehouseName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -118,6 +111,11 @@ export default function SalesPage() {
             <span className="stat-value">{formatCurrency(summary.totalProfit)}</span>
             <span className="stat-label">Total Profit</span>
           </div>
+          <div className="stat-card warning">
+            <span className="stat-icon">📦</span>
+            <span className="stat-value">{summary.totalItemsSold || 0}</span>
+            <span className="stat-label">Items Sold</span>
+          </div>
         </div>
       )}
 
@@ -126,7 +124,7 @@ export default function SalesPage() {
         <input
           type="text"
           className="form-input"
-          placeholder="Search by product, invoice, or customer..."
+          placeholder="Search by invoice, customer, or warehouse..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -141,76 +139,99 @@ export default function SalesPage() {
                 <tr>
                   <th>Invoice</th>
                   <th>Date</th>
-                  <th>Product</th>
-                  <th>Category</th>
                   <th>Customer</th>
-                  <th>Qty</th>
-                  <th>Unit Price</th>
+                  <th>Warehouse</th>
+                  <th>Items</th>
                   <th>Total</th>
-                  <th>Profit</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredSales.map((sale) => (
-                  <tr key={sale.SaleID}>
-                    <td>
-                      <code style={{ 
-                        backgroundColor: 'var(--bg-tertiary)', 
-                        padding: '2px 6px', 
-                        borderRadius: '4px',
-                        fontSize: '11px'
-                      }}>
-                        {sale.InvoiceNumber}
-                      </code>
-                    </td>
-                    <td>{new Date(sale.SaleDate).toLocaleDateString()}</td>
-                    <td>
-                      <strong>{sale.ProductName}</strong>
-                      <div className="text-muted" style={{ fontSize: '11px' }}>
-                        {sale.ProductCode}
-                      </div>
-                    </td>
-                    <td>{sale.CategoryName}</td>
-                    <td>{sale.CustomerName || '-'}</td>
-                    <td>{sale.Quantity}</td>
-                    <td>{formatCurrency(sale.UnitPrice)}</td>
-                    <td><strong>{formatCurrency(sale.TotalAmount)}</strong></td>
-                    <td className="text-success">
-                      {formatCurrency(sale.Profit)}
-                    </td>
-                  </tr>
+                  <React.Fragment key={sale.SaleID}>
+                    <tr>
+                      <td>
+                        <code style={{ 
+                          backgroundColor: 'var(--bg-tertiary)', 
+                          padding: '2px 6px', 
+                          borderRadius: '4px',
+                          fontSize: '11px'
+                        }}>
+                          {sale.InvoiceNumber}
+                        </code>
+                      </td>
+                      <td>{new Date(sale.SaleDate).toLocaleDateString()}</td>
+                      <td><strong>{sale.CustomerName}</strong></td>
+                      <td>
+                        <span style={{ fontSize: '12px' }}>🏭 {sale.WarehouseName}</span>
+                      </td>
+                      <td>
+                        <span className="badge badge-info">{sale.ItemCount} items</span>
+                      </td>
+                      <td><strong style={{ color: 'var(--success)' }}>{formatCurrency(sale.TotalAmount)}</strong></td>
+                      <td>
+                        <span className={`badge ${sale.Status === 'COMPLETED' ? 'badge-success' : 'badge-warning'}`}>
+                          {sale.Status}
+                        </span>
+                      </td>
+                      <td>
+                        <button 
+                          className="btn btn-sm btn-ghost"
+                          onClick={() => setExpandedSale(expandedSale === sale.SaleID ? null : sale.SaleID)}
+                        >
+                          {expandedSale === sale.SaleID ? '▲ Hide' : '▼ Details'}
+                        </button>
+                      </td>
+                    </tr>
+                    {expandedSale === sale.SaleID && sale.items && (
+                      <tr>
+                        <td colSpan="8" style={{ padding: '0', background: 'var(--bg-tertiary)' }}>
+                          <div style={{ padding: '1rem' }}>
+                            <h4 style={{ margin: '0 0 0.5rem', fontSize: '14px' }}>Items in this sale:</h4>
+                            <table className="table" style={{ margin: 0, background: 'var(--bg-secondary)' }}>
+                              <thead>
+                                <tr>
+                                  <th>Product</th>
+                                  <th>Code</th>
+                                  <th>Qty</th>
+                                  <th>Unit Price</th>
+                                  <th>Line Total</th>
+                                  <th>Profit</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {sale.items.map(item => (
+                                  <tr key={item.SaleItemID}>
+                                    <td>{item.ProductName}</td>
+                                    <td><code style={{ fontSize: '10px' }}>{item.ProductCode}</code></td>
+                                    <td>{item.Quantity}</td>
+                                    <td>{formatCurrency(item.UnitPrice)}</td>
+                                    <td><strong>{formatCurrency(item.LineTotal)}</strong></td>
+                                    <td style={{ color: 'var(--success)' }}>{formatCurrency(item.Profit)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">🛒</span>
+            <span className="icon">💰</span>
             <h3>No sales found</h3>
-            <p>
-              {searchTerm 
-                ? 'Try adjusting your search' 
-                : 'Start recording your first sale'}
-            </p>
-            {!searchTerm && (
-              <Link href="/sales/add" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-                Record Sale
-              </Link>
-            )}
+            <p>Record your first sale to get started</p>
+            <Link href="/sales/add" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+              New Sale
+            </Link>
           </div>
         )}
-      </div>
-
-      {/* Navigation */}
-      <div className="card">
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <Link href="/analytics/sales" className="btn btn-primary">
-            📈 Sales Analytics
-          </Link>
-          <Link href="/" className="btn btn-secondary">
-            ← Dashboard
-          </Link>
-        </div>
       </div>
     </div>
   );

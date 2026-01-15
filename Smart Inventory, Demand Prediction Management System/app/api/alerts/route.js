@@ -3,6 +3,7 @@
  * ================
  * 
  * GET /api/alerts - Returns all inventory alerts
+ * PATCH /api/alerts - Resolve an alert
  * 
  * Alerts are automatically created by database triggers when:
  * - Stock falls below reorder level (LOW_STOCK)
@@ -14,7 +15,7 @@ import { executeQuery } from '@/lib/db';
 
 /**
  * GET /api/alerts
- * Fetches all inventory alerts
+ * Fetches all inventory alerts with warehouse info
  * 
  * Query Parameters:
  * - status: 'all' | 'unresolved' | 'resolved' (default: 'unresolved')
@@ -38,34 +39,40 @@ export async function GET(request) {
         p.ProductCode,
         p.ProductName,
         c.CategoryName,
-        s.SupplierName,
-        s.Email AS SupplierEmail,
-        s.Phone AS SupplierPhone,
+        sup.SupplierName,
+        sup.Email AS SupplierEmail,
+        sup.Phone AS SupplierPhone,
+        a.WarehouseID,
+        w.WarehouseName,
         a.AlertType,
         a.Message,
         a.CurrentStock,
         a.ReorderLevel,
         a.IsResolved,
         a.ResolvedAt,
-        a.ResolvedBy,
+        a.ResolvedByUserID,
+        u.FullName AS ResolvedByName,
         a.CreatedAt,
         -- Current stock might have changed since alert was created
-        p.CurrentStock AS LatestStock,
+        IFNULL(ps.OnHandQty, 0) AS LatestStock,
         -- Calculate urgency
         CASE 
           WHEN a.AlertType = 'OUT_OF_STOCK' THEN 'CRITICAL'
-          WHEN p.CurrentStock <= (p.ReorderLevel / 2) THEN 'HIGH'
+          WHEN IFNULL(ps.OnHandQty, 0) <= (p.ReorderLevel / 2) THEN 'HIGH'
           ELSE 'MEDIUM'
         END AS Urgency
       FROM InventoryAlerts a
       INNER JOIN Products p ON a.ProductID = p.ProductID
       INNER JOIN Categories c ON p.CategoryID = c.CategoryID
-      INNER JOIN Suppliers s ON p.SupplierID = s.SupplierID
+      INNER JOIN Suppliers sup ON p.SupplierID = sup.SupplierID
+      INNER JOIN Warehouses w ON a.WarehouseID = w.WarehouseID
+      LEFT JOIN ProductStocks ps ON a.ProductID = ps.ProductID AND a.WarehouseID = ps.WarehouseID
+      LEFT JOIN Users u ON a.ResolvedByUserID = u.UserID
       ${whereClause}
       ORDER BY 
         CASE 
           WHEN a.AlertType = 'OUT_OF_STOCK' THEN 1
-          WHEN p.CurrentStock <= (p.ReorderLevel / 2) THEN 2
+          WHEN IFNULL(ps.OnHandQty, 0) <= (p.ReorderLevel / 2) THEN 2
           ELSE 3
         END,
         a.CreatedAt DESC
@@ -75,12 +82,12 @@ export async function GET(request) {
 
     // Summary statistics
     const summary = {
-      totalAlerts: result.recordset.length,
-      criticalCount: result.recordset.filter(a => a.Urgency === 'CRITICAL').length,
-      highCount: result.recordset.filter(a => a.Urgency === 'HIGH').length,
-      mediumCount: result.recordset.filter(a => a.Urgency === 'MEDIUM').length,
-      outOfStockCount: result.recordset.filter(a => a.AlertType === 'OUT_OF_STOCK').length,
-      lowStockCount: result.recordset.filter(a => a.AlertType === 'LOW_STOCK').length,
+      totalAlerts: result.length,
+      criticalCount: result.filter(a => a.Urgency === 'CRITICAL').length,
+      highCount: result.filter(a => a.Urgency === 'HIGH').length,
+      mediumCount: result.filter(a => a.Urgency === 'MEDIUM').length,
+      outOfStockCount: result.filter(a => a.AlertType === 'OUT_OF_STOCK').length,
+      lowStockCount: result.filter(a => a.AlertType === 'LOW_STOCK').length,
     };
 
     return NextResponse.json({
@@ -88,17 +95,13 @@ export async function GET(request) {
       message: 'Alerts fetched successfully',
       filter: status,
       summary,
-      data: result.recordset,
+      data: result,
     });
   } catch (error) {
     console.error('Error fetching alerts:', error);
 
     return NextResponse.json(
-      {
-        success: false,
-        message: 'Failed to fetch alerts',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
-      },
+      { success: false, message: 'Failed to fetch alerts', error: error.message },
       { status: 500 }
     );
   }
@@ -111,14 +114,11 @@ export async function GET(request) {
 export async function PATCH(request) {
   try {
     const body = await request.json();
-    const { alertId, resolvedBy } = body;
+    const { alertId, resolvedByUserId } = body;
 
     if (!alertId) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Alert ID is required',
-        },
+        { success: false, message: 'Alert ID is required' },
         { status: 400 }
       );
     }
@@ -127,23 +127,23 @@ export async function PATCH(request) {
       UPDATE InventoryAlerts
       SET 
         IsResolved = 1,
-        ResolvedAt = GETDATE(),
-        ResolvedBy = @resolvedBy
-      OUTPUT INSERTED.*
-      WHERE AlertID = @alertId
+        ResolvedAt = NOW(),
+        ResolvedByUserID = ?
+      WHERE AlertID = ?
     `;
 
-    const result = await executeQuery(updateQuery, {
+    await executeQuery(updateQuery, {
+      resolvedByUserId: resolvedByUserId || 1,
       alertId,
-      resolvedBy: resolvedBy || 'System',
     });
 
-    if (result.recordset.length === 0) {
+    // Get updated alert
+    const selectQuery = `SELECT * FROM InventoryAlerts WHERE AlertID = ?`;
+    const result = await executeQuery(selectQuery, { alertId });
+
+    if (result.length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          message: 'Alert not found',
-        },
+        { success: false, message: 'Alert not found' },
         { status: 404 }
       );
     }
@@ -151,17 +151,13 @@ export async function PATCH(request) {
     return NextResponse.json({
       success: true,
       message: 'Alert resolved successfully',
-      data: result.recordset[0],
+      data: result[0],
     });
   } catch (error) {
     console.error('Error resolving alert:', error);
 
     return NextResponse.json(
-      {
-        success: false,
-        message: 'Failed to resolve alert',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
-      },
+      { success: false, message: 'Failed to resolve alert', error: error.message },
       { status: 500 }
     );
   }

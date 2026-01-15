@@ -21,8 +21,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: 'Supplier performance data fetched successfully',
-      count: result.recordset.length,
-      data: result.recordset,
+      count: result.length,
+      data: result,
     });
   } catch (error) {
     console.error('Error fetching supplier performance:', error);
@@ -37,9 +37,9 @@ export async function GET() {
           s.Email,
           s.Phone,
           COUNT(DISTINCT p.ProductID) AS ProductCount,
-          ISNULL(SUM(p.CurrentStock * p.CostPrice), 0) AS InventoryValue,
+          IFNULL(SUM(p.CurrentStock * p.CostPrice), 0) AS InventoryValue,
           COUNT(DISTINCT pur.PurchaseID) AS PurchaseCount,
-          ISNULL(SUM(pur.TotalCost), 0) AS TotalPurchaseValue,
+          IFNULL(SUM(pur.Quantity * pur.UnitCost), 0) AS TotalPurchaseValue,
           s.IsActive
         FROM Suppliers s
         LEFT JOIN Products p ON s.SupplierID = p.SupplierID
@@ -59,8 +59,8 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         message: 'Supplier performance data fetched successfully (fallback)',
-        count: fallbackResult.recordset.length,
-        data: fallbackResult.recordset,
+        count: fallbackResult.length,
+        data: fallbackResult,
       });
     } catch (fallbackError) {
       return NextResponse.json(

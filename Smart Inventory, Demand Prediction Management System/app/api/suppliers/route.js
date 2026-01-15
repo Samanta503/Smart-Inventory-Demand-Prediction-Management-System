@@ -31,7 +31,7 @@ export async function GET() {
         -- Count products from this supplier
         (SELECT COUNT(*) FROM Products p WHERE p.SupplierID = s.SupplierID) AS ProductCount,
         -- Total inventory value
-        (SELECT ISNULL(SUM(p.CurrentStock * p.CostPrice), 0) 
+        (SELECT IFNULL(SUM(p.CurrentStock * p.CostPrice), 0) 
          FROM Products p WHERE p.SupplierID = s.SupplierID) AS TotalInventoryValue
       FROM Suppliers s
       ORDER BY s.SupplierName ASC
@@ -42,8 +42,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: 'Suppliers fetched successfully',
-      count: result.recordset.length,
-      data: result.recordset,
+      count: result.length,
+      data: result,
     });
   } catch (error) {
     console.error('Error fetching suppliers:', error);
@@ -92,13 +92,12 @@ export async function POST(request) {
       INSERT INTO Suppliers (
         SupplierName, ContactPerson, Email, Phone, Address, City, Country
       )
-      OUTPUT INSERTED.*
       VALUES (
         @supplierName, @contactPerson, @email, @phone, @address, @city, @country
       )
     `;
 
-    const result = await executeQuery(insertQuery, {
+    await executeQuery(insertQuery, {
       supplierName,
       contactPerson: contactPerson || null,
       email: email || null,
@@ -108,11 +107,15 @@ export async function POST(request) {
       country: country || null,
     });
 
+    // Get the inserted supplier
+    const getInsertedQuery = `SELECT * FROM Suppliers ORDER BY SupplierID DESC LIMIT 1`;
+    const result = await executeQuery(getInsertedQuery);
+
     return NextResponse.json(
       {
         success: true,
         message: 'Supplier created successfully',
-        data: result.recordset[0],
+        data: result[0],
       },
       { status: 201 }
     );

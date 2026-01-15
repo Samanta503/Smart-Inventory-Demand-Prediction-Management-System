@@ -33,8 +33,8 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       message: 'Categories fetched successfully',
-      count: result.recordset.length,
-      data: result.recordset,
+      count: result.length,
+      data: result,
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -74,7 +74,7 @@ export async function POST(request) {
     const checkQuery = `SELECT CategoryID FROM Categories WHERE CategoryName = @categoryName`;
     const checkResult = await executeQuery(checkQuery, { categoryName });
 
-    if (checkResult.recordset.length > 0) {
+    if (checkResult.length > 0) {
       return NextResponse.json(
         {
           success: false,
@@ -87,20 +87,23 @@ export async function POST(request) {
     // Insert new category
     const insertQuery = `
       INSERT INTO Categories (CategoryName, Description)
-      OUTPUT INSERTED.*
       VALUES (@categoryName, @description)
     `;
 
-    const result = await executeQuery(insertQuery, {
+    await executeQuery(insertQuery, {
       categoryName,
       description: description || null,
     });
+
+    // Get the inserted category
+    const getInsertedQuery = `SELECT * FROM Categories WHERE CategoryName = @categoryName`;
+    const result = await executeQuery(getInsertedQuery, { categoryName });
 
     return NextResponse.json(
       {
         success: true,
         message: 'Category created successfully',
-        data: result.recordset[0],
+        data: result[0],
       },
       { status: 201 }
     );

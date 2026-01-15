@@ -4,10 +4,10 @@
  * Purchases Page
  * ==============
  * 
- * View all purchase records (stock in transactions).
+ * View all purchase records with multi-item support.
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export default function PurchasesPage() {
@@ -15,6 +15,7 @@ export default function PurchasesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [expandedPurchase, setExpandedPurchase] = useState(null);
 
   useEffect(() => {
     fetchPurchases();
@@ -26,8 +27,8 @@ export default function PurchasesPage() {
       const response = await fetch('/api/purchases');
       const result = await response.json();
       if (result.success) {
-        setPurchases(result.data);
-        setSummary(result.summary);
+        setPurchases(result.data || []);
+        setSummary(result.summary || null);
       } else {
         throw new Error(result.message);
       }
@@ -97,44 +98,83 @@ export default function PurchasesPage() {
             <table className="table">
               <thead>
                 <tr>
+                  <th></th>
                   <th>Reference</th>
                   <th>Date</th>
-                  <th>Product</th>
                   <th>Supplier</th>
-                  <th>Quantity</th>
-                  <th>Unit Cost</th>
+                  <th>Warehouse</th>
+                  <th>Items</th>
                   <th>Total Cost</th>
                   <th>Notes</th>
                 </tr>
               </thead>
               <tbody>
                 {purchases.map((purchase) => (
-                  <tr key={purchase.PurchaseID}>
-                    <td>
-                      <code style={{ 
-                        backgroundColor: 'var(--bg-tertiary)', 
-                        padding: '2px 6px', 
-                        borderRadius: '4px',
-                        fontSize: '11px'
-                      }}>
-                        {purchase.ReferenceNumber}
-                      </code>
-                    </td>
-                    <td>{new Date(purchase.PurchaseDate).toLocaleDateString()}</td>
-                    <td>
-                      <strong>{purchase.ProductName}</strong>
-                      <div className="text-muted" style={{ fontSize: '11px' }}>
-                        {purchase.ProductCode}
-                      </div>
-                    </td>
-                    <td>{purchase.SupplierName}</td>
-                    <td><strong>{purchase.Quantity}</strong></td>
-                    <td>{formatCurrency(purchase.UnitCost)}</td>
-                    <td><strong>{formatCurrency(purchase.TotalCost)}</strong></td>
-                    <td className="text-muted" style={{ fontSize: '12px', maxWidth: '150px' }}>
-                      {purchase.Notes || '-'}
-                    </td>
-                  </tr>
+                  <React.Fragment key={purchase.PurchaseID}>
+                    <tr 
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => setExpandedPurchase(expandedPurchase === purchase.PurchaseID ? null : purchase.PurchaseID)}
+                    >
+                      <td style={{ width: '40px' }}>
+                        <span style={{ fontSize: '12px' }}>
+                          {expandedPurchase === purchase.PurchaseID ? '▼' : '▶'}
+                        </span>
+                      </td>
+                      <td>
+                        <code style={{ 
+                          backgroundColor: 'var(--bg-tertiary)', 
+                          padding: '2px 6px', 
+                          borderRadius: '4px',
+                          fontSize: '11px'
+                        }}>
+                          {purchase.ReferenceNumber}
+                        </code>
+                      </td>
+                      <td>{new Date(purchase.PurchaseDate).toLocaleDateString()}</td>
+                      <td><strong>{purchase.SupplierName}</strong></td>
+                      <td>{purchase.WarehouseName}</td>
+                      <td>
+                        <span className="badge badge-info">
+                          {purchase.items?.length || 0} items
+                        </span>
+                      </td>
+                      <td><strong>{formatCurrency(purchase.TotalAmount)}</strong></td>
+                      <td className="text-muted" style={{ fontSize: '12px', maxWidth: '150px' }}>
+                        {purchase.Notes || '-'}
+                      </td>
+                    </tr>
+                    {expandedPurchase === purchase.PurchaseID && purchase.items && (
+                      <tr>
+                        <td colSpan="8" style={{ padding: '0', backgroundColor: 'var(--bg-tertiary)' }}>
+                          <div style={{ padding: '1rem 1rem 1rem 3rem' }}>
+                            <table className="table" style={{ marginBottom: 0 }}>
+                              <thead>
+                                <tr>
+                                  <th>Product</th>
+                                  <th>Quantity</th>
+                                  <th>Unit Cost</th>
+                                  <th>Line Total</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {purchase.items.map((item, idx) => (
+                                  <tr key={idx}>
+                                    <td>
+                                      <strong>{item.ProductName}</strong>
+                                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.ProductCode}</div>
+                                    </td>
+                                    <td>{item.Quantity}</td>
+                                    <td>{formatCurrency(item.UnitCost)}</td>
+                                    <td><strong>{formatCurrency(item.LineTotal)}</strong></td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

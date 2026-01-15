@@ -27,7 +27,7 @@ export default function CategoriesPage() {
       const response = await fetch('/api/categories');
       const result = await response.json();
       if (result.success) {
-        setCategories(result.data);
+        setCategories(result.data || []);
       } else {
         throw new Error(result.message);
       }

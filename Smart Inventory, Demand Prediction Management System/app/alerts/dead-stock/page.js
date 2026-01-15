@@ -37,8 +37,8 @@ export default function DeadStockPage() {
         throw new Error(result.message);
       }
 
-      setProducts(result.data);
-      setSummary(result.summary);
+      setProducts(result.data || []);
+      setSummary(result.summary || null);
     } catch (err) {
       setError(err.message);
     } finally {

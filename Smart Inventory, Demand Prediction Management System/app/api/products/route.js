@@ -58,12 +58,12 @@ export async function GET() {
     const result = await executeQuery(query);
 
     // Return the products as JSON
-    // result.recordset contains the array of rows
+    // result is an array of rows in MySQL
     return NextResponse.json({
       success: true,
       message: 'Products fetched successfully',
-      count: result.recordset.length,
-      data: result.recordset,
+      count: result.length,
+      data: result,
     });
   } catch (error) {
     // Log the error for debugging
@@ -164,7 +164,7 @@ export async function POST(request) {
     `;
     const checkResult = await executeQuery(checkQuery, { productCode });
     
-    if (checkResult.recordset.length > 0) {
+    if (checkResult.length > 0) {
       return NextResponse.json(
         {
           success: false,
@@ -192,7 +192,6 @@ export async function POST(request) {
         ReorderLevel,
         IsActive
       )
-      OUTPUT INSERTED.*
       VALUES (
         @productCode,
         @productName,
@@ -208,8 +207,8 @@ export async function POST(request) {
       )
     `;
 
-    // Execute insert with parameterized values (prevents SQL injection)
-    const result = await executeQuery(insertQuery, {
+    // Execute insert
+    await executeQuery(insertQuery, {
       productCode,
       productName,
       description: description || null,
@@ -222,12 +221,18 @@ export async function POST(request) {
       reorderLevel,
     });
 
+    // Get the inserted product
+    const getInsertedQuery = `SELECT * FROM Products WHERE ProductCode = @productCode`;
+    const result = await executeQuery(getInsertedQuery, { productCode });
+
+    
+
     // Return the created product
     return NextResponse.json(
       {
         success: true,
         message: 'Product created successfully',
-        data: result.recordset[0],
+        data: result[0],
       },
       { status: 201 } // 201 Created
     );

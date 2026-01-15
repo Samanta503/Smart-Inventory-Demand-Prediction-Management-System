@@ -2,87 +2,66 @@
  * Database Connection Utility
  * ==========================
  * 
- * This file handles all database connections using the mssql package.
- * Using SQL Server Authentication for reliable connection.
+ * This file handles all database connections using the mysql2 package.
+ * Using MySQL connection pool for efficient connection management.
  */
 
-import sql from 'mssql';
+import mysql from 'mysql2/promise';
 
 /**
  * Database configuration object
  */
 const config = {
-  // Server name
-  server: process.env.DB_SERVER || "LUCIFER",
-  
-  // Database name
-  database: process.env.DB_DATABASE || "SmartInventoryDB",
-  
-  // SQL Server Authentication
-  user: process.env.DB_USER || "inventory_user",
-  password: process.env.DB_PASSWORD || "Inv@2025#Db",
-  
-  // Connection options
-  options: {
-    // Instance name - SQL Browser service resolves this
-    instanceName: process.env.DB_INSTANCE || "SQLEXPRESS",
-    
-    // Encryption settings - false for local development
-    encrypt: false,
-    
-    // Trust server certificate
-    trustServerCertificate: true,
-    
-    // Enable arithmetic abort
-    enableArithAbort: true,
-  },
-  
-  // Connection pool settings
-  pool: {
-    max: 10,
-    min: 0,
-    idleTimeoutMillis: 30000,
-  },
-  
-  // Connection timeout
-  connectionTimeout: 30000,
-  requestTimeout: 30000,
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT) || 3306,
+  database: process.env.DB_DATABASE || 'SmartInventoryDB',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  waitForConnections: true,
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
 };
 
 /**
  * Global variable to store the connection pool
  * We use globalThis to persist the pool across hot reloads in development
  */
-let globalPool = globalThis.sqlPool;
+let globalPool = globalThis.mysqlPool;
 
 /**
- * Get a connection from the pool
+ * Get a connection pool
  * Creates the pool if it doesn't exist yet
  * 
- * @returns {Promise<sql.ConnectionPool>} A connected pool instance
+ * @returns {Promise<mysql.Pool>} A connection pool instance
  * 
  * USAGE:
  *   const pool = await getConnection();
- *   const result = await pool.request().query('SELECT * FROM Products');
+ *   const [rows] = await pool.query('SELECT * FROM Products');
  */
 export async function getConnection() {
   try {
-    // If we already have a connected pool, return it
-    if (globalPool && globalPool.connected) {
+    // If we already have a pool, return it
+    if (globalPool) {
       return globalPool;
     }
 
-    // Create a new pool and connect
-    console.log('Creating new database connection pool...');
-    console.log('Connecting to:', config.server, '\\', config.options.instanceName);
+    // Create a new pool
+    console.log('Creating new MySQL connection pool...');
+    console.log('Connecting to:', config.host + ':' + config.port);
     console.log('Database:', config.database);
     
-    globalPool = await sql.connect(config);
+    globalPool = mysql.createPool(config);
+    
+    // Test the connection
+    const connection = await globalPool.getConnection();
+    console.log('MySQL database connected successfully!');
+    connection.release();
     
     // Store in globalThis for persistence across hot reloads
-    globalThis.sqlPool = globalPool;
+    globalThis.mysqlPool = globalPool;
     
-    console.log('Database connected successfully!');
     return globalPool;
   } catch (error) {
     console.error('Database connection failed:', error);
@@ -94,14 +73,21 @@ export async function getConnection() {
  * Execute a SQL query with parameters
  * This is a helper function to make queries easier
  * 
- * @param {string} queryText - The SQL query to execute
- * @param {Object} params - An object containing parameter names and values
- * @returns {Promise<sql.IResult>} The query result
+ * @param {string} queryText - The SQL query to execute (use ? for placeholders)
+ * @param {Object|Array} params - Parameters as object (named) or array (positional)
+ * @returns {Promise<Object>} The query result with recordset property
  * 
  * USAGE:
+ *   // Using named parameters (will be converted to positional)
  *   const result = await executeQuery(
- *     'SELECT * FROM Products WHERE CategoryID = @categoryId',
+ *     'SELECT * FROM Products WHERE CategoryID = ?',
  *     { categoryId: 1 }
+ *   );
+ *   
+ *   // Using positional parameters
+ *   const result = await executeQuery(
+ *     'SELECT * FROM Products WHERE CategoryID = ?',
+ *     [1]
  *   );
  */
 export async function executeQuery(queryText, params = {}) {
@@ -109,18 +95,41 @@ export async function executeQuery(queryText, params = {}) {
     // Get a connection from the pool
     const pool = await getConnection();
     
-    // Create a new request
-    const request = pool.request();
+    // Convert named parameters to positional if params is an object
+    let paramArray = [];
+    let processedQuery = queryText;
     
-    // Add parameters to the request
-    // This prevents SQL injection attacks!
-    for (const [key, value] of Object.entries(params)) {
-      request.input(key, value);
+    if (params && typeof params === 'object' && !Array.isArray(params)) {
+      // Replace @paramName with ? and build parameter array in order of appearance
+      const regex = /@(\w+)/g;
+      let match;
+      const foundParams = [];
+      
+      while ((match = regex.exec(queryText)) !== null) {
+        foundParams.push(match[1]);
+      }
+      
+      // Build parameter array based on order of appearance
+      for (const paramName of foundParams) {
+        if (params.hasOwnProperty(paramName)) {
+          paramArray.push(params[paramName]);
+        }
+      }
+      
+      // Replace all @paramName with ?
+      processedQuery = queryText.replace(/@\w+/g, '?');
+    } else if (Array.isArray(params)) {
+      paramArray = params;
     }
     
-    // Execute the query and return the result
-    const result = await request.query(queryText);
-    return result;
+    // Execute the query
+    const [rows, fields] = await pool.query(processedQuery, paramArray);
+    
+    // Return in a format compatible with the existing code
+    return {
+      recordset: Array.isArray(rows) ? rows : [rows],
+      rowsAffected: [rows.affectedRows || rows.length || 0],
+    };
   } catch (error) {
     console.error('Query execution failed:', error);
     console.error('Query:', queryText);
@@ -134,7 +143,7 @@ export async function executeQuery(queryText, params = {}) {
  * 
  * @param {string} procedureName - Name of the stored procedure
  * @param {Object} params - Parameters to pass to the procedure
- * @returns {Promise<sql.IResult>} The procedure result
+ * @returns {Promise<Object>} The procedure result
  * 
  * USAGE:
  *   const result = await executeStoredProcedure('sp_GetDeadStock', { DaysWithoutSale: 90 });
@@ -142,16 +151,23 @@ export async function executeQuery(queryText, params = {}) {
 export async function executeStoredProcedure(procedureName, params = {}) {
   try {
     const pool = await getConnection();
-    const request = pool.request();
     
-    // Add parameters
-    for (const [key, value] of Object.entries(params)) {
-      request.input(key, value);
-    }
-
-    // Execute stored procedure
-    const result = await request.execute(procedureName);
-    return result;
+    // Build the CALL statement with parameters
+    const paramKeys = Object.keys(params);
+    const placeholders = paramKeys.map(() => '?').join(', ');
+    const paramValues = paramKeys.map(key => params[key]);
+    
+    const callStatement = paramKeys.length > 0
+      ? `CALL ${procedureName}(${placeholders})`
+      : `CALL ${procedureName}()`;
+    
+    const [results] = await pool.query(callStatement, paramValues);
+    
+    // MySQL stored procedures return results in nested arrays
+    return {
+      recordset: Array.isArray(results[0]) ? results[0] : results,
+      rowsAffected: [results.affectedRows || 0],
+    };
   } catch (error) {
     console.error('Stored procedure execution failed:', error);
     console.error('Procedure:', procedureName);
@@ -167,9 +183,9 @@ export async function executeStoredProcedure(procedureName, params = {}) {
 export async function closeConnection() {
   try {
     if (globalPool) {
-      await globalPool.close();
+      await globalPool.end();
       globalPool = null;
-      globalThis.sqlPool = null;
+      globalThis.mysqlPool = null;
       console.log('Database connection closed.');
     }
   } catch (error) {
@@ -178,5 +194,5 @@ export async function closeConnection() {
   }
 }
 
-// Export the sql object for type access (e.g., sql.Int, sql.VarChar)
-export { sql };
+// Export mysql for type access if needed
+export { mysql };

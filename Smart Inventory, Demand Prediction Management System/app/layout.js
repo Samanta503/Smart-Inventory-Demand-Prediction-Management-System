@@ -58,6 +58,10 @@ function Sidebar() {
             <span className="icon">🏷️</span>
             Categories
           </Link>
+          <Link href="/warehouses" className="nav-link">
+            <span className="icon">🏭</span>
+            Warehouses
+          </Link>
         </div>
 
         {/* Transactions */}
@@ -74,6 +78,19 @@ function Sidebar() {
           <Link href="/purchases" className="nav-link">
             <span className="icon">📥</span>
             Purchases
+          </Link>
+        </div>
+
+        {/* Customers & Suppliers */}
+        <div className="nav-section">
+          <div className="nav-section-title">Partners</div>
+          <Link href="/customers" className="nav-link">
+            <span className="icon">👥</span>
+            Customers
+          </Link>
+          <Link href="/suppliers" className="nav-link">
+            <span className="icon">🏢</span>
+            Suppliers
           </Link>
         </div>
 
@@ -100,10 +117,6 @@ function Sidebar() {
           <Link href="/analytics/sales" className="nav-link">
             <span className="icon">📈</span>
             Sales Analytics
-          </Link>
-          <Link href="/suppliers" className="nav-link">
-            <span className="icon">🏢</span>
-            Suppliers
           </Link>
         </div>
       </nav>

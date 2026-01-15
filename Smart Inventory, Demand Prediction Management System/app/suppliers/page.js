@@ -35,7 +35,7 @@ export default function SuppliersPage() {
       const response = await fetch('/api/suppliers');
       const result = await response.json();
       if (result.success) {
-        setSuppliers(result.data);
+        setSuppliers(result.data || []);
       } else {
         throw new Error(result.message);
       }

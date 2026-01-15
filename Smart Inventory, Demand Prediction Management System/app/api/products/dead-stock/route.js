@@ -61,18 +61,18 @@ export async function GET(request) {
         -- Calculate days since last sale
         CASE 
           WHEN MAX(sa.SaleDate) IS NULL THEN 'Never Sold'
-          ELSE CAST(DATEDIFF(DAY, MAX(sa.SaleDate), GETDATE()) AS NVARCHAR(10)) + ' days'
+          ELSE CONCAT(DATEDIFF(NOW(), MAX(sa.SaleDate)), ' days')
         END AS DaysSinceLastSale,
         -- Numeric days for sorting
         CASE 
           WHEN MAX(sa.SaleDate) IS NULL THEN 9999
-          ELSE DATEDIFF(DAY, MAX(sa.SaleDate), GETDATE())
+          ELSE DATEDIFF(NOW(), MAX(sa.SaleDate))
         END AS DaysSinceLastSaleNum,
         -- Recommendation based on age
         CASE 
           WHEN MAX(sa.SaleDate) IS NULL THEN 'Review product viability - Never sold'
-          WHEN DATEDIFF(DAY, MAX(sa.SaleDate), GETDATE()) >= 180 THEN 'Consider clearance sale or return to supplier'
-          WHEN DATEDIFF(DAY, MAX(sa.SaleDate), GETDATE()) >= 120 THEN 'Run promotional campaign'
+          WHEN DATEDIFF(NOW(), MAX(sa.SaleDate)) >= 180 THEN 'Consider clearance sale or return to supplier'
+          WHEN DATEDIFF(NOW(), MAX(sa.SaleDate)) >= 120 THEN 'Run promotional campaign'
           ELSE 'Monitor closely'
         END AS Recommendation
       FROM Products p
@@ -95,7 +95,7 @@ export async function GET(request) {
       HAVING 
         -- Never sold OR no sales in specified period
         MAX(sa.SaleDate) IS NULL
-        OR DATEDIFF(DAY, MAX(sa.SaleDate), GETDATE()) >= @daysWithoutSale
+        OR DATEDIFF(NOW(), MAX(sa.SaleDate)) >= @daysWithoutSale
       ORDER BY DaysSinceLastSaleNum DESC
     `;
 
@@ -104,19 +104,19 @@ export async function GET(request) {
     // Calculate summary statistics
     const summary = {
       daysThreshold: daysWithoutSale,
-      totalDeadStockProducts: result.recordset.length,
-      neverSoldCount: result.recordset.filter(p => p.DaysSinceLastSale === 'Never Sold').length,
-      totalDeadStockValue: result.recordset.reduce(
+      totalDeadStockProducts: result.length,
+      neverSoldCount: result.filter(p => p.DaysSinceLastSale === 'Never Sold').length,
+      totalDeadStockValue: result.reduce(
         (sum, p) => sum + parseFloat(p.DeadStockValue || 0),
         0
       ).toFixed(2),
       // Potential recovery if sold at cost
-      potentialRecoveryAtCost: result.recordset.reduce(
+      potentialRecoveryAtCost: result.reduce(
         (sum, p) => sum + parseFloat(p.DeadStockValue || 0),
         0
       ).toFixed(2),
       // Potential revenue if sold at full price
-      potentialRevenueAtFullPrice: result.recordset.reduce(
+      potentialRevenueAtFullPrice: result.reduce(
         (sum, p) => sum + (parseFloat(p.CurrentStock) * parseFloat(p.SellingPrice)),
         0
       ).toFixed(2),
@@ -126,7 +126,7 @@ export async function GET(request) {
       success: true,
       message: `Dead stock products (no sales in ${daysWithoutSale}+ days) fetched successfully`,
       summary,
-      data: result.recordset,
+      data: result,
     });
   } catch (error) {
     console.error('Error fetching dead stock products:', error);

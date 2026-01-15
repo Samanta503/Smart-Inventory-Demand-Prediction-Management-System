@@ -38,7 +38,7 @@ export default function ProductsPage() {
         throw new Error(result.message);
       }
 
-      setProducts(result.data);
+      setProducts(result.data || []);
     } catch (err) {
       setError(err.message);
     } finally {

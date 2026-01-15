@@ -2,13 +2,10 @@
  * Sales API Route
  * ===============
  * 
- * GET  /api/sales - Returns all sales records
- * POST /api/sales - Creates a new sale record
+ * GET  /api/sales - Returns all sales records (headers with items)
+ * POST /api/sales - Creates a new sale (header + multiple items)
  * 
- * When a sale is created:
- * 1. The sale record is inserted into the Sales table
- * 2. A trigger automatically decreases the product stock
- * 3. If stock falls below reorder level, an alert is created
+ * New structure uses SalesHeaders + SalesItems for multi-item transactions
  */
 
 import { NextResponse } from 'next/server';
@@ -16,64 +13,91 @@ import { executeQuery } from '@/lib/db';
 
 /**
  * GET /api/sales
- * Fetches all sales records with product details
+ * Fetches all sales headers with their items
  */
 export async function GET() {
   try {
-    const query = `
+    // Get sales headers with customer and warehouse info
+    const headersQuery = `
       SELECT 
-        s.SaleID,
-        s.ProductID,
-        p.ProductCode,
-        p.ProductName,
-        c.CategoryName,
-        s.Quantity,
-        s.UnitPrice,
-        s.TotalAmount,
-        s.SaleDate,
-        s.CustomerName,
-        s.InvoiceNumber,
-        s.Notes,
-        s.CreatedBy,
-        s.CreatedAt,
-        -- Calculate profit for this sale
-        (s.TotalAmount - (s.Quantity * p.CostPrice)) AS Profit
-      FROM Sales s
-      INNER JOIN Products p ON s.ProductID = p.ProductID
-      INNER JOIN Categories c ON p.CategoryID = c.CategoryID
-      ORDER BY s.SaleDate DESC, s.SaleID DESC
+        sh.SaleID,
+        sh.CustomerID,
+        c.CustomerName,
+        sh.WarehouseID,
+        w.WarehouseName,
+        sh.SaleDate,
+        sh.InvoiceNumber,
+        sh.Status,
+        sh.CreatedByUserID,
+        u.FullName AS CreatedByName,
+        sh.Notes,
+        sh.CreatedAt,
+        (SELECT SUM(si.LineTotal) FROM SalesItems si WHERE si.SaleID = sh.SaleID) AS TotalAmount,
+        (SELECT COUNT(*) FROM SalesItems si WHERE si.SaleID = sh.SaleID) AS ItemCount
+      FROM SalesHeaders sh
+      INNER JOIN Customers c ON sh.CustomerID = c.CustomerID
+      INNER JOIN Warehouses w ON sh.WarehouseID = w.WarehouseID
+      INNER JOIN Users u ON sh.CreatedByUserID = u.UserID
+      WHERE sh.Status != 'CANCELLED'
+      ORDER BY sh.SaleDate DESC, sh.SaleID DESC
     `;
 
-    const result = await executeQuery(query);
+    const headers = await executeQuery(headersQuery);
+
+    // Get all items for these sales
+    const itemsQuery = `
+      SELECT 
+        si.SaleItemID,
+        si.SaleID,
+        si.ProductID,
+        p.ProductCode,
+        p.ProductName,
+        p.CostPrice,
+        si.Quantity,
+        si.UnitPrice,
+        si.LineTotal,
+        si.Notes,
+        (si.Quantity * (si.UnitPrice - p.CostPrice)) AS Profit
+      FROM SalesItems si
+      INNER JOIN Products p ON si.ProductID = p.ProductID
+      ORDER BY si.SaleID, si.SaleItemID
+    `;
+
+    const items = await executeQuery(itemsQuery);
+
+    // Group items by SaleID
+    const itemsBySaleId = {};
+    items.forEach(item => {
+      if (!itemsBySaleId[item.SaleID]) {
+        itemsBySaleId[item.SaleID] = [];
+      }
+      itemsBySaleId[item.SaleID].push(item);
+    });
+
+    // Attach items to headers
+    const salesWithItems = headers.map(header => ({
+      ...header,
+      items: itemsBySaleId[header.SaleID] || []
+    }));
 
     // Calculate summary
     const summary = {
-      totalSales: result.recordset.length,
-      totalRevenue: result.recordset.reduce(
-        (sum, s) => sum + parseFloat(s.TotalAmount || 0),
-        0
-      ).toFixed(2),
-      totalProfit: result.recordset.reduce(
-        (sum, s) => sum + parseFloat(s.Profit || 0),
-        0
-      ).toFixed(2),
+      totalSales: headers.length,
+      totalRevenue: headers.reduce((sum, s) => sum + parseFloat(s.TotalAmount || 0), 0).toFixed(2),
+      totalProfit: items.reduce((sum, i) => sum + parseFloat(i.Profit || 0), 0).toFixed(2),
+      totalItemsSold: items.reduce((sum, i) => sum + parseInt(i.Quantity || 0), 0),
     };
 
     return NextResponse.json({
       success: true,
       message: 'Sales fetched successfully',
       summary,
-      data: result.recordset,
+      data: salesWithItems,
     });
   } catch (error) {
     console.error('Error fetching sales:', error);
-
     return NextResponse.json(
-      {
-        success: false,
-        message: 'Failed to fetch sales',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
-      },
+      { success: false, message: 'Failed to fetch sales', error: error.message },
       { status: 500 }
     );
   }
@@ -81,215 +105,125 @@ export async function GET() {
 
 /**
  * POST /api/sales
- * Creates a new sale record
+ * Creates a new sale with header and items
  * 
- * Request body should contain:
- * - productId: number (required) - ID of the product being sold
- * - quantity: number (required) - Number of units sold
- * - unitPrice: number (optional) - Price per unit (defaults to product's selling price)
- * - customerName: string (optional) - Customer name
- * - invoiceNumber: string (optional) - Invoice reference
- * - notes: string (optional) - Additional notes
- * - createdBy: string (optional) - Who processed the sale
- * 
- * NOTE: The database trigger will automatically:
- * - Decrease the product stock
- * - Create a StockLedger entry
- * - Create an InventoryAlert if stock falls below reorder level
+ * Request body:
+ * {
+ *   customerId: number,
+ *   warehouseId: number,
+ *   createdByUserId: number (default: 1),
+ *   notes: string,
+ *   items: [{ productId, quantity, unitPrice, notes }]
+ * }
  */
 export async function POST(request) {
   try {
-    // Parse the request body
     const body = await request.json();
+    const { customerId, warehouseId, createdByUserId = 1, notes, items } = body;
 
-    const {
-      productId,
-      quantity,
-      unitPrice,
-      customerName,
+    // Validation
+    if (!customerId || !warehouseId || !items || items.length === 0) {
+      return NextResponse.json(
+        { success: false, message: 'Customer, warehouse, and at least one item are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate each item has stock
+    for (const item of items) {
+      if (!item.productId || !item.quantity || item.quantity <= 0) {
+        return NextResponse.json(
+          { success: false, message: 'Each item must have productId and positive quantity' },
+          { status: 400 }
+        );
+      }
+
+      // Check stock in warehouse
+      const stockQuery = `
+        SELECT IFNULL(OnHandQty, 0) AS OnHandQty 
+        FROM ProductStocks 
+        WHERE ProductID = ? AND WarehouseID = ?
+      `;
+      const stockResult = await executeQuery(stockQuery, { productId: item.productId, warehouseId });
+      const available = stockResult[0]?.OnHandQty || 0;
+      
+      if (available < item.quantity) {
+        const prodQuery = `SELECT ProductName FROM Products WHERE ProductID = ?`;
+        const prodResult = await executeQuery(prodQuery, { productId: item.productId });
+        const productName = prodResult[0]?.ProductName || 'Unknown';
+        return NextResponse.json(
+          { success: false, message: `Insufficient stock for "${productName}". Available: ${available}` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Generate invoice number
+    const invoiceNumber = `INV-${Date.now()}`;
+
+    // Insert header
+    const headerQuery = `
+      INSERT INTO SalesHeaders (CustomerID, WarehouseID, InvoiceNumber, CreatedByUserID, Notes)
+      VALUES (?, ?, ?, ?, ?)
+    `;
+    await executeQuery(headerQuery, {
+      customerId,
+      warehouseId,
       invoiceNumber,
-      notes,
-      createdBy,
-    } = body;
-
-    // ===============================
-    // VALIDATION
-    // ===============================
-
-    // Check required fields
-    if (!productId || !quantity) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Missing required fields',
-          requiredFields: ['productId', 'quantity'],
-        },
-        { status: 400 }
-      );
-    }
-
-    // Validate quantity
-    if (quantity <= 0 || !Number.isInteger(quantity)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Quantity must be a positive integer',
-        },
-        { status: 400 }
-      );
-    }
-
-    // ===============================
-    // CHECK PRODUCT EXISTS AND HAS STOCK
-    // ===============================
-
-    const productQuery = `
-      SELECT 
-        ProductID,
-        ProductName,
-        CurrentStock,
-        SellingPrice,
-        IsActive
-      FROM Products 
-      WHERE ProductID = @productId
-    `;
-
-    const productResult = await executeQuery(productQuery, { productId });
-
-    // Check if product exists
-    if (productResult.recordset.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Product not found',
-        },
-        { status: 404 }
-      );
-    }
-
-    const product = productResult.recordset[0];
-
-    // Check if product is active
-    if (!product.IsActive) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Product is not available for sale',
-        },
-        { status: 400 }
-      );
-    }
-
-    // Check if enough stock is available
-    if (product.CurrentStock < quantity) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: `Insufficient stock. Available: ${product.CurrentStock}, Requested: ${quantity}`,
-          availableStock: product.CurrentStock,
-        },
-        { status: 400 }
-      );
-    }
-
-    // ===============================
-    // INSERT SALE RECORD
-    // ===============================
-
-    // Use provided unit price or default to product's selling price
-    const finalUnitPrice = unitPrice !== undefined ? unitPrice : product.SellingPrice;
-
-    // Generate invoice number if not provided
-    const finalInvoiceNumber = invoiceNumber || `INV-${Date.now()}`;
-
-    const insertQuery = `
-      INSERT INTO Sales (
-        ProductID,
-        Quantity,
-        UnitPrice,
-        SaleDate,
-        CustomerName,
-        InvoiceNumber,
-        Notes,
-        CreatedBy
-      )
-      OUTPUT 
-        INSERTED.SaleID,
-        INSERTED.ProductID,
-        INSERTED.Quantity,
-        INSERTED.UnitPrice,
-        INSERTED.TotalAmount,
-        INSERTED.SaleDate,
-        INSERTED.CustomerName,
-        INSERTED.InvoiceNumber,
-        INSERTED.Notes,
-        INSERTED.CreatedBy,
-        INSERTED.CreatedAt
-      VALUES (
-        @productId,
-        @quantity,
-        @unitPrice,
-        GETDATE(),
-        @customerName,
-        @invoiceNumber,
-        @notes,
-        @createdBy
-      )
-    `;
-
-    const result = await executeQuery(insertQuery, {
-      productId,
-      quantity,
-      unitPrice: finalUnitPrice,
-      customerName: customerName || null,
-      invoiceNumber: finalInvoiceNumber,
-      notes: notes || null,
-      createdBy: createdBy || 'System',
+      createdByUserId,
+      notes: notes || null
     });
 
-    // Get updated stock after the trigger has executed
-    const updatedProductQuery = `
-      SELECT CurrentStock FROM Products WHERE ProductID = @productId
-    `;
-    const updatedProduct = await executeQuery(updatedProductQuery, { productId });
+    // Get the inserted SaleID
+    const saleIdResult = await executeQuery('SELECT LAST_INSERT_ID() AS SaleID');
+    const saleId = saleIdResult[0].SaleID;
 
-    // Prepare response data
-    const saleRecord = result.recordset[0];
-    const responseData = {
-      ...saleRecord,
-      productName: product.ProductName,
-      previousStock: product.CurrentStock,
-      newStock: updatedProduct.recordset[0].CurrentStock,
-    };
+    // Insert items (triggers will handle stock updates)
+    for (const item of items) {
+      // Get default price if not provided
+      let unitPrice = item.unitPrice;
+      if (!unitPrice) {
+        const priceQuery = `SELECT SellingPrice FROM Products WHERE ProductID = ?`;
+        const priceResult = await executeQuery(priceQuery, { productId: item.productId });
+        unitPrice = priceResult[0]?.SellingPrice || 0;
+      }
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Sale recorded successfully',
-        data: responseData,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error('Error creating sale:', error);
-
-    // Check for specific error from trigger
-    if (error.message && error.message.includes('Insufficient stock')) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Insufficient stock to complete this sale',
-        },
-        { status: 400 }
-      );
+      const itemQuery = `
+        INSERT INTO SalesItems (SaleID, ProductID, Quantity, UnitPrice, Notes)
+        VALUES (?, ?, ?, ?, ?)
+      `;
+      await executeQuery(itemQuery, {
+        saleId,
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice,
+        notes: item.notes || null
+      });
     }
 
+    // Get the complete sale
+    const resultQuery = `
+      SELECT 
+        sh.*,
+        c.CustomerName,
+        w.WarehouseName,
+        (SELECT SUM(LineTotal) FROM SalesItems WHERE SaleID = sh.SaleID) AS TotalAmount
+      FROM SalesHeaders sh
+      INNER JOIN Customers c ON sh.CustomerID = c.CustomerID
+      INNER JOIN Warehouses w ON sh.WarehouseID = w.WarehouseID
+      WHERE sh.SaleID = ?
+    `;
+    const result = await executeQuery(resultQuery, { saleId });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Sale created successfully',
+      data: result[0],
+    }, { status: 201 });
+  } catch (error) {
+    console.error('Error creating sale:', error);
     return NextResponse.json(
-      {
-        success: false,
-        message: 'Failed to create sale',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
-      },
+      { success: false, message: 'Failed to create sale', error: error.message },
       { status: 500 }
     );
   }

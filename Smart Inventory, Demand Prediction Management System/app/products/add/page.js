@@ -55,10 +55,10 @@ export default function AddProductPage() {
         const categoriesData = await categoriesRes.json();
         const suppliersData = await suppliersRes.json();
 
-        if (categoriesData.success) {
+        if (categoriesData.success && categoriesData.data) {
           setCategories(categoriesData.data);
         }
-        if (suppliersData.success) {
+        if (suppliersData.success && suppliersData.data) {
           setSuppliers(suppliersData.data);
         }
       } catch (err) {

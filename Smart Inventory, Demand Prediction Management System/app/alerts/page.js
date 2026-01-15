@@ -38,8 +38,8 @@ export default function AlertsPage() {
         throw new Error(result.message);
       }
 
-      setAlerts(result.data);
-      setSummary(result.summary);
+      setAlerts(result.data || []);
+      setSummary(result.summary || null);
     } catch (err) {
       setError(err.message);
     } finally {
