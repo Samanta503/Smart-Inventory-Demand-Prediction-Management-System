@@ -83,14 +83,29 @@ export async function GET(request) {
     // WEEKLY STATISTICS (Selected Week or Current Week)
     // ===============================
     
-    // Calculate the week number for the selected date if not provided
-    const weekCondition = selectedWeek 
-      ? `YEARWEEK(sh.SaleDate, 1) = YEARWEEK(CONCAT(${selectedYear}, '-01-01'), 1) + ${selectedWeek - 1}`
-      : `YEARWEEK(sh.SaleDate, 1) = YEARWEEK(CONCAT(${selectedYear}, '-', LPAD(${selectedMonth}, 2, '0'), '-01'), 1)`;
-    
-    const weekConditionPurchase = selectedWeek 
-      ? `YEARWEEK(ph.PurchaseDate, 1) = YEARWEEK(CONCAT(${selectedYear}, '-01-01'), 1) + ${selectedWeek - 1}`
-      : `YEARWEEK(ph.PurchaseDate, 1) = YEARWEEK(CONCAT(${selectedYear}, '-', LPAD(${selectedMonth}, 2, '0'), '-01'), 1)`;
+    // Week condition logic:
+    // - If specific week selected: use that week number within the selected year
+    // - If no week selected: use the CURRENT week (regardless of selected month/year for comparison)
+    let weekCondition;
+    let weekConditionPurchase;
+    let displayWeekNum;
+
+    if (selectedWeek) {
+      // User selected a specific week - calculate based on year and week number
+      weekCondition = `YEARWEEK(sh.SaleDate, 1) = YEARWEEK(STR_TO_DATE(CONCAT(${selectedYear}, ' ', ${selectedWeek}, ' Monday'), '%X %V %W'))`; 
+      weekConditionPurchase = `YEARWEEK(ph.PurchaseDate, 1) = YEARWEEK(STR_TO_DATE(CONCAT(${selectedYear}, ' ', ${selectedWeek}, ' Monday'), '%X %V %W'))`;
+      displayWeekNum = selectedWeek;
+    } else {
+      // No specific week - use current week
+      weekCondition = `YEARWEEK(sh.SaleDate, 1) = YEARWEEK(NOW(), 1)`;
+      weekConditionPurchase = `YEARWEEK(ph.PurchaseDate, 1) = YEARWEEK(NOW(), 1)`;
+      displayWeekNum = null; // Will be calculated below
+    }
+
+    // Get current week number for display
+    const currentWeekQuery = `SELECT WEEK(NOW(), 1) AS CurrentWeek`;
+    const currentWeekResult = await executeQuery(currentWeekQuery);
+    const currentWeekNum = currentWeekResult.recordset[0]?.CurrentWeek || 1;
 
     const weeklyStatsQuery = `
       SELECT 
@@ -225,6 +240,7 @@ export async function GET(request) {
         cogs: parseFloat(weekly.WeeklyCOGS) || 0,
         grossProfit: (parseFloat(weekly.WeeklySales) || 0) - (parseFloat(weekly.WeeklyCOGS) || 0),
         netProfit: (parseFloat(weekly.WeeklySales) || 0) - (parseFloat(weekly.WeeklyCOGS) || 0),
+        weekNumber: selectedWeek || currentWeekNum, // Add week number for display
       },
       monthly: {
         sales: parseFloat(monthly.MonthlySales) || 0,
@@ -242,6 +258,7 @@ export async function GET(request) {
         grossProfit: (parseFloat(yearly.YearlySales) || 0) - (parseFloat(yearly.YearlyCOGS) || 0),
         netProfit: (parseFloat(yearly.YearlySales) || 0) - (parseFloat(yearly.YearlyCOGS) || 0),
       },
+      currentWeek: currentWeekNum, // For reference
     };
 
     // ===============================

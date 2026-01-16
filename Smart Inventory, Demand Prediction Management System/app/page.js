@@ -288,7 +288,7 @@ export default function Dashboard() {
             border: '2px solid var(--primary-color)'
           }}>
             <h3 style={{ fontSize: '14px', color: 'var(--primary-color)', marginBottom: '1rem' }}>
-              📅 {selectedWeek ? `Week ${selectedWeek}` : 'First Week of Month'}
+              📅 Week {periodStats?.weekly?.weekNumber || periodStats?.currentWeek || 'Current'} {selectedWeek ? '' : '(Current)'}
             </h3>
             <div style={{ display: 'grid', gap: '0.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
