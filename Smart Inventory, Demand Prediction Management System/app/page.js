@@ -14,6 +14,29 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
+// Month names for display
+const MONTHS = [
+  { value: 1, label: 'January' },
+  { value: 2, label: 'February' },
+  { value: 3, label: 'March' },
+  { value: 4, label: 'April' },
+  { value: 5, label: 'May' },
+  { value: 6, label: 'June' },
+  { value: 7, label: 'July' },
+  { value: 8, label: 'August' },
+  { value: 9, label: 'September' },
+  { value: 10, label: 'October' },
+  { value: 11, label: 'November' },
+  { value: 12, label: 'December' },
+];
+
+// Generate year options (last 10 years to next year)
+const currentYear = new Date().getFullYear();
+const YEARS = Array.from({ length: 12 }, (_, i) => currentYear - 10 + i);
+
+// Generate week options (1-53)
+const WEEKS = Array.from({ length: 53 }, (_, i) => i + 1);
+
 /**
  * Dashboard Component
  * -------------------
@@ -34,6 +57,11 @@ export default function Dashboard() {
   // State to store any errors
   const [error, setError] = useState(null);
 
+  // State for period selection
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedWeek, setSelectedWeek] = useState('');
+
   /**
    * useEffect Hook
    * --------------
@@ -49,13 +77,19 @@ export default function Dashboard() {
    * --------------------
    * Makes an API call to get all dashboard statistics
    */
-  async function fetchDashboardData() {
+  async function fetchDashboardData(year = selectedYear, month = selectedMonth, week = selectedWeek) {
     try {
       setLoading(true);
       setError(null);
 
+      // Build URL with query parameters
+      let url = `/api/analytics/dashboard?year=${year}&month=${month}`;
+      if (week) {
+        url += `&week=${week}`;
+      }
+
       // Fetch data from our dashboard API
-      const response = await fetch('/api/analytics/dashboard');
+      const response = await fetch(url);
       
       // Parse the JSON response
       const result = await response.json();
@@ -75,6 +109,35 @@ export default function Dashboard() {
       // Always set loading to false when done
       setLoading(false);
     }
+  }
+
+  // Handle period selection changes
+  function handleYearChange(e) {
+    const year = parseInt(e.target.value);
+    setSelectedYear(year);
+    fetchDashboardData(year, selectedMonth, selectedWeek);
+  }
+
+  function handleMonthChange(e) {
+    const month = parseInt(e.target.value);
+    setSelectedMonth(month);
+    fetchDashboardData(selectedYear, month, selectedWeek);
+  }
+
+  function handleWeekChange(e) {
+    const week = e.target.value ? parseInt(e.target.value) : '';
+    setSelectedWeek(week);
+    fetchDashboardData(selectedYear, selectedMonth, week);
+  }
+
+  function resetToCurrentPeriod() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+    setSelectedYear(year);
+    setSelectedMonth(month);
+    setSelectedWeek('');
+    fetchDashboardData(year, month, '');
   }
 
   /**
@@ -134,14 +197,87 @@ export default function Dashboard() {
             Welcome to Smart Inventory Management System
           </p>
         </div>
-        <button className="btn btn-primary" onClick={fetchDashboardData}>
+        <button className="btn btn-primary" onClick={() => fetchDashboardData(selectedYear, selectedMonth, selectedWeek)}>
           🔄 Refresh
         </button>
       </div>
 
       {/* Period Statistics - Weekly, Monthly, Yearly */}
       <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h2 className="card-title" style={{ marginBottom: '1rem' }}>📊 Financial Overview</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <h2 className="card-title" style={{ margin: 0 }}>📊 Financial Overview</h2>
+          
+          {/* Date Selection Controls */}
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* Year Selector */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Year:</label>
+              <select 
+                value={selectedYear} 
+                onChange={handleYearChange}
+                className="form-input"
+                style={{ padding: '0.4rem 0.75rem', minWidth: '100px' }}
+              >
+                {YEARS.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Month Selector */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Month:</label>
+              <select 
+                value={selectedMonth} 
+                onChange={handleMonthChange}
+                className="form-input"
+                style={{ padding: '0.4rem 0.75rem', minWidth: '120px' }}
+              >
+                {MONTHS.map(month => (
+                  <option key={month.value} value={month.value}>{month.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Week Selector */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <label style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Week:</label>
+              <select 
+                value={selectedWeek} 
+                onChange={handleWeekChange}
+                className="form-input"
+                style={{ padding: '0.4rem 0.75rem', minWidth: '100px' }}
+              >
+                <option value="">All Weeks</option>
+                {WEEKS.map(week => (
+                  <option key={week} value={week}>Week {week}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Reset Button */}
+            <button 
+              className="btn btn-sm btn-secondary" 
+              onClick={resetToCurrentPeriod}
+              style={{ padding: '0.4rem 0.75rem' }}
+            >
+              ↻ Current
+            </button>
+          </div>
+        </div>
+
+        {/* Selected Period Display */}
+        <div style={{ 
+          marginBottom: '1rem', 
+          padding: '0.5rem 1rem', 
+          backgroundColor: 'var(--bg-tertiary)', 
+          borderRadius: '6px',
+          fontSize: '13px'
+        }}>
+          📅 Showing data for: <strong>{MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}</strong>
+          {selectedWeek && <span> • <strong>Week {selectedWeek}</strong></span>}
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
           
           {/* Weekly Stats */}
@@ -151,7 +287,9 @@ export default function Dashboard() {
             borderRadius: '8px',
             border: '2px solid var(--primary-color)'
           }}>
-            <h3 style={{ fontSize: '14px', color: 'var(--primary-color)', marginBottom: '1rem' }}>📅 This Week</h3>
+            <h3 style={{ fontSize: '14px', color: 'var(--primary-color)', marginBottom: '1rem' }}>
+              📅 {selectedWeek ? `Week ${selectedWeek}` : 'First Week of Month'}
+            </h3>
             <div style={{ display: 'grid', gap: '0.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span className="text-muted">Sales ({periodStats?.weekly?.salesCount || 0} orders)</span>
@@ -184,7 +322,9 @@ export default function Dashboard() {
             borderRadius: '8px',
             border: '2px solid var(--success-color)'
           }}>
-            <h3 style={{ fontSize: '14px', color: 'var(--success-color)', marginBottom: '1rem' }}>📆 This Month</h3>
+            <h3 style={{ fontSize: '14px', color: 'var(--success-color)', marginBottom: '1rem' }}>
+              📆 {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}
+            </h3>
             <div style={{ display: 'grid', gap: '0.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span className="text-muted">Sales ({periodStats?.monthly?.salesCount || 0} orders)</span>
@@ -217,7 +357,9 @@ export default function Dashboard() {
             borderRadius: '8px',
             border: '2px solid var(--warning-color)'
           }}>
-            <h3 style={{ fontSize: '14px', color: 'var(--warning-color)', marginBottom: '1rem' }}>📅 This Year</h3>
+            <h3 style={{ fontSize: '14px', color: 'var(--warning-color)', marginBottom: '1rem' }}>
+              📅 Year {selectedYear}
+            </h3>
             <div style={{ display: 'grid', gap: '0.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span className="text-muted">Sales ({periodStats?.yearly?.salesCount || 0} orders)</span>

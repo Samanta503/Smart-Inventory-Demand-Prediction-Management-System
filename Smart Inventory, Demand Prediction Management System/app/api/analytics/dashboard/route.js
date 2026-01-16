@@ -5,6 +5,11 @@
  * GET /api/analytics/dashboard
  * Returns summary statistics for the dashboard
  * Updated for new schema with SalesHeaders/Items, PurchaseHeaders/Items
+ * 
+ * Query Parameters:
+ * - year: Selected year (default: current year)
+ * - month: Selected month 1-12 (default: current month)
+ * - week: Selected week 1-53 (default: current week)
  */
 
 import { NextResponse } from 'next/server';
@@ -14,8 +19,14 @@ import { executeQuery } from '@/lib/db';
  * GET /api/analytics/dashboard
  * Fetches all dashboard metrics in one call
  */
-export async function GET() {
+export async function GET(request) {
   try {
+    // Parse query parameters for custom date selection
+    const { searchParams } = new URL(request.url);
+    const selectedYear = parseInt(searchParams.get('year')) || new Date().getFullYear();
+    const selectedMonth = parseInt(searchParams.get('month')) || (new Date().getMonth() + 1);
+    const selectedWeek = parseInt(searchParams.get('week')) || null; // Will calculate current week if null
+
     // ===============================
     // INVENTORY OVERVIEW
     // ===============================
@@ -69,9 +80,18 @@ export async function GET() {
     const purchases = await executeQuery(purchasesQuery);
 
     // ===============================
-    // WEEKLY STATISTICS (This Week)
+    // WEEKLY STATISTICS (Selected Week or Current Week)
     // ===============================
     
+    // Calculate the week number for the selected date if not provided
+    const weekCondition = selectedWeek 
+      ? `YEARWEEK(sh.SaleDate, 1) = YEARWEEK(CONCAT(${selectedYear}, '-01-01'), 1) + ${selectedWeek - 1}`
+      : `YEARWEEK(sh.SaleDate, 1) = YEARWEEK(CONCAT(${selectedYear}, '-', LPAD(${selectedMonth}, 2, '0'), '-01'), 1)`;
+    
+    const weekConditionPurchase = selectedWeek 
+      ? `YEARWEEK(ph.PurchaseDate, 1) = YEARWEEK(CONCAT(${selectedYear}, '-01-01'), 1) + ${selectedWeek - 1}`
+      : `YEARWEEK(ph.PurchaseDate, 1) = YEARWEEK(CONCAT(${selectedYear}, '-', LPAD(${selectedMonth}, 2, '0'), '-01'), 1)`;
+
     const weeklyStatsQuery = `
       SELECT 
         -- Sales
@@ -80,13 +100,13 @@ export async function GET() {
           FROM SalesHeaders sh 
           JOIN SalesItems si ON sh.SaleID = si.SaleID 
           WHERE sh.Status = 'COMPLETED' 
-            AND YEARWEEK(sh.SaleDate, 1) = YEARWEEK(NOW(), 1)
+            AND ${weekCondition}
         ), 0) AS WeeklySales,
         IFNULL((
           SELECT COUNT(DISTINCT sh.SaleID) 
           FROM SalesHeaders sh 
           WHERE sh.Status = 'COMPLETED' 
-            AND YEARWEEK(sh.SaleDate, 1) = YEARWEEK(NOW(), 1)
+            AND ${weekCondition}
         ), 0) AS WeeklySalesCount,
         -- Purchases (Cost)
         IFNULL((
@@ -94,7 +114,7 @@ export async function GET() {
           FROM PurchaseHeaders ph 
           JOIN PurchaseItems pi ON ph.PurchaseID = pi.PurchaseID 
           WHERE ph.Status = 'COMPLETED' 
-            AND YEARWEEK(ph.PurchaseDate, 1) = YEARWEEK(NOW(), 1)
+            AND ${weekConditionPurchase}
         ), 0) AS WeeklyPurchases,
         -- Cost of Goods Sold (COGS) - using product cost price
         IFNULL((
@@ -103,13 +123,13 @@ export async function GET() {
           JOIN SalesItems si ON sh.SaleID = si.SaleID 
           JOIN Products p ON si.ProductID = p.ProductID
           WHERE sh.Status = 'COMPLETED' 
-            AND YEARWEEK(sh.SaleDate, 1) = YEARWEEK(NOW(), 1)
+            AND ${weekCondition}
         ), 0) AS WeeklyCOGS
     `;
     const weeklyStats = await executeQuery(weeklyStatsQuery);
 
     // ===============================
-    // MONTHLY STATISTICS (This Month)
+    // MONTHLY STATISTICS (Selected Month)
     // ===============================
     
     const monthlyStatsQuery = `
@@ -120,15 +140,15 @@ export async function GET() {
           FROM SalesHeaders sh 
           JOIN SalesItems si ON sh.SaleID = si.SaleID 
           WHERE sh.Status = 'COMPLETED' 
-            AND YEAR(sh.SaleDate) = YEAR(NOW()) 
-            AND MONTH(sh.SaleDate) = MONTH(NOW())
+            AND YEAR(sh.SaleDate) = ${selectedYear}
+            AND MONTH(sh.SaleDate) = ${selectedMonth}
         ), 0) AS MonthlySales,
         IFNULL((
           SELECT COUNT(DISTINCT sh.SaleID) 
           FROM SalesHeaders sh 
           WHERE sh.Status = 'COMPLETED' 
-            AND YEAR(sh.SaleDate) = YEAR(NOW()) 
-            AND MONTH(sh.SaleDate) = MONTH(NOW())
+            AND YEAR(sh.SaleDate) = ${selectedYear}
+            AND MONTH(sh.SaleDate) = ${selectedMonth}
         ), 0) AS MonthlySalesCount,
         -- Purchases (Cost)
         IFNULL((
@@ -136,8 +156,8 @@ export async function GET() {
           FROM PurchaseHeaders ph 
           JOIN PurchaseItems pi ON ph.PurchaseID = pi.PurchaseID 
           WHERE ph.Status = 'COMPLETED' 
-            AND YEAR(ph.PurchaseDate) = YEAR(NOW()) 
-            AND MONTH(ph.PurchaseDate) = MONTH(NOW())
+            AND YEAR(ph.PurchaseDate) = ${selectedYear}
+            AND MONTH(ph.PurchaseDate) = ${selectedMonth}
         ), 0) AS MonthlyPurchases,
         -- Cost of Goods Sold (COGS)
         IFNULL((
@@ -146,14 +166,14 @@ export async function GET() {
           JOIN SalesItems si ON sh.SaleID = si.SaleID 
           JOIN Products p ON si.ProductID = p.ProductID
           WHERE sh.Status = 'COMPLETED' 
-            AND YEAR(sh.SaleDate) = YEAR(NOW()) 
-            AND MONTH(sh.SaleDate) = MONTH(NOW())
+            AND YEAR(sh.SaleDate) = ${selectedYear}
+            AND MONTH(sh.SaleDate) = ${selectedMonth}
         ), 0) AS MonthlyCOGS
     `;
     const monthlyStats = await executeQuery(monthlyStatsQuery);
 
     // ===============================
-    // YEARLY STATISTICS (This Year)
+    // YEARLY STATISTICS (Selected Year)
     // ===============================
     
     const yearlyStatsQuery = `
@@ -164,13 +184,13 @@ export async function GET() {
           FROM SalesHeaders sh 
           JOIN SalesItems si ON sh.SaleID = si.SaleID 
           WHERE sh.Status = 'COMPLETED' 
-            AND YEAR(sh.SaleDate) = YEAR(NOW())
+            AND YEAR(sh.SaleDate) = ${selectedYear}
         ), 0) AS YearlySales,
         IFNULL((
           SELECT COUNT(DISTINCT sh.SaleID) 
           FROM SalesHeaders sh 
           WHERE sh.Status = 'COMPLETED' 
-            AND YEAR(sh.SaleDate) = YEAR(NOW())
+            AND YEAR(sh.SaleDate) = ${selectedYear}
         ), 0) AS YearlySalesCount,
         -- Purchases (Cost)
         IFNULL((
@@ -178,7 +198,7 @@ export async function GET() {
           FROM PurchaseHeaders ph 
           JOIN PurchaseItems pi ON ph.PurchaseID = pi.PurchaseID 
           WHERE ph.Status = 'COMPLETED' 
-            AND YEAR(ph.PurchaseDate) = YEAR(NOW())
+            AND YEAR(ph.PurchaseDate) = ${selectedYear}
         ), 0) AS YearlyPurchases,
         -- Cost of Goods Sold (COGS)
         IFNULL((
@@ -187,7 +207,7 @@ export async function GET() {
           JOIN SalesItems si ON sh.SaleID = si.SaleID 
           JOIN Products p ON si.ProductID = p.ProductID
           WHERE sh.Status = 'COMPLETED' 
-            AND YEAR(sh.SaleDate) = YEAR(NOW())
+            AND YEAR(sh.SaleDate) = ${selectedYear}
         ), 0) AS YearlyCOGS
     `;
     const yearlyStats = await executeQuery(yearlyStatsQuery);
@@ -324,6 +344,11 @@ export async function GET() {
         sales: sales.recordset[0] || {},
         purchases: purchases.recordset[0] || {},
         periodStats,
+        selectedPeriod: {
+          year: selectedYear,
+          month: selectedMonth,
+          week: selectedWeek,
+        },
         alerts: alerts.recordset[0] || {},
         recentSales: recentSales.recordset || [],
         topProducts: topProducts.recordset || [],
