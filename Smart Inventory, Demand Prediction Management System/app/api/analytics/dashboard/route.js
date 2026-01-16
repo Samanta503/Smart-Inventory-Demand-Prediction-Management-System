@@ -69,6 +69,162 @@ export async function GET() {
     const purchases = await executeQuery(purchasesQuery);
 
     // ===============================
+    // WEEKLY STATISTICS (This Week)
+    // ===============================
+    
+    const weeklyStatsQuery = `
+      SELECT 
+        -- Sales
+        IFNULL((
+          SELECT SUM(si.LineTotal) 
+          FROM SalesHeaders sh 
+          JOIN SalesItems si ON sh.SaleID = si.SaleID 
+          WHERE sh.Status = 'COMPLETED' 
+            AND YEARWEEK(sh.SaleDate, 1) = YEARWEEK(NOW(), 1)
+        ), 0) AS WeeklySales,
+        IFNULL((
+          SELECT COUNT(DISTINCT sh.SaleID) 
+          FROM SalesHeaders sh 
+          WHERE sh.Status = 'COMPLETED' 
+            AND YEARWEEK(sh.SaleDate, 1) = YEARWEEK(NOW(), 1)
+        ), 0) AS WeeklySalesCount,
+        -- Purchases (Cost)
+        IFNULL((
+          SELECT SUM(pi.LineTotal) 
+          FROM PurchaseHeaders ph 
+          JOIN PurchaseItems pi ON ph.PurchaseID = pi.PurchaseID 
+          WHERE ph.Status = 'COMPLETED' 
+            AND YEARWEEK(ph.PurchaseDate, 1) = YEARWEEK(NOW(), 1)
+        ), 0) AS WeeklyPurchases,
+        -- Cost of Goods Sold (COGS) - using product cost price
+        IFNULL((
+          SELECT SUM(si.Quantity * p.CostPrice) 
+          FROM SalesHeaders sh 
+          JOIN SalesItems si ON sh.SaleID = si.SaleID 
+          JOIN Products p ON si.ProductID = p.ProductID
+          WHERE sh.Status = 'COMPLETED' 
+            AND YEARWEEK(sh.SaleDate, 1) = YEARWEEK(NOW(), 1)
+        ), 0) AS WeeklyCOGS
+    `;
+    const weeklyStats = await executeQuery(weeklyStatsQuery);
+
+    // ===============================
+    // MONTHLY STATISTICS (This Month)
+    // ===============================
+    
+    const monthlyStatsQuery = `
+      SELECT 
+        -- Sales
+        IFNULL((
+          SELECT SUM(si.LineTotal) 
+          FROM SalesHeaders sh 
+          JOIN SalesItems si ON sh.SaleID = si.SaleID 
+          WHERE sh.Status = 'COMPLETED' 
+            AND YEAR(sh.SaleDate) = YEAR(NOW()) 
+            AND MONTH(sh.SaleDate) = MONTH(NOW())
+        ), 0) AS MonthlySales,
+        IFNULL((
+          SELECT COUNT(DISTINCT sh.SaleID) 
+          FROM SalesHeaders sh 
+          WHERE sh.Status = 'COMPLETED' 
+            AND YEAR(sh.SaleDate) = YEAR(NOW()) 
+            AND MONTH(sh.SaleDate) = MONTH(NOW())
+        ), 0) AS MonthlySalesCount,
+        -- Purchases (Cost)
+        IFNULL((
+          SELECT SUM(pi.LineTotal) 
+          FROM PurchaseHeaders ph 
+          JOIN PurchaseItems pi ON ph.PurchaseID = pi.PurchaseID 
+          WHERE ph.Status = 'COMPLETED' 
+            AND YEAR(ph.PurchaseDate) = YEAR(NOW()) 
+            AND MONTH(ph.PurchaseDate) = MONTH(NOW())
+        ), 0) AS MonthlyPurchases,
+        -- Cost of Goods Sold (COGS)
+        IFNULL((
+          SELECT SUM(si.Quantity * p.CostPrice) 
+          FROM SalesHeaders sh 
+          JOIN SalesItems si ON sh.SaleID = si.SaleID 
+          JOIN Products p ON si.ProductID = p.ProductID
+          WHERE sh.Status = 'COMPLETED' 
+            AND YEAR(sh.SaleDate) = YEAR(NOW()) 
+            AND MONTH(sh.SaleDate) = MONTH(NOW())
+        ), 0) AS MonthlyCOGS
+    `;
+    const monthlyStats = await executeQuery(monthlyStatsQuery);
+
+    // ===============================
+    // YEARLY STATISTICS (This Year)
+    // ===============================
+    
+    const yearlyStatsQuery = `
+      SELECT 
+        -- Sales
+        IFNULL((
+          SELECT SUM(si.LineTotal) 
+          FROM SalesHeaders sh 
+          JOIN SalesItems si ON sh.SaleID = si.SaleID 
+          WHERE sh.Status = 'COMPLETED' 
+            AND YEAR(sh.SaleDate) = YEAR(NOW())
+        ), 0) AS YearlySales,
+        IFNULL((
+          SELECT COUNT(DISTINCT sh.SaleID) 
+          FROM SalesHeaders sh 
+          WHERE sh.Status = 'COMPLETED' 
+            AND YEAR(sh.SaleDate) = YEAR(NOW())
+        ), 0) AS YearlySalesCount,
+        -- Purchases (Cost)
+        IFNULL((
+          SELECT SUM(pi.LineTotal) 
+          FROM PurchaseHeaders ph 
+          JOIN PurchaseItems pi ON ph.PurchaseID = pi.PurchaseID 
+          WHERE ph.Status = 'COMPLETED' 
+            AND YEAR(ph.PurchaseDate) = YEAR(NOW())
+        ), 0) AS YearlyPurchases,
+        -- Cost of Goods Sold (COGS)
+        IFNULL((
+          SELECT SUM(si.Quantity * p.CostPrice) 
+          FROM SalesHeaders sh 
+          JOIN SalesItems si ON sh.SaleID = si.SaleID 
+          JOIN Products p ON si.ProductID = p.ProductID
+          WHERE sh.Status = 'COMPLETED' 
+            AND YEAR(sh.SaleDate) = YEAR(NOW())
+        ), 0) AS YearlyCOGS
+    `;
+    const yearlyStats = await executeQuery(yearlyStatsQuery);
+
+    // Calculate Profit/Loss for each period
+    const weekly = weeklyStats.recordset[0] || {};
+    const monthly = monthlyStats.recordset[0] || {};
+    const yearly = yearlyStats.recordset[0] || {};
+
+    const periodStats = {
+      weekly: {
+        sales: parseFloat(weekly.WeeklySales) || 0,
+        salesCount: parseInt(weekly.WeeklySalesCount) || 0,
+        purchases: parseFloat(weekly.WeeklyPurchases) || 0,
+        cogs: parseFloat(weekly.WeeklyCOGS) || 0,
+        grossProfit: (parseFloat(weekly.WeeklySales) || 0) - (parseFloat(weekly.WeeklyCOGS) || 0),
+        netProfit: (parseFloat(weekly.WeeklySales) || 0) - (parseFloat(weekly.WeeklyCOGS) || 0),
+      },
+      monthly: {
+        sales: parseFloat(monthly.MonthlySales) || 0,
+        salesCount: parseInt(monthly.MonthlySalesCount) || 0,
+        purchases: parseFloat(monthly.MonthlyPurchases) || 0,
+        cogs: parseFloat(monthly.MonthlyCOGS) || 0,
+        grossProfit: (parseFloat(monthly.MonthlySales) || 0) - (parseFloat(monthly.MonthlyCOGS) || 0),
+        netProfit: (parseFloat(monthly.MonthlySales) || 0) - (parseFloat(monthly.MonthlyCOGS) || 0),
+      },
+      yearly: {
+        sales: parseFloat(yearly.YearlySales) || 0,
+        salesCount: parseInt(yearly.YearlySalesCount) || 0,
+        purchases: parseFloat(yearly.YearlyPurchases) || 0,
+        cogs: parseFloat(yearly.YearlyCOGS) || 0,
+        grossProfit: (parseFloat(yearly.YearlySales) || 0) - (parseFloat(yearly.YearlyCOGS) || 0),
+        netProfit: (parseFloat(yearly.YearlySales) || 0) - (parseFloat(yearly.YearlyCOGS) || 0),
+      },
+    };
+
+    // ===============================
     // ALERTS OVERVIEW
     // ===============================
     
@@ -167,6 +323,7 @@ export async function GET() {
         inventory: inventory.recordset[0] || {},
         sales: sales.recordset[0] || {},
         purchases: purchases.recordset[0] || {},
+        periodStats,
         alerts: alerts.recordset[0] || {},
         recentSales: recentSales.recordset || [],
         topProducts: topProducts.recordset || [],

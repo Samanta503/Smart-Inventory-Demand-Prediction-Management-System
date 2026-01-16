@@ -122,7 +122,7 @@ export default function Dashboard() {
   }
 
   // Destructure data for easier access
-  const { inventory, sales, purchases, alerts, recentSales, topProducts, categories } = data || {};
+  const { inventory, sales, purchases, periodStats, alerts, recentSales, topProducts, categories } = data || {};
 
   return (
     <div>
@@ -137,6 +137,112 @@ export default function Dashboard() {
         <button className="btn btn-primary" onClick={fetchDashboardData}>
           🔄 Refresh
         </button>
+      </div>
+
+      {/* Period Statistics - Weekly, Monthly, Yearly */}
+      <div className="card" style={{ marginBottom: '1.5rem' }}>
+        <h2 className="card-title" style={{ marginBottom: '1rem' }}>📊 Financial Overview</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+          
+          {/* Weekly Stats */}
+          <div style={{ 
+            padding: '1rem', 
+            backgroundColor: 'var(--bg-secondary)', 
+            borderRadius: '8px',
+            border: '2px solid var(--primary-color)'
+          }}>
+            <h3 style={{ fontSize: '14px', color: 'var(--primary-color)', marginBottom: '1rem' }}>📅 This Week</h3>
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Sales ({periodStats?.weekly?.salesCount || 0} orders)</span>
+                <strong style={{ color: 'var(--success-color)' }}>{formatCurrency(periodStats?.weekly?.sales)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Purchases</span>
+                <strong style={{ color: 'var(--info-color)' }}>{formatCurrency(periodStats?.weekly?.purchases)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Cost of Goods</span>
+                <span>{formatCurrency(periodStats?.weekly?.cogs)}</span>
+              </div>
+              <hr style={{ margin: '0.5rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <strong>Gross Profit</strong>
+                <strong style={{ 
+                  color: (periodStats?.weekly?.grossProfit || 0) >= 0 ? 'var(--success-color)' : 'var(--danger-color)' 
+                }}>
+                  {(periodStats?.weekly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.weekly?.grossProfit)}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Monthly Stats */}
+          <div style={{ 
+            padding: '1rem', 
+            backgroundColor: 'var(--bg-secondary)', 
+            borderRadius: '8px',
+            border: '2px solid var(--success-color)'
+          }}>
+            <h3 style={{ fontSize: '14px', color: 'var(--success-color)', marginBottom: '1rem' }}>📆 This Month</h3>
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Sales ({periodStats?.monthly?.salesCount || 0} orders)</span>
+                <strong style={{ color: 'var(--success-color)' }}>{formatCurrency(periodStats?.monthly?.sales)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Purchases</span>
+                <strong style={{ color: 'var(--info-color)' }}>{formatCurrency(periodStats?.monthly?.purchases)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Cost of Goods</span>
+                <span>{formatCurrency(periodStats?.monthly?.cogs)}</span>
+              </div>
+              <hr style={{ margin: '0.5rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <strong>Gross Profit</strong>
+                <strong style={{ 
+                  color: (periodStats?.monthly?.grossProfit || 0) >= 0 ? 'var(--success-color)' : 'var(--danger-color)' 
+                }}>
+                  {(periodStats?.monthly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.monthly?.grossProfit)}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Yearly Stats */}
+          <div style={{ 
+            padding: '1rem', 
+            backgroundColor: 'var(--bg-secondary)', 
+            borderRadius: '8px',
+            border: '2px solid var(--warning-color)'
+          }}>
+            <h3 style={{ fontSize: '14px', color: 'var(--warning-color)', marginBottom: '1rem' }}>📅 This Year</h3>
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Sales ({periodStats?.yearly?.salesCount || 0} orders)</span>
+                <strong style={{ color: 'var(--success-color)' }}>{formatCurrency(periodStats?.yearly?.sales)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Purchases</span>
+                <strong style={{ color: 'var(--info-color)' }}>{formatCurrency(periodStats?.yearly?.purchases)}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span className="text-muted">Cost of Goods</span>
+                <span>{formatCurrency(periodStats?.yearly?.cogs)}</span>
+              </div>
+              <hr style={{ margin: '0.5rem 0', border: 'none', borderTop: '1px solid var(--border-color)' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <strong>Gross Profit</strong>
+                <strong style={{ 
+                  color: (periodStats?.yearly?.grossProfit || 0) >= 0 ? 'var(--success-color)' : 'var(--danger-color)' 
+                }}>
+                  {(periodStats?.yearly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.yearly?.grossProfit)}
+                </strong>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Inventory Statistics Cards */}
