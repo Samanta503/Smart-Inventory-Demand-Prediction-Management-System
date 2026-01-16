@@ -279,21 +279,25 @@ export async function GET(request) {
     // RECENT SALES (Last 5) - Updated for new schema
     // ===============================
     
+    // Get recent sales with item details (showing individual items sold)
     const recentSalesQuery = `
       SELECT 
         sh.SaleID,
         sh.InvoiceNumber,
         c.CustomerName,
         w.WarehouseName,
-        (SELECT SUM(LineTotal) FROM SalesItems WHERE SaleID = sh.SaleID) AS TotalAmount,
-        (SELECT COUNT(*) FROM SalesItems WHERE SaleID = sh.SaleID) AS ItemCount,
+        p.ProductName,
+        si.Quantity,
+        si.LineTotal AS TotalAmount,
         sh.SaleDate
       FROM SalesHeaders sh
       INNER JOIN Customers c ON sh.CustomerID = c.CustomerID
       INNER JOIN Warehouses w ON sh.WarehouseID = w.WarehouseID
+      INNER JOIN SalesItems si ON sh.SaleID = si.SaleID
+      INNER JOIN Products p ON si.ProductID = p.ProductID
       WHERE sh.Status = 'COMPLETED'
-      ORDER BY sh.SaleDate DESC
-      LIMIT 5
+      ORDER BY sh.SaleDate DESC, sh.SaleID DESC
+      LIMIT 10
     `;
     const recentSales = await executeQuery(recentSalesQuery);
 
