@@ -5,6 +5,7 @@
  * =================
  * 
  * Record new stock arrivals from suppliers with multi-item support.
+ * Supports category-based supplier filtering.
  */
 
 import { useState, useEffect } from 'react';
@@ -15,6 +16,7 @@ export default function AddPurchasePage() {
   const router = useRouter();
   
   // Form state
+  const [categoryId, setCategoryId] = useState('');
   const [supplierId, setSupplierId] = useState('');
   const [warehouseId, setWarehouseId] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
@@ -32,8 +34,11 @@ export default function AddPurchasePage() {
   
   // Data for dropdowns
   const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const [allSuppliers, setAllSuppliers] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
+  const [categories, setCategories] = useState([]);
   
   // UI state
   const [loading, setLoading] = useState(true);
@@ -46,25 +51,62 @@ export default function AddPurchasePage() {
     generateReferenceNumber();
   }, []);
 
+  // Filter suppliers and products when category changes
+  useEffect(() => {
+    if (categoryId) {
+      // Filter suppliers by category
+      const filteredSuppliers = allSuppliers.filter(s => 
+        s.categories && s.categories.some(c => c.CategoryID === parseInt(categoryId))
+      );
+      setSuppliers(filteredSuppliers);
+      
+      // Filter products by category
+      const filteredProducts = allProducts.filter(p => p.CategoryID === parseInt(categoryId));
+      setProducts(filteredProducts);
+      
+      // Reset supplier and product selection if not in filtered list
+      if (supplierId && !filteredSuppliers.some(s => s.SupplierID === parseInt(supplierId))) {
+        setSupplierId('');
+      }
+      if (currentItem.productId && !filteredProducts.some(p => p.ProductID === parseInt(currentItem.productId))) {
+        setCurrentItem({ productId: '', quantity: '', unitCost: '' });
+      }
+    } else {
+      setSuppliers(allSuppliers);
+      setProducts(allProducts);
+    }
+  }, [categoryId, allSuppliers, allProducts]);
+
   async function fetchData() {
     try {
-      const [productsRes, suppliersRes, warehousesRes] = await Promise.all([
+      const [productsRes, suppliersRes, warehousesRes, categoriesRes] = await Promise.all([
         fetch('/api/products'),
         fetch('/api/suppliers'),
-        fetch('/api/warehouses')
+        fetch('/api/warehouses'),
+        fetch('/api/categories')
       ]);
       
       const productsData = await productsRes.json();
       const suppliersData = await suppliersRes.json();
       const warehousesData = await warehousesRes.json();
+      const categoriesData = await categoriesRes.json();
       
-      if (productsData.success) setProducts(productsData.data || []);
-      if (suppliersData.success) setSuppliers(suppliersData.data || []);
+      if (productsData.success) {
+        setProducts(productsData.data || []);
+        setAllProducts(productsData.data || []);
+      }
+      if (suppliersData.success) {
+        setSuppliers(suppliersData.data || []);
+        setAllSuppliers(suppliersData.data || []);
+      }
       if (warehousesData.success) {
         setWarehouses(warehousesData.data || []);
         if (warehousesData.data && warehousesData.data.length > 0) {
           setWarehouseId(warehousesData.data[0].WarehouseID.toString());
         }
+      }
+      if (categoriesData.success) {
+        setCategories(categoriesData.data || []);
       }
     } catch (err) {
       setError('Failed to load data');
@@ -222,9 +264,49 @@ export default function AddPurchasePage() {
                 />
               </div>
             </div>
+            
+            {/* Category Filter - First Step */}
+            <div className="form-group" style={{ 
+              backgroundColor: 'var(--bg-tertiary)', 
+              padding: '12px', 
+              borderRadius: '8px',
+              marginBottom: '1rem',
+              border: '2px dashed var(--primary-color)'
+            }}>
+              <label className="form-label" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>
+                📂 Step 1: Select Category (Optional)
+              </label>
+              <select
+                value={categoryId}
+                onChange={(e) => {
+                  setCategoryId(e.target.value);
+                  setSupplierId('');
+                }}
+                className="form-input"
+              >
+                <option value="">All Categories (Show all suppliers)</option>
+                {categories.map(c => (
+                  <option key={c.CategoryID} value={c.CategoryID}>
+                    {c.CategoryName}
+                  </option>
+                ))}
+              </select>
+              {categoryId && (
+                <p style={{ 
+                  marginTop: '8px', 
+                  fontSize: '13px', 
+                  color: 'var(--text-muted)' 
+                }}>
+                  Showing {suppliers.length} supplier(s) and {products.length} product(s) in this category
+                </p>
+              )}
+            </div>
+
             <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Supplier *</label>
+                <label className="form-label">
+                  Supplier * {categoryId && <span style={{ color: 'var(--primary-color)', fontSize: '12px' }}>(filtered by category)</span>}
+                </label>
                 <select
                   value={supplierId}
                   onChange={(e) => setSupplierId(e.target.value)}
@@ -235,9 +317,17 @@ export default function AddPurchasePage() {
                   {suppliers.map(s => (
                     <option key={s.SupplierID} value={s.SupplierID}>
                       {s.SupplierName}
+                      {s.categories && s.categories.length > 0 && 
+                        ` (${s.categories.map(c => c.CategoryName).join(', ')})`
+                      }
                     </option>
                   ))}
                 </select>
+                {categoryId && suppliers.length === 0 && (
+                  <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--danger-color)' }}>
+                    ⚠️ No suppliers found for this category. Please assign suppliers to this category first.
+                  </p>
+                )}
               </div>
               <div className="form-group">
                 <label className="form-label">Warehouse *</label>
@@ -273,7 +363,9 @@ export default function AddPurchasePage() {
             <h3 style={{ marginBottom: '1rem' }}>Add Items</h3>
             <div className="form-row">
               <div className="form-group" style={{ flex: 2 }}>
-                <label className="form-label">Product</label>
+                <label className="form-label">
+                  Product {categoryId && <span style={{ color: 'var(--primary-color)', fontSize: '12px' }}>(filtered by category)</span>}
+                </label>
                 <select
                   value={currentItem.productId}
                   onChange={(e) => {

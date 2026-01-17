@@ -5,16 +5,21 @@
  * ==============
  * 
  * Manage suppliers - view all suppliers and add new ones.
+ * Shows which categories each supplier provides.
  */
 
 import { useState, useEffect } from 'react';
 
 export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [expandedSupplier, setExpandedSupplier] = useState(null);
+  const [editingCategories, setEditingCategories] = useState(null);
+  const [selectedCategories, setSelectedCategories] = useState([]);
   const [newSupplier, setNewSupplier] = useState({
     supplierName: '',
     contactPerson: '',
@@ -23,10 +28,12 @@ export default function SuppliersPage() {
     address: '',
     city: '',
     country: '',
+    categoryIds: [],
   });
 
   useEffect(() => {
     fetchSuppliers();
+    fetchCategories();
   }, []);
 
   async function fetchSuppliers() {
@@ -43,6 +50,18 @@ export default function SuppliersPage() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchCategories() {
+    try {
+      const response = await fetch('/api/categories');
+      const result = await response.json();
+      if (result.success) {
+        setCategories(result.data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err);
     }
   }
 
@@ -67,6 +86,7 @@ export default function SuppliersPage() {
       setNewSupplier({
         supplierName: '', contactPerson: '', email: '',
         phone: '', address: '', city: '', country: '',
+        categoryIds: [],
       });
       setShowForm(false);
       fetchSuppliers();
@@ -75,6 +95,57 @@ export default function SuppliersPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  async function handleUpdateCategories(supplierId) {
+    try {
+      setSubmitting(true);
+      const response = await fetch('/api/suppliers', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          supplierId,
+          categoryIds: selectedCategories,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.message);
+      }
+
+      setEditingCategories(null);
+      setSelectedCategories([]);
+      fetchSuppliers();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  function startEditingCategories(supplier) {
+    setEditingCategories(supplier.SupplierID);
+    setSelectedCategories(supplier.categories?.map(c => c.CategoryID) || []);
+    setExpandedSupplier(supplier.SupplierID);
+  }
+
+  function toggleCategory(categoryId) {
+    setSelectedCategories(prev => 
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  }
+
+  function toggleNewSupplierCategory(categoryId) {
+    setNewSupplier(prev => ({
+      ...prev,
+      categoryIds: prev.categoryIds.includes(categoryId)
+        ? prev.categoryIds.filter(id => id !== categoryId)
+        : [...prev.categoryIds, categoryId]
+    }));
   }
 
   function formatCurrency(value) {
@@ -184,6 +255,51 @@ export default function SuppliersPage() {
                 />
               </div>
             </div>
+
+            {/* Category Selection for New Supplier */}
+            <div className="form-group">
+              <label className="form-label">Categories Supplied</label>
+              <div style={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: '8px',
+                padding: '12px',
+                backgroundColor: 'var(--card-bg)',
+                borderRadius: '8px',
+                border: '1px solid var(--border-color)'
+              }}>
+                {categories.map(cat => (
+                  <label 
+                    key={cat.CategoryID} 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '6px',
+                      padding: '6px 12px',
+                      backgroundColor: newSupplier.categoryIds.includes(cat.CategoryID) 
+                        ? 'var(--primary-color)' 
+                        : 'var(--bg-color)',
+                      color: newSupplier.categoryIds.includes(cat.CategoryID) 
+                        ? 'white' 
+                        : 'inherit',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={newSupplier.categoryIds.includes(cat.CategoryID)}
+                      onChange={() => toggleNewSupplierCategory(cat.CategoryID)}
+                      style={{ display: 'none' }}
+                    />
+                    {newSupplier.categoryIds.includes(cat.CategoryID) ? '✓ ' : ''}{cat.CategoryName}
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <button type="submit" className="btn btn-primary" disabled={submitting}>
               {submitting ? 'Adding...' : 'Add Supplier'}
             </button>
@@ -199,43 +315,189 @@ export default function SuppliersPage() {
                 <tr>
                   <th>Supplier</th>
                   <th>Contact</th>
+                  <th>Categories</th>
                   <th>Location</th>
                   <th>Products</th>
                   <th>Inventory Value</th>
                   <th>Status</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {suppliers.map((sup) => (
-                  <tr key={sup.SupplierID}>
-                    <td>
-                      <strong>{sup.SupplierName}</strong>
-                      {sup.ContactPerson && (
-                        <div className="text-muted" style={{ fontSize: '12px' }}>
-                          {sup.ContactPerson}
+                  <>
+                    <tr 
+                      key={sup.SupplierID}
+                      onClick={() => setExpandedSupplier(expandedSupplier === sup.SupplierID ? null : sup.SupplierID)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ 
+                            transform: expandedSupplier === sup.SupplierID ? 'rotate(90deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease',
+                            display: 'inline-block'
+                          }}>▶</span>
+                          <div>
+                            <strong>{sup.SupplierName}</strong>
+                            {sup.ContactPerson && (
+                              <div className="text-muted" style={{ fontSize: '12px' }}>
+                                {sup.ContactPerson}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
-                    </td>
-                    <td>
-                      {sup.Email && <div style={{ fontSize: '13px' }}>✉️ {sup.Email}</div>}
-                      {sup.Phone && <div style={{ fontSize: '13px' }}>📞 {sup.Phone}</div>}
-                    </td>
-                    <td>
-                      {sup.City && sup.Country 
-                        ? `${sup.City}, ${sup.Country}`
-                        : sup.City || sup.Country || '-'
-                      }
-                    </td>
-                    <td>
-                      <span className="badge badge-info">{sup.ProductCount}</span>
-                    </td>
-                    <td>{formatCurrency(sup.TotalInventoryValue)}</td>
-                    <td>
-                      <span className={`badge ${sup.IsActive ? 'badge-success' : 'badge-secondary'}`}>
-                        {sup.IsActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                      <td>
+                        {sup.Email && <div style={{ fontSize: '13px' }}>✉️ {sup.Email}</div>}
+                        {sup.Phone && <div style={{ fontSize: '13px' }}>📞 {sup.Phone}</div>}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {sup.categories && sup.categories.length > 0 ? (
+                            sup.categories.map(cat => (
+                              <span 
+                                key={cat.CategoryID} 
+                                className="badge badge-info"
+                                style={{ fontSize: '11px' }}
+                              >
+                                {cat.CategoryName}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-muted" style={{ fontSize: '12px' }}>No categories</span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        {sup.City && sup.Country 
+                          ? `${sup.City}, ${sup.Country}`
+                          : sup.City || sup.Country || '-'
+                        }
+                      </td>
+                      <td>
+                        <span className="badge badge-info">{sup.ProductCount}</span>
+                      </td>
+                      <td>{formatCurrency(sup.TotalInventoryValue)}</td>
+                      <td>
+                        <span className={`badge ${sup.IsActive ? 'badge-success' : 'badge-secondary'}`}>
+                          {sup.IsActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td onClick={(e) => e.stopPropagation()}>
+                        <button 
+                          className="btn btn-sm"
+                          onClick={() => startEditingCategories(sup)}
+                          style={{ padding: '4px 8px', fontSize: '12px' }}
+                        >
+                          ✏️ Categories
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Expanded Row for Category Editing */}
+                    {expandedSupplier === sup.SupplierID && (
+                      <tr key={`${sup.SupplierID}-expanded`}>
+                        <td colSpan="8" style={{ backgroundColor: 'var(--bg-color)', padding: '16px' }}>
+                          <div>
+                            <h4 style={{ marginBottom: '12px' }}>
+                              📦 Categories for {sup.SupplierName}
+                            </h4>
+                            
+                            {editingCategories === sup.SupplierID ? (
+                              <div>
+                                <p style={{ marginBottom: '12px', fontSize: '14px', color: 'var(--text-muted)' }}>
+                                  Select the categories this supplier provides:
+                                </p>
+                                <div style={{ 
+                                  display: 'flex', 
+                                  flexWrap: 'wrap', 
+                                  gap: '8px',
+                                  marginBottom: '16px'
+                                }}>
+                                  {categories.map(cat => (
+                                    <label 
+                                      key={cat.CategoryID} 
+                                      style={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: '6px',
+                                        padding: '8px 16px',
+                                        backgroundColor: selectedCategories.includes(cat.CategoryID) 
+                                          ? 'var(--primary-color)' 
+                                          : 'var(--card-bg)',
+                                        color: selectedCategories.includes(cat.CategoryID) 
+                                          ? 'white' 
+                                          : 'inherit',
+                                        borderRadius: '20px',
+                                        cursor: 'pointer',
+                                        fontSize: '13px',
+                                        transition: 'all 0.2s ease',
+                                        border: '1px solid var(--border-color)'
+                                      }}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedCategories.includes(cat.CategoryID)}
+                                        onChange={() => toggleCategory(cat.CategoryID)}
+                                        style={{ display: 'none' }}
+                                      />
+                                      {selectedCategories.includes(cat.CategoryID) ? '✓ ' : ''}{cat.CategoryName}
+                                    </label>
+                                  ))}
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button 
+                                    className="btn btn-primary"
+                                    onClick={() => handleUpdateCategories(sup.SupplierID)}
+                                    disabled={submitting}
+                                  >
+                                    {submitting ? 'Saving...' : '💾 Save Categories'}
+                                  </button>
+                                  <button 
+                                    className="btn"
+                                    onClick={() => {
+                                      setEditingCategories(null);
+                                      setSelectedCategories([]);
+                                    }}
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                {sup.categories && sup.categories.length > 0 ? (
+                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {sup.categories.map(cat => (
+                                      <span 
+                                        key={cat.CategoryID} 
+                                        className="badge badge-info"
+                                        style={{ padding: '8px 16px' }}
+                                      >
+                                        {cat.CategoryName}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p style={{ color: 'var(--text-muted)' }}>
+                                    No categories assigned. Click "Edit Categories" to add some.
+                                  </p>
+                                )}
+                                <button 
+                                  className="btn btn-primary"
+                                  onClick={() => startEditingCategories(sup)}
+                                  style={{ marginTop: '12px' }}
+                                >
+                                  ✏️ Edit Categories
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
               </tbody>
             </table>

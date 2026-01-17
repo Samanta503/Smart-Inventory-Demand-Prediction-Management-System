@@ -2,8 +2,9 @@
  * Suppliers API Route
  * ===================
  * 
- * GET  /api/suppliers - Returns all suppliers
- * POST /api/suppliers - Creates a new supplier
+ * GET  /api/suppliers - Returns all suppliers with their categories
+ * POST /api/suppliers - Creates a new supplier with category assignments
+ * PATCH /api/suppliers - Updates supplier categories
  */
 
 import { NextResponse } from 'next/server';
@@ -11,11 +12,14 @@ import { executeQuery } from '@/lib/db';
 
 /**
  * GET /api/suppliers
- * Fetches all suppliers with their statistics
+ * Fetches all suppliers with their statistics and categories
  */
-export async function GET() {
+export async function GET(request) {
   try {
-    const query = `
+    const { searchParams } = new URL(request.url);
+    const categoryId = searchParams.get('categoryId');
+
+    let query = `
       SELECT 
         s.SupplierID,
         s.SupplierName,
@@ -34,16 +38,57 @@ export async function GET() {
         (SELECT IFNULL(SUM(p.CurrentStock * p.CostPrice), 0) 
          FROM Products p WHERE p.SupplierID = s.SupplierID) AS TotalInventoryValue
       FROM Suppliers s
-      ORDER BY s.SupplierName ASC
     `;
 
-    const result = await executeQuery(query);
+    // If categoryId is provided, filter suppliers by that category
+    if (categoryId) {
+      query += `
+        WHERE s.SupplierID IN (
+          SELECT sc.SupplierID FROM SupplierCategories sc WHERE sc.CategoryID = ?
+        )
+      `;
+    }
+
+    query += ` ORDER BY s.SupplierName ASC`;
+
+    const result = await executeQuery(query, categoryId ? [parseInt(categoryId)] : []);
+    const suppliers = result.recordset;
+
+    // Get categories for each supplier
+    const categoriesQuery = `
+      SELECT 
+        sc.SupplierID,
+        c.CategoryID,
+        c.CategoryName
+      FROM SupplierCategories sc
+      INNER JOIN Categories c ON sc.CategoryID = c.CategoryID
+      ORDER BY c.CategoryName
+    `;
+    const categoriesResult = await executeQuery(categoriesQuery);
+    
+    // Group categories by supplier
+    const categoriesBySupplier = {};
+    categoriesResult.recordset.forEach(row => {
+      if (!categoriesBySupplier[row.SupplierID]) {
+        categoriesBySupplier[row.SupplierID] = [];
+      }
+      categoriesBySupplier[row.SupplierID].push({
+        CategoryID: row.CategoryID,
+        CategoryName: row.CategoryName
+      });
+    });
+
+    // Attach categories to suppliers
+    const suppliersWithCategories = suppliers.map(supplier => ({
+      ...supplier,
+      categories: categoriesBySupplier[supplier.SupplierID] || []
+    }));
 
     return NextResponse.json({
       success: true,
       message: 'Suppliers fetched successfully',
-      count: result.recordset.length,
-      data: result.recordset,
+      count: suppliersWithCategories.length,
+      data: suppliersWithCategories,
     });
   } catch (error) {
     console.error('Error fetching suppliers:', error);
@@ -92,24 +137,37 @@ export async function POST(request) {
       INSERT INTO Suppliers (
         SupplierName, ContactPerson, Email, Phone, Address, City, Country
       )
-      VALUES (
-        @supplierName, @contactPerson, @email, @phone, @address, @city, @country
-      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-    await executeQuery(insertQuery, {
+    await executeQuery(insertQuery, [
       supplierName,
-      contactPerson: contactPerson || null,
-      email: email || null,
-      phone: phone || null,
-      address: address || null,
-      city: city || null,
-      country: country || null,
-    });
+      contactPerson || null,
+      email || null,
+      phone || null,
+      address || null,
+      city || null,
+      country || null,
+    ]);
 
-    // Get the inserted supplier
-    const getInsertedQuery = `SELECT * FROM Suppliers ORDER BY SupplierID DESC LIMIT 1`;
-    const result = await executeQuery(getInsertedQuery);
+    // Get the inserted supplier ID
+    const getInsertedQuery = `SELECT LAST_INSERT_ID() AS SupplierID`;
+    const insertedResult = await executeQuery(getInsertedQuery);
+    const supplierId = insertedResult.recordset[0].SupplierID;
+
+    // Insert category assignments if provided
+    if (body.categoryIds && body.categoryIds.length > 0) {
+      for (const categoryId of body.categoryIds) {
+        await executeQuery(
+          `INSERT INTO SupplierCategories (SupplierID, CategoryID) VALUES (?, ?)`,
+          [supplierId, categoryId]
+        );
+      }
+    }
+
+    // Get the full supplier with categories
+    const getSupplierQuery = `SELECT * FROM Suppliers WHERE SupplierID = ?`;
+    const result = await executeQuery(getSupplierQuery, [supplierId]);
 
     return NextResponse.json(
       {
@@ -126,6 +184,56 @@ export async function POST(request) {
       {
         success: false,
         message: 'Failed to create supplier',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+      },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/suppliers
+ * Updates supplier categories
+ */
+export async function PATCH(request) {
+  try {
+    const body = await request.json();
+    const { supplierId, categoryIds } = body;
+
+    if (!supplierId) {
+      return NextResponse.json(
+        { success: false, message: 'Supplier ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Delete existing category assignments
+    await executeQuery(
+      `DELETE FROM SupplierCategories WHERE SupplierID = ?`,
+      [supplierId]
+    );
+
+    // Insert new category assignments
+    if (categoryIds && categoryIds.length > 0) {
+      for (const categoryId of categoryIds) {
+        await executeQuery(
+          `INSERT INTO SupplierCategories (SupplierID, CategoryID) VALUES (?, ?)`,
+          [supplierId, categoryId]
+        );
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Supplier categories updated successfully',
+    });
+  } catch (error) {
+    console.error('Error updating supplier categories:', error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: 'Failed to update supplier categories',
         error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
       },
       { status: 500 }
