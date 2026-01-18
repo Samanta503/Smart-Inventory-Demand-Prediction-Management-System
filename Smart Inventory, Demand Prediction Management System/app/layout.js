@@ -6,120 +6,143 @@
  * It wraps all pages and provides:
  * - Global CSS styles
  * - HTML structure
- * - Sidebar navigation
+ * - Professional sidebar navigation with smooth transitions
  */
+
+'use client';
 
 import './globals.css';
 import Link from 'next/link';
-
-// Metadata for the application (SEO)
-export const metadata = {
-  title: 'Smart Inventory Management System',
-  description: 'A comprehensive inventory and demand prediction management system',
-};
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
 /**
  * Sidebar Navigation Component
  * ----------------------------
- * Displays the navigation menu with links to all pages
+ * Professional navigation menu with smooth animations
  */
 function Sidebar() {
+  const pathname = usePathname();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const navSections = [
+    {
+      title: 'Overview',
+      items: [
+        { href: '/', icon: '📊', label: 'Dashboard' },
+      ]
+    },
+    {
+      title: 'Inventory',
+      items: [
+        { href: '/products', icon: '📦', label: 'Products' },
+        { href: '/products/add', icon: '➕', label: 'Add Product' },
+        { href: '/categories', icon: '🏷️', label: 'Categories' },
+        { href: '/warehouses', icon: '🏭', label: 'Warehouses' },
+      ]
+    },
+    {
+      title: 'Transactions',
+      items: [
+        { href: '/sales', icon: '💰', label: 'Sales' },
+        { href: '/sales/add', icon: '🛒', label: 'New Sale' },
+        { href: '/purchases', icon: '📥', label: 'Purchases' },
+        { href: '/purchases/add', icon: '📋', label: 'New Purchase' },
+      ]
+    },
+    {
+      title: 'Partners',
+      items: [
+        { href: '/customers', icon: '👥', label: 'Customers' },
+        { href: '/suppliers', icon: '🏢', label: 'Suppliers' },
+      ]
+    },
+    {
+      title: 'Alerts & Reports',
+      items: [
+        { href: '/alerts', icon: '🔔', label: 'Alerts' },
+        { href: '/alerts/low-stock', icon: '⚠️', label: 'Low Stock' },
+        { href: '/alerts/dead-stock', icon: '💀', label: 'Dead Stock' },
+      ]
+    },
+    {
+      title: 'Analytics',
+      items: [
+        { href: '/analytics/sales', icon: '📈', label: 'Sales Analytics' },
+      ]
+    },
+  ];
+
+  const isActive = (href) => {
+    if (href === '/') return pathname === '/';
+    return pathname.startsWith(href);
+  };
+
   return (
-    <aside className="sidebar">
-      {/* Logo */}
-      <div className="sidebar-logo">
-        <span>📦</span>
-        Smart Inventory
+    <aside className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}>
+      {/* Logo Section */}
+      <div className="sidebar-header">
+        <div className="sidebar-logo">
+          <div className="logo-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+          </div>
+          <span className="logo-text">Smart Inventory</span>
+        </div>
+        <button 
+          className="sidebar-toggle"
+          onClick={() => setCollapsed(!collapsed)}
+          aria-label="Toggle sidebar"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d={collapsed ? "M9 18l6-6-6-6" : "M15 18l-6-6 6-6"} />
+          </svg>
+        </button>
       </div>
 
-      {/* Main Navigation */}
-      <nav>
-        {/* Dashboard */}
-        <div className="nav-section">
-          <div className="nav-section-title">Overview</div>
-          <Link href="/" className="nav-link">
-            <span className="icon">📊</span>
-            Dashboard
-          </Link>
-        </div>
-
-        {/* Inventory */}
-        <div className="nav-section">
-          <div className="nav-section-title">Inventory</div>
-          <Link href="/products" className="nav-link">
-            <span className="icon">📦</span>
-            Products
-          </Link>
-          <Link href="/products/add" className="nav-link">
-            <span className="icon">➕</span>
-            Add Product
-          </Link>
-          <Link href="/categories" className="nav-link">
-            <span className="icon">🏷️</span>
-            Categories
-          </Link>
-          <Link href="/warehouses" className="nav-link">
-            <span className="icon">🏭</span>
-            Warehouses
-          </Link>
-        </div>
-
-        {/* Transactions */}
-        <div className="nav-section">
-          <div className="nav-section-title">Transactions</div>
-          <Link href="/sales" className="nav-link">
-            <span className="icon">💰</span>
-            Sales
-          </Link>
-          <Link href="/sales/add" className="nav-link">
-            <span className="icon">🛒</span>
-            New Sale
-          </Link>
-          <Link href="/purchases" className="nav-link">
-            <span className="icon">📥</span>
-            Purchases
-          </Link>
-        </div>
-
-        {/* Customers & Suppliers */}
-        <div className="nav-section">
-          <div className="nav-section-title">Partners</div>
-          <Link href="/customers" className="nav-link">
-            <span className="icon">👥</span>
-            Customers
-          </Link>
-          <Link href="/suppliers" className="nav-link">
-            <span className="icon">🏢</span>
-            Suppliers
-          </Link>
-        </div>
-
-        {/* Alerts & Reports */}
-        <div className="nav-section">
-          <div className="nav-section-title">Alerts & Reports</div>
-          <Link href="/alerts" className="nav-link">
-            <span className="icon">🔔</span>
-            Alerts
-          </Link>
-          <Link href="/alerts/low-stock" className="nav-link">
-            <span className="icon">⚠️</span>
-            Low Stock
-          </Link>
-          <Link href="/alerts/dead-stock" className="nav-link">
-            <span className="icon">💀</span>
-            Dead Stock
-          </Link>
-        </div>
-
-        {/* Analytics */}
-        <div className="nav-section">
-          <div className="nav-section-title">Analytics</div>
-          <Link href="/analytics/sales" className="nav-link">
-            <span className="icon">📈</span>
-            Sales Analytics
-          </Link>
-        </div>
+      {/* Navigation */}
+      <nav className="sidebar-nav">
+        {navSections.map((section, sectionIndex) => (
+          <div key={sectionIndex} className="nav-section">
+            <div className="nav-section-title">
+              <span>{section.title}</span>
+            </div>
+            <ul className="nav-list">
+              {section.items.map((item, itemIndex) => (
+                <li key={itemIndex}>
+                  <Link 
+                    href={item.href} 
+                    className={`nav-link ${isActive(item.href) ? 'active' : ''}`}
+                  >
+                    <span className="nav-icon">{item.icon}</span>
+                    <span className="nav-label">{item.label}</span>
+                    {isActive(item.href) && <span className="nav-indicator" />}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
       </nav>
+
+      {/* Footer */}
+      <div className="sidebar-footer">
+        <div className="sidebar-user">
+          <div className="user-avatar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <div className="user-info">
+            <span className="user-name">Admin User</span>
+            <span className="user-role">Administrator</span>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }
@@ -132,6 +155,10 @@ function Sidebar() {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <title>Smart Inventory Management System</title>
+        <meta name="description" content="A comprehensive inventory and demand prediction management system" />
+      </head>
       <body>
         <div className="layout">
           <Sidebar />
