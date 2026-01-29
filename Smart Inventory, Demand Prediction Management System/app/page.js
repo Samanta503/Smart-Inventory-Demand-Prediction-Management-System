@@ -37,51 +37,38 @@ const YEARS = Array.from({ length: 12 }, (_, i) => currentYear - 10 + i);
 // Generate week options (1-53)
 const WEEKS = Array.from({ length: 53 }, (_, i) => i + 1);
 
-// Dashboard Styles matching sidebar theme
-const dashboardStyles = {
+// Professional Dark Dashboard Styles - Matching Sidebar Theme
+const styles = {
+  // Main container with dark gradient background
   container: {
-    padding: '0',
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+    background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+    padding: '1.5rem 2rem 2rem',
   },
+  // Header section
   header: {
-    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-    padding: '2rem 2.5rem',
-    borderRadius: '0 0 24px 24px',
     marginBottom: '2rem',
-    boxShadow: '0 10px 40px rgba(15, 23, 42, 0.15)',
     position: 'relative',
-    overflow: 'hidden',
   },
-  headerOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%)',
-    pointerEvents: 'none',
-  },
-  headerContent: {
-    position: 'relative',
-    zIndex: 1,
+  headerTop: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: '1rem',
+    alignItems: 'flex-start',
+    marginBottom: '0.5rem',
   },
   headerTitle: {
-    color: 'white',
     fontSize: '2rem',
     fontWeight: '700',
-    marginBottom: '0.5rem',
+    color: '#ffffff',
     letterSpacing: '-0.5px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
   },
   headerSubtitle: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: '1rem',
-    fontWeight: '400',
+    color: 'rgba(148, 163, 184, 0.8)',
+    fontSize: '0.95rem',
+    marginTop: '0.5rem',
   },
   refreshBtn: {
     background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
@@ -90,53 +77,54 @@ const dashboardStyles = {
     borderRadius: '12px',
     color: 'white',
     fontWeight: '600',
+    fontSize: '14px',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
     transition: 'all 0.3s ease',
-    boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)',
+    boxShadow: '0 4px 20px rgba(59, 130, 246, 0.35)',
   },
-  content: {
-    padding: '0 2rem 2rem',
-  },
+  // Financial Overview Card
   financialCard: {
-    background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
+    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
     borderRadius: '20px',
-    padding: '1.75rem',
-    marginBottom: '2rem',
-    boxShadow: '0 10px 40px rgba(15, 23, 42, 0.12)',
+    padding: '1.5rem',
+    marginBottom: '1.5rem',
+    border: '1px solid rgba(59, 130, 246, 0.15)',
+    backdropFilter: 'blur(20px)',
     position: 'relative',
     overflow: 'hidden',
   },
-  financialCardOverlay: {
+  cardGlow: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)',
+    top: '-50%',
+    left: '-50%',
+    width: '200%',
+    height: '200%',
+    background: 'radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 40%)',
     pointerEvents: 'none',
   },
   financialHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '1.5rem',
+    marginBottom: '1.25rem',
     flexWrap: 'wrap',
     gap: '1rem',
     position: 'relative',
     zIndex: 1,
   },
-  financialTitle: {
-    color: 'white',
-    fontSize: '1.25rem',
+  sectionTitle: {
+    color: '#ffffff',
+    fontSize: '1.15rem',
     fontWeight: '600',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    gap: '0.6rem',
   },
-  controlsContainer: {
+  // Controls
+  controlsRow: {
     display: 'flex',
     gap: '0.75rem',
     alignItems: 'center',
@@ -145,48 +133,51 @@ const dashboardStyles = {
   controlGroup: {
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    gap: '0.4rem',
   },
   controlLabel: {
     fontSize: '12px',
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'rgba(148, 163, 184, 0.7)',
     fontWeight: '500',
   },
   select: {
-    padding: '0.5rem 0.75rem',
+    padding: '0.45rem 0.7rem',
     borderRadius: '8px',
-    border: '1px solid rgba(255, 255, 255, 0.15)',
-    background: 'rgba(255, 255, 255, 0.1)',
-    color: 'white',
+    border: '1px solid rgba(59, 130, 246, 0.25)',
+    background: 'rgba(15, 23, 42, 0.6)',
+    color: '#e2e8f0',
     fontSize: '13px',
     cursor: 'pointer',
     outline: 'none',
-    minWidth: '110px',
-    backdropFilter: 'blur(10px)',
+    minWidth: '100px',
+    transition: 'all 0.2s ease',
   },
   resetBtn: {
-    padding: '0.5rem 1rem',
+    padding: '0.45rem 0.9rem',
     borderRadius: '8px',
-    border: '1px solid rgba(255, 255, 255, 0.2)',
-    background: 'rgba(255, 255, 255, 0.1)',
-    color: 'white',
-    fontSize: '13px',
+    border: '1px solid rgba(139, 92, 246, 0.3)',
+    background: 'rgba(139, 92, 246, 0.15)',
+    color: '#c4b5fd',
+    fontSize: '12px',
     fontWeight: '500',
     cursor: 'pointer',
     transition: 'all 0.2s ease',
   },
+  // Period Badge
   periodBadge: {
-    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%)',
-    padding: '0.6rem 1.2rem',
-    borderRadius: '10px',
-    fontSize: '13px',
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: '1.25rem',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
+    background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)',
+    padding: '0.5rem 1rem',
+    borderRadius: '8px',
+    fontSize: '12px',
+    color: 'rgba(226, 232, 240, 0.9)',
+    marginBottom: '1rem',
+    border: '1px solid rgba(59, 130, 246, 0.2)',
+    display: 'inline-block',
     position: 'relative',
     zIndex: 1,
   },
-  statsGrid: {
+  // Period Stats Grid
+  periodGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
     gap: '1rem',
@@ -194,198 +185,260 @@ const dashboardStyles = {
     zIndex: 1,
   },
   periodCard: {
-    padding: '1.25rem',
-    background: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: '16px',
-    border: '1px solid rgba(255, 255, 255, 0.1)',
-    backdropFilter: 'blur(10px)',
+    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%)',
+    borderRadius: '14px',
+    padding: '1.1rem',
+    border: '1px solid rgba(255, 255, 255, 0.06)',
+    transition: 'all 0.3s ease',
   },
-  periodCardTitle: {
-    fontSize: '13px',
+  periodTitle: {
+    fontSize: '12px',
     fontWeight: '600',
-    marginBottom: '1rem',
+    marginBottom: '0.9rem',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    gap: '0.4rem',
   },
   periodRow: {
     display: 'flex',
     justifyContent: 'space-between',
-    marginBottom: '0.5rem',
-    fontSize: '13px',
+    alignItems: 'center',
+    marginBottom: '0.4rem',
+    fontSize: '12px',
   },
   periodLabel: {
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'rgba(148, 163, 184, 0.7)',
   },
-  divider: {
-    margin: '0.75rem 0',
+  periodDivider: {
+    margin: '0.6rem 0',
     border: 'none',
-    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
   },
+  // Metrics Grid
   metricsGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '1.25rem',
-    marginBottom: '2rem',
+    gap: '1rem',
+    marginBottom: '1.5rem',
   },
   metricCard: {
-    background: 'white',
+    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%)',
     borderRadius: '16px',
-    padding: '1.5rem',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
-    border: '1px solid rgba(0, 0, 0, 0.04)',
+    padding: '1.25rem',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
     transition: 'all 0.3s ease',
     position: 'relative',
     overflow: 'hidden',
   },
+  metricGlow: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: '100px',
+    height: '100px',
+    borderRadius: '50%',
+    filter: 'blur(40px)',
+    opacity: 0.4,
+    pointerEvents: 'none',
+  },
   metricIcon: {
-    width: '48px',
-    height: '48px',
+    width: '44px',
+    height: '44px',
     borderRadius: '12px',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '1.5rem',
-    marginBottom: '1rem',
+    fontSize: '1.35rem',
+    marginBottom: '0.9rem',
+    position: 'relative',
+    zIndex: 1,
   },
   metricValue: {
-    fontSize: '1.75rem',
+    fontSize: '1.5rem',
     fontWeight: '700',
-    color: '#1e293b',
-    marginBottom: '0.25rem',
+    color: '#ffffff',
+    marginBottom: '0.2rem',
+    position: 'relative',
+    zIndex: 1,
   },
   metricLabel: {
-    fontSize: '0.875rem',
-    color: '#64748b',
+    fontSize: '0.8rem',
+    color: 'rgba(148, 163, 184, 0.8)',
     fontWeight: '500',
+    position: 'relative',
+    zIndex: 1,
   },
-  twoColumnGrid: {
+  // Two Column Grid
+  twoColGrid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
-    gap: '1.5rem',
-    marginBottom: '1.5rem',
+    gap: '1.25rem',
+    marginBottom: '1.25rem',
   },
+  // Cards
   card: {
-    background: 'white',
-    borderRadius: '20px',
-    padding: '1.5rem',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)',
-    border: '1px solid rgba(0, 0, 0, 0.04)',
+    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%)',
+    borderRadius: '18px',
+    padding: '1.25rem',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+    position: 'relative',
+    overflow: 'hidden',
   },
   cardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '1.25rem',
-    paddingBottom: '1rem',
-    borderBottom: '1px solid #f1f5f9',
+    marginBottom: '1rem',
+    paddingBottom: '0.9rem',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
   },
   cardTitle: {
-    fontSize: '1.1rem',
+    fontSize: '1rem',
     fontWeight: '600',
-    color: '#1e293b',
+    color: '#ffffff',
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
   },
-  viewAllBtn: {
-    padding: '0.5rem 1rem',
+  viewBtn: {
+    padding: '0.4rem 0.9rem',
     borderRadius: '8px',
-    background: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
-    color: '#475569',
-    fontSize: '13px',
+    background: 'rgba(59, 130, 246, 0.15)',
+    color: '#60a5fa',
+    fontSize: '12px',
     fontWeight: '500',
-    border: 'none',
-    cursor: 'pointer',
+    border: '1px solid rgba(59, 130, 246, 0.25)',
     textDecoration: 'none',
     transition: 'all 0.2s ease',
   },
+  badge: {
+    padding: '0.3rem 0.7rem',
+    borderRadius: '20px',
+    fontSize: '11px',
+    fontWeight: '500',
+    background: 'rgba(139, 92, 246, 0.15)',
+    color: '#a78bfa',
+    border: '1px solid rgba(139, 92, 246, 0.2)',
+  },
+  // Table
   table: {
     width: '100%',
-    borderCollapse: 'collapse',
+    borderCollapse: 'separate',
+    borderSpacing: '0',
   },
   th: {
     textAlign: 'left',
-    padding: '0.75rem 1rem',
-    fontSize: '12px',
+    padding: '0.7rem 0.9rem',
+    fontSize: '11px',
     fontWeight: '600',
-    color: '#64748b',
+    color: 'rgba(148, 163, 184, 0.7)',
     textTransform: 'uppercase',
     letterSpacing: '0.5px',
-    borderBottom: '1px solid #f1f5f9',
-    background: '#f8fafc',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+    background: 'rgba(15, 23, 42, 0.4)',
   },
   td: {
-    padding: '0.875rem 1rem',
-    fontSize: '14px',
-    color: '#334155',
-    borderBottom: '1px solid #f1f5f9',
+    padding: '0.75rem 0.9rem',
+    fontSize: '13px',
+    color: '#e2e8f0',
+    borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
   },
-  quickActionsCard: {
-    background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)',
-    borderRadius: '20px',
-    padding: '1.75rem',
-    boxShadow: '0 10px 40px rgba(15, 23, 42, 0.12)',
-    marginTop: '1.5rem',
+  // Quick Actions
+  quickActions: {
+    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%)',
+    borderRadius: '18px',
+    padding: '1.25rem',
+    border: '1px solid rgba(255, 255, 255, 0.05)',
+    marginTop: '1.25rem',
   },
-  quickActionsTitle: {
-    color: 'white',
-    fontSize: '1.1rem',
+  quickTitle: {
+    color: '#ffffff',
+    fontSize: '1rem',
     fontWeight: '600',
-    marginBottom: '1.25rem',
+    marginBottom: '1rem',
     display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
   },
-  quickActionsGrid: {
+  actionsGrid: {
     display: 'flex',
-    gap: '1rem',
+    gap: '0.75rem',
     flexWrap: 'wrap',
   },
   actionBtn: {
-    padding: '0.75rem 1.25rem',
-    borderRadius: '12px',
+    padding: '0.7rem 1.1rem',
+    borderRadius: '10px',
     border: 'none',
     fontWeight: '600',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.5rem',
+    gap: '0.4rem',
     transition: 'all 0.3s ease',
     textDecoration: 'none',
-    fontSize: '14px',
+    fontSize: '13px',
   },
+  // Empty State
   emptyState: {
     padding: '2rem',
     textAlign: 'center',
-    color: '#94a3b8',
-    fontSize: '14px',
+    color: 'rgba(148, 163, 184, 0.6)',
+    fontSize: '13px',
   },
+  // Loading
   loadingContainer: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: '60vh',
-    gap: '1rem',
+    minHeight: '80vh',
+    gap: '1.5rem',
   },
   spinner: {
-    width: '48px',
-    height: '48px',
-    border: '4px solid #e2e8f0',
-    borderTop: '4px solid #3b82f6',
+    width: '50px',
+    height: '50px',
+    border: '3px solid rgba(59, 130, 246, 0.2)',
+    borderTop: '3px solid #3b82f6',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
   },
+  loadingText: {
+    color: 'rgba(148, 163, 184, 0.8)',
+    fontSize: '15px',
+    fontWeight: '500',
+  },
+  // Error
   errorCard: {
-    background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
+    background: 'linear-gradient(145deg, rgba(127, 29, 29, 0.3) 0%, rgba(15, 23, 42, 0.9) 100%)',
     borderRadius: '16px',
     padding: '1.5rem',
     margin: '2rem',
     display: 'flex',
     alignItems: 'center',
     gap: '1rem',
-    border: '1px solid #fecaca',
+    border: '1px solid rgba(239, 68, 68, 0.3)',
+  },
+  // Rank Badge
+  rankBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '22px',
+    height: '22px',
+    borderRadius: '50%',
+    fontSize: '11px',
+    fontWeight: '700',
+    marginRight: '0.5rem',
+  },
+  // Product Count Badge
+  countBadge: {
+    background: 'rgba(59, 130, 246, 0.2)',
+    color: '#60a5fa',
+    padding: '0.2rem 0.6rem',
+    borderRadius: '20px',
+    fontSize: '12px',
+    fontWeight: '600',
   },
 };
 
@@ -516,10 +569,10 @@ export default function Dashboard() {
   // Show loading state
   if (loading) {
     return (
-      <div style={dashboardStyles.container}>
-        <div style={dashboardStyles.loadingContainer}>
-          <div style={dashboardStyles.spinner}></div>
-          <p style={{ color: '#64748b', fontWeight: '500' }}>Loading dashboard...</p>
+      <div style={styles.container}>
+        <div style={styles.loadingContainer}>
+          <div style={styles.spinner}></div>
+          <p style={styles.loadingText}>Loading dashboard...</p>
         </div>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
@@ -529,18 +582,18 @@ export default function Dashboard() {
   // Show error state
   if (error) {
     return (
-      <div style={dashboardStyles.container}>
-        <div style={dashboardStyles.errorCard}>
+      <div style={styles.container}>
+        <div style={styles.errorCard}>
           <span style={{ fontSize: '2rem' }}>⚠️</span>
           <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: '600', color: '#991b1b', marginBottom: '0.25rem' }}>Error Loading Dashboard</p>
-            <p style={{ color: '#b91c1c', fontSize: '14px' }}>{error}</p>
+            <p style={{ fontWeight: '600', color: '#fca5a5', marginBottom: '0.25rem' }}>Error Loading Dashboard</p>
+            <p style={{ color: '#f87171', fontSize: '14px' }}>{error}</p>
           </div>
           <button 
             onClick={fetchDashboardData} 
             style={{
-              ...dashboardStyles.refreshBtn,
-              background: '#ef4444',
+              ...styles.refreshBtn,
+              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
               boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
             }}
           >
@@ -555,569 +608,382 @@ export default function Dashboard() {
   const { inventory, sales, purchases, periodStats, alerts, recentSales, topProducts, categories } = data || {};
 
   return (
-    <div style={dashboardStyles.container}>
-      {/* Animated Header */}
-      <div style={dashboardStyles.header}>
-        <div style={dashboardStyles.headerOverlay}></div>
-        <div style={dashboardStyles.headerContent}>
+    <div style={styles.container}>
+      {/* Header Section */}
+      <div style={styles.header}>
+        <div style={styles.headerTop}>
           <div>
-            <h1 style={dashboardStyles.headerTitle}>📊 Dashboard</h1>
-            <p style={dashboardStyles.headerSubtitle}>
+            <h1 style={styles.headerTitle}>
+              <span style={{ 
+                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', 
+                padding: '0.4rem', 
+                borderRadius: '10px',
+                display: 'inline-flex',
+                marginRight: '0.5rem'
+              }}>📊</span>
+              Dashboard
+            </h1>
+            <p style={styles.headerSubtitle}>
               Welcome to Smart Inventory Management System
             </p>
           </div>
           <button 
-            style={dashboardStyles.refreshBtn} 
+            style={styles.refreshBtn} 
             onClick={() => fetchDashboardData(selectedYear, selectedMonth, selectedWeek)}
-            onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
-            onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
           >
             🔄 Refresh Data
           </button>
         </div>
       </div>
 
-      <div style={dashboardStyles.content}>
-        {/* Financial Overview Card with Dark Theme */}
-        <div style={dashboardStyles.financialCard}>
-          <div style={dashboardStyles.financialCardOverlay}></div>
+      {/* Financial Overview Card */}
+      <div style={styles.financialCard}>
+        <div style={styles.cardGlow}></div>
+        
+        <div style={styles.financialHeader}>
+          <h2 style={styles.sectionTitle}>
+            <span>💹</span> Financial Overview
+          </h2>
           
-          <div style={dashboardStyles.financialHeader}>
-            <h2 style={dashboardStyles.financialTitle}>
-              <span>💹</span> Financial Overview
-            </h2>
-            
-            {/* Date Selection Controls */}
-            <div style={dashboardStyles.controlsContainer}>
-              {/* Year Selector */}
-              <div style={dashboardStyles.controlGroup}>
-                <label style={dashboardStyles.controlLabel}>Year:</label>
-                <select 
-                  value={selectedYear} 
-                  onChange={handleYearChange}
-                  style={dashboardStyles.select}
-                >
-                  {YEARS.map(year => (
-                    <option key={year} value={year} style={{ background: '#1e293b' }}>{year}</option>
-                  ))}
-                </select>
-              </div>
+          {/* Date Selection Controls */}
+          <div style={styles.controlsRow}>
+            <div style={styles.controlGroup}>
+              <label style={styles.controlLabel}>Year:</label>
+              <select value={selectedYear} onChange={handleYearChange} style={styles.select}>
+                {YEARS.map(year => (
+                  <option key={year} value={year} style={{ background: '#0f172a' }}>{year}</option>
+                ))}
+              </select>
+            </div>
 
-              {/* Month Selector */}
-              <div style={dashboardStyles.controlGroup}>
-                <label style={dashboardStyles.controlLabel}>Month:</label>
-                <select 
-                  value={selectedMonth} 
-                  onChange={handleMonthChange}
-                  style={dashboardStyles.select}
-                >
-                  {MONTHS.map(month => (
-                    <option key={month.value} value={month.value} style={{ background: '#1e293b' }}>{month.label}</option>
-                  ))}
-                </select>
-              </div>
+            <div style={styles.controlGroup}>
+              <label style={styles.controlLabel}>Month:</label>
+              <select value={selectedMonth} onChange={handleMonthChange} style={styles.select}>
+                {MONTHS.map(month => (
+                  <option key={month.value} value={month.value} style={{ background: '#0f172a' }}>{month.label}</option>
+                ))}
+              </select>
+            </div>
 
-              {/* Week Selector */}
-              <div style={dashboardStyles.controlGroup}>
-                <label style={dashboardStyles.controlLabel}>Week:</label>
-                <select 
-                  value={selectedWeek} 
-                  onChange={handleWeekChange}
-                  style={dashboardStyles.select}
-                >
-                  <option value="" style={{ background: '#1e293b' }}>All Weeks</option>
-                  {WEEKS.map(week => (
-                    <option key={week} value={week} style={{ background: '#1e293b' }}>Week {week}</option>
-                  ))}
-                </select>
-              </div>
+            <div style={styles.controlGroup}>
+              <label style={styles.controlLabel}>Week:</label>
+              <select value={selectedWeek} onChange={handleWeekChange} style={styles.select}>
+                <option value="" style={{ background: '#0f172a' }}>All Weeks</option>
+                {WEEKS.map(week => (
+                  <option key={week} value={week} style={{ background: '#0f172a' }}>Week {week}</option>
+                ))}
+              </select>
+            </div>
 
-              {/* Reset Button */}
-              <button 
-                style={dashboardStyles.resetBtn} 
-                onClick={resetToCurrentPeriod}
-                onMouseEnter={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
-                onMouseLeave={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.1)'}
-              >
-                ↻ Current Period
-              </button>
+            <button style={styles.resetBtn} onClick={resetToCurrentPeriod}>
+              ↻ Current Period
+            </button>
+          </div>
+        </div>
+
+        {/* Period Badge */}
+        <div style={styles.periodBadge}>
+          📅 Showing data for: <strong>{MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}</strong>
+          {selectedWeek && <span> • <strong>Week {selectedWeek}</strong></span>}
+        </div>
+
+        {/* Period Stats Grid */}
+        <div style={styles.periodGrid}>
+          {/* Weekly Stats */}
+          <div style={{ ...styles.periodCard, borderLeft: '3px solid #3b82f6' }}>
+            <h3 style={{ ...styles.periodTitle, color: '#60a5fa' }}>
+              📅 Week {periodStats?.weekly?.weekNumber || periodStats?.currentWeek || 'Current'} {selectedWeek ? '' : '(Current)'}
+            </h3>
+            <div>
+              <div style={styles.periodRow}>
+                <span style={styles.periodLabel}>Sales ({periodStats?.weekly?.salesCount || 0} orders)</span>
+                <strong style={{ color: '#4ade80' }}>{formatCurrency(periodStats?.weekly?.sales)}</strong>
+              </div>
+              <div style={styles.periodRow}>
+                <span style={styles.periodLabel}>Purchases</span>
+                <strong style={{ color: '#38bdf8' }}>{formatCurrency(periodStats?.weekly?.purchases)}</strong>
+              </div>
+              <div style={styles.periodRow}>
+                <span style={styles.periodLabel}>Cost of Goods</span>
+                <span style={{ color: 'rgba(226, 232, 240, 0.8)' }}>{formatCurrency(periodStats?.weekly?.cogs)}</span>
+              </div>
+              <hr style={styles.periodDivider} />
+              <div style={styles.periodRow}>
+                <strong style={{ color: '#e2e8f0' }}>Gross Profit</strong>
+                <strong style={{ color: (periodStats?.weekly?.grossProfit || 0) >= 0 ? '#4ade80' : '#f87171' }}>
+                  {(periodStats?.weekly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.weekly?.grossProfit)}
+                </strong>
+              </div>
             </div>
           </div>
 
-          {/* Selected Period Display */}
-          <div style={dashboardStyles.periodBadge}>
-            📅 Showing data for: <strong>{MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}</strong>
-            {selectedWeek && <span> • <strong>Week {selectedWeek}</strong></span>}
+          {/* Monthly Stats */}
+          <div style={{ ...styles.periodCard, borderLeft: '3px solid #22c55e' }}>
+            <h3 style={{ ...styles.periodTitle, color: '#4ade80' }}>
+              📆 {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}
+            </h3>
+            <div>
+              <div style={styles.periodRow}>
+                <span style={styles.periodLabel}>Sales ({periodStats?.monthly?.salesCount || 0} orders)</span>
+                <strong style={{ color: '#4ade80' }}>{formatCurrency(periodStats?.monthly?.sales)}</strong>
+              </div>
+              <div style={styles.periodRow}>
+                <span style={styles.periodLabel}>Purchases</span>
+                <strong style={{ color: '#38bdf8' }}>{formatCurrency(periodStats?.monthly?.purchases)}</strong>
+              </div>
+              <div style={styles.periodRow}>
+                <span style={styles.periodLabel}>Cost of Goods</span>
+                <span style={{ color: 'rgba(226, 232, 240, 0.8)' }}>{formatCurrency(periodStats?.monthly?.cogs)}</span>
+              </div>
+              <hr style={styles.periodDivider} />
+              <div style={styles.periodRow}>
+                <strong style={{ color: '#e2e8f0' }}>Gross Profit</strong>
+                <strong style={{ color: (periodStats?.monthly?.grossProfit || 0) >= 0 ? '#4ade80' : '#f87171' }}>
+                  {(periodStats?.monthly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.monthly?.grossProfit)}
+                </strong>
+              </div>
+            </div>
           </div>
 
-          <div style={dashboardStyles.statsGrid}>
-            {/* Weekly Stats */}
-            <div style={{ ...dashboardStyles.periodCard, borderTop: '3px solid #3b82f6' }}>
-              <h3 style={{ ...dashboardStyles.periodCardTitle, color: '#60a5fa' }}>
-                📅 Week {periodStats?.weekly?.weekNumber || periodStats?.currentWeek || 'Current'} {selectedWeek ? '' : '(Current)'}
-              </h3>
-              <div>
-                <div style={dashboardStyles.periodRow}>
-                  <span style={dashboardStyles.periodLabel}>Sales ({periodStats?.weekly?.salesCount || 0} orders)</span>
-                  <strong style={{ color: '#4ade80' }}>{formatCurrency(periodStats?.weekly?.sales)}</strong>
-                </div>
-                <div style={dashboardStyles.periodRow}>
-                  <span style={dashboardStyles.periodLabel}>Purchases</span>
-                  <strong style={{ color: '#38bdf8' }}>{formatCurrency(periodStats?.weekly?.purchases)}</strong>
-                </div>
-                <div style={dashboardStyles.periodRow}>
-                  <span style={dashboardStyles.periodLabel}>Cost of Goods</span>
-                  <span style={{ color: 'rgba(255,255,255,0.8)' }}>{formatCurrency(periodStats?.weekly?.cogs)}</span>
-                </div>
-                <hr style={dashboardStyles.divider} />
-                <div style={dashboardStyles.periodRow}>
-                  <strong style={{ color: 'white' }}>Gross Profit</strong>
-                  <strong style={{ 
-                    color: (periodStats?.weekly?.grossProfit || 0) >= 0 ? '#4ade80' : '#f87171' 
-                  }}>
-                    {(periodStats?.weekly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.weekly?.grossProfit)}
-                  </strong>
-                </div>
+          {/* Yearly Stats */}
+          <div style={{ ...styles.periodCard, borderLeft: '3px solid #f59e0b' }}>
+            <h3 style={{ ...styles.periodTitle, color: '#fbbf24' }}>
+              📅 Year {selectedYear}
+            </h3>
+            <div>
+              <div style={styles.periodRow}>
+                <span style={styles.periodLabel}>Sales ({periodStats?.yearly?.salesCount || 0} orders)</span>
+                <strong style={{ color: '#4ade80' }}>{formatCurrency(periodStats?.yearly?.sales)}</strong>
               </div>
-            </div>
-
-            {/* Monthly Stats */}
-            <div style={{ ...dashboardStyles.periodCard, borderTop: '3px solid #22c55e' }}>
-              <h3 style={{ ...dashboardStyles.periodCardTitle, color: '#4ade80' }}>
-                📆 {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}
-              </h3>
-              <div>
-                <div style={dashboardStyles.periodRow}>
-                  <span style={dashboardStyles.periodLabel}>Sales ({periodStats?.monthly?.salesCount || 0} orders)</span>
-                  <strong style={{ color: '#4ade80' }}>{formatCurrency(periodStats?.monthly?.sales)}</strong>
-                </div>
-                <div style={dashboardStyles.periodRow}>
-                  <span style={dashboardStyles.periodLabel}>Purchases</span>
-                  <strong style={{ color: '#38bdf8' }}>{formatCurrency(periodStats?.monthly?.purchases)}</strong>
-                </div>
-                <div style={dashboardStyles.periodRow}>
-                  <span style={dashboardStyles.periodLabel}>Cost of Goods</span>
-                  <span style={{ color: 'rgba(255,255,255,0.8)' }}>{formatCurrency(periodStats?.monthly?.cogs)}</span>
-                </div>
-                <hr style={dashboardStyles.divider} />
-                <div style={dashboardStyles.periodRow}>
-                  <strong style={{ color: 'white' }}>Gross Profit</strong>
-                  <strong style={{ 
-                    color: (periodStats?.monthly?.grossProfit || 0) >= 0 ? '#4ade80' : '#f87171' 
-                  }}>
-                    {(periodStats?.monthly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.monthly?.grossProfit)}
-                  </strong>
-                </div>
+              <div style={styles.periodRow}>
+                <span style={styles.periodLabel}>Purchases</span>
+                <strong style={{ color: '#38bdf8' }}>{formatCurrency(periodStats?.yearly?.purchases)}</strong>
               </div>
-            </div>
-
-            {/* Yearly Stats */}
-            <div style={{ ...dashboardStyles.periodCard, borderTop: '3px solid #f59e0b' }}>
-              <h3 style={{ ...dashboardStyles.periodCardTitle, color: '#fbbf24' }}>
-                📅 Year {selectedYear}
-              </h3>
-              <div>
-                <div style={dashboardStyles.periodRow}>
-                  <span style={dashboardStyles.periodLabel}>Sales ({periodStats?.yearly?.salesCount || 0} orders)</span>
-                  <strong style={{ color: '#4ade80' }}>{formatCurrency(periodStats?.yearly?.sales)}</strong>
-                </div>
-                <div style={dashboardStyles.periodRow}>
-                  <span style={dashboardStyles.periodLabel}>Purchases</span>
-                  <strong style={{ color: '#38bdf8' }}>{formatCurrency(periodStats?.yearly?.purchases)}</strong>
-                </div>
-                <div style={dashboardStyles.periodRow}>
-                  <span style={dashboardStyles.periodLabel}>Cost of Goods</span>
-                  <span style={{ color: 'rgba(255,255,255,0.8)' }}>{formatCurrency(periodStats?.yearly?.cogs)}</span>
-                </div>
-                <hr style={dashboardStyles.divider} />
-                <div style={dashboardStyles.periodRow}>
-                  <strong style={{ color: 'white' }}>Gross Profit</strong>
-                  <strong style={{ 
-                    color: (periodStats?.yearly?.grossProfit || 0) >= 0 ? '#4ade80' : '#f87171' 
-                  }}>
-                    {(periodStats?.yearly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.yearly?.grossProfit)}
-                  </strong>
-                </div>
+              <div style={styles.periodRow}>
+                <span style={styles.periodLabel}>Cost of Goods</span>
+                <span style={{ color: 'rgba(226, 232, 240, 0.8)' }}>{formatCurrency(periodStats?.yearly?.cogs)}</span>
+              </div>
+              <hr style={styles.periodDivider} />
+              <div style={styles.periodRow}>
+                <strong style={{ color: '#e2e8f0' }}>Gross Profit</strong>
+                <strong style={{ color: (periodStats?.yearly?.grossProfit || 0) >= 0 ? '#4ade80' : '#f87171' }}>
+                  {(periodStats?.yearly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.yearly?.grossProfit)}
+                </strong>
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Inventory Statistics Cards */}
-        <div style={dashboardStyles.metricsGrid}>
-          {/* Total Products */}
-          <div 
-            style={dashboardStyles.metricCard}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
-            }}
-          >
-            <div style={{ ...dashboardStyles.metricIcon, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}>
-              📦
-            </div>
-            <div style={dashboardStyles.metricValue}>{formatNumber(inventory?.TotalProducts)}</div>
-            <div style={dashboardStyles.metricLabel}>Total Products</div>
-          </div>
-
-          {/* Total Inventory Value */}
-          <div 
-            style={dashboardStyles.metricCard}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 12px 30px rgba(6, 182, 212, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
-            }}
-          >
-            <div style={{ ...dashboardStyles.metricIcon, background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }}>
-              💎
-            </div>
-            <div style={dashboardStyles.metricValue}>{formatCurrency(inventory?.TotalInventoryValue)}</div>
-            <div style={dashboardStyles.metricLabel}>Inventory Value</div>
-          </div>
-
-          {/* Monthly Revenue */}
-          <div 
-            style={dashboardStyles.metricCard}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 12px 30px rgba(34, 197, 94, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
-            }}
-          >
-            <div style={{ ...dashboardStyles.metricIcon, background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}>
-              💰
-            </div>
-            <div style={dashboardStyles.metricValue}>{formatCurrency(sales?.TotalRevenue)}</div>
-            <div style={dashboardStyles.metricLabel}>This Month's Revenue</div>
-          </div>
-
-          {/* Monthly Sales Count */}
-          <div 
-            style={dashboardStyles.metricCard}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 12px 30px rgba(139, 92, 246, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
-            }}
-          >
-            <div style={{ ...dashboardStyles.metricIcon, background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>
-              🛒
-            </div>
-            <div style={dashboardStyles.metricValue}>{formatNumber(sales?.TotalSales)}</div>
-            <div style={dashboardStyles.metricLabel}>Sales This Month</div>
-          </div>
-
-          {/* Low Stock Alert */}
-          <div 
-            style={dashboardStyles.metricCard}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 12px 30px rgba(245, 158, 11, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
-            }}
-          >
-            <div style={{ ...dashboardStyles.metricIcon, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
-              ⚠️
-            </div>
-            <div style={dashboardStyles.metricValue}>{formatNumber(inventory?.LowStockProducts)}</div>
-            <div style={dashboardStyles.metricLabel}>Low Stock Items</div>
-          </div>
-
-          {/* Out of Stock */}
-          <div 
-            style={dashboardStyles.metricCard}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 12px 30px rgba(239, 68, 68, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
-            }}
-          >
-            <div style={{ ...dashboardStyles.metricIcon, background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}>
-              ❌
-            </div>
-            <div style={dashboardStyles.metricValue}>{formatNumber(inventory?.OutOfStockProducts)}</div>
-            <div style={dashboardStyles.metricLabel}>Out of Stock</div>
-          </div>
-
-          {/* Unresolved Alerts */}
-          <div 
-            style={dashboardStyles.metricCard}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 12px 30px rgba(239, 68, 68, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
-            }}
-          >
-            <div style={{ ...dashboardStyles.metricIcon, background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' }}>
-              🔔
-            </div>
-            <div style={dashboardStyles.metricValue}>{formatNumber(alerts?.TotalUnresolvedAlerts)}</div>
-            <div style={dashboardStyles.metricLabel}>Active Alerts</div>
-          </div>
-
-          {/* Monthly Purchases */}
-          <div 
-            style={dashboardStyles.metricCard}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 12px 30px rgba(59, 130, 246, 0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
-            }}
-          >
-            <div style={{ ...dashboardStyles.metricIcon, background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}>
-              📥
-            </div>
-            <div style={dashboardStyles.metricValue}>{formatCurrency(purchases?.TotalPurchaseCost)}</div>
-            <div style={dashboardStyles.metricLabel}>Purchases This Month</div>
-          </div>
+      {/* Metrics Grid - 8 Cards */}
+      <div style={styles.metricsGrid}>
+        {/* Total Products */}
+        <div style={styles.metricCard}>
+          <div style={{ ...styles.metricGlow, background: '#3b82f6' }}></div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}>📦</div>
+          <div style={styles.metricValue}>{formatNumber(inventory?.TotalProducts)}</div>
+          <div style={styles.metricLabel}>Total Products</div>
         </div>
 
-        {/* Content Grid - Two columns */}
-        <div style={dashboardStyles.twoColumnGrid}>
-          {/* Recent Sales Card */}
-          <div style={dashboardStyles.card}>
-            <div style={dashboardStyles.cardHeader}>
-              <h2 style={dashboardStyles.cardTitle}>
-                <span>💹</span> Recent Sales
-              </h2>
-              <Link href="/sales" style={dashboardStyles.viewAllBtn}>
-                View All →
-              </Link>
-            </div>
-            
-            {recentSales && recentSales.length > 0 ? (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={dashboardStyles.table}>
-                  <thead>
-                    <tr>
-                      <th style={{ ...dashboardStyles.th, borderRadius: '8px 0 0 0' }}>Product</th>
-                      <th style={dashboardStyles.th}>Qty</th>
-                      <th style={dashboardStyles.th}>Amount</th>
-                      <th style={{ ...dashboardStyles.th, borderRadius: '0 8px 0 0' }}>Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recentSales.map((sale) => (
-                      <tr key={sale.SaleID} style={{ transition: 'background 0.2s' }}>
-                        <td style={{ ...dashboardStyles.td, fontWeight: '500' }}>{sale.ProductName}</td>
-                        <td style={dashboardStyles.td}>{sale.Quantity}</td>
-                        <td style={{ ...dashboardStyles.td, color: '#22c55e', fontWeight: '600' }}>{formatCurrency(sale.TotalAmount)}</td>
-                        <td style={{ ...dashboardStyles.td, color: '#64748b' }}>{new Date(sale.SaleDate).toLocaleDateString()}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div style={dashboardStyles.emptyState}>
-                <p>📭 No recent sales</p>
-              </div>
-            )}
-          </div>
-
-          {/* Top Products Card */}
-          <div style={dashboardStyles.card}>
-            <div style={dashboardStyles.cardHeader}>
-              <h2 style={dashboardStyles.cardTitle}>
-                <span>🏆</span> Top Selling Products
-              </h2>
-              <span style={{ fontSize: '12px', color: '#94a3b8', background: '#f1f5f9', padding: '0.35rem 0.75rem', borderRadius: '20px' }}>This Month</span>
-            </div>
-            
-            {topProducts && topProducts.length > 0 ? (
-              <div style={{ overflowX: 'auto' }}>
-                <table style={dashboardStyles.table}>
-                  <thead>
-                    <tr>
-                      <th style={{ ...dashboardStyles.th, borderRadius: '8px 0 0 0' }}>Product</th>
-                      <th style={dashboardStyles.th}>Units Sold</th>
-                      <th style={{ ...dashboardStyles.th, borderRadius: '0 8px 0 0' }}>Revenue</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topProducts.map((product, index) => (
-                      <tr key={product.ProductID}>
-                        <td style={{ ...dashboardStyles.td, fontWeight: '500' }}>
-                          <span style={{ 
-                            display: 'inline-flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            width: '24px', 
-                            height: '24px', 
-                            borderRadius: '50%', 
-                            fontSize: '12px', 
-                            fontWeight: '700',
-                            marginRight: '0.5rem',
-                            background: index === 0 ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' : 
-                                       index === 1 ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' : 
-                                       index === 2 ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' : '#e2e8f0',
-                            color: index < 3 ? 'white' : '#64748b',
-                          }}>
-                            {index + 1}
-                          </span>
-                          {product.ProductName}
-                        </td>
-                        <td style={dashboardStyles.td}>{formatNumber(product.UnitsSold)}</td>
-                        <td style={{ ...dashboardStyles.td, color: '#22c55e', fontWeight: '600' }}>{formatCurrency(product.Revenue)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div style={dashboardStyles.emptyState}>
-                <p>📊 No sales data for this month</p>
-              </div>
-            )}
-          </div>
+        {/* Inventory Value */}
+        <div style={styles.metricCard}>
+          <div style={{ ...styles.metricGlow, background: '#06b6d4' }}></div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }}>💎</div>
+          <div style={styles.metricValue}>{formatCurrency(inventory?.TotalInventoryValue)}</div>
+          <div style={styles.metricLabel}>Inventory Value</div>
         </div>
 
-        {/* Category Distribution */}
-        <div style={dashboardStyles.card}>
-          <div style={dashboardStyles.cardHeader}>
-            <h2 style={dashboardStyles.cardTitle}>
-              <span>🏷️</span> Category Distribution
-            </h2>
-            <Link href="/categories" style={dashboardStyles.viewAllBtn}>
-              Manage Categories →
-            </Link>
+        {/* Monthly Revenue */}
+        <div style={styles.metricCard}>
+          <div style={{ ...styles.metricGlow, background: '#22c55e' }}></div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}>💰</div>
+          <div style={styles.metricValue}>{formatCurrency(sales?.TotalRevenue)}</div>
+          <div style={styles.metricLabel}>This Month's Revenue</div>
+        </div>
+
+        {/* Sales Count */}
+        <div style={styles.metricCard}>
+          <div style={{ ...styles.metricGlow, background: '#8b5cf6' }}></div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>🛒</div>
+          <div style={styles.metricValue}>{formatNumber(sales?.TotalSales)}</div>
+          <div style={styles.metricLabel}>Sales This Month</div>
+        </div>
+
+        {/* Low Stock */}
+        <div style={styles.metricCard}>
+          <div style={{ ...styles.metricGlow, background: '#f59e0b' }}></div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>⚠️</div>
+          <div style={styles.metricValue}>{formatNumber(inventory?.LowStockProducts)}</div>
+          <div style={styles.metricLabel}>Low Stock Items</div>
+        </div>
+
+        {/* Out of Stock */}
+        <div style={styles.metricCard}>
+          <div style={{ ...styles.metricGlow, background: '#ef4444' }}></div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}>❌</div>
+          <div style={styles.metricValue}>{formatNumber(inventory?.OutOfStockProducts)}</div>
+          <div style={styles.metricLabel}>Out of Stock</div>
+        </div>
+
+        {/* Active Alerts */}
+        <div style={styles.metricCard}>
+          <div style={{ ...styles.metricGlow, background: '#f43f5e' }}></div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' }}>🔔</div>
+          <div style={styles.metricValue}>{formatNumber(alerts?.TotalUnresolvedAlerts)}</div>
+          <div style={styles.metricLabel}>Active Alerts</div>
+        </div>
+
+        {/* Purchases */}
+        <div style={styles.metricCard}>
+          <div style={{ ...styles.metricGlow, background: '#0ea5e9' }}></div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}>📥</div>
+          <div style={styles.metricValue}>{formatCurrency(purchases?.TotalPurchaseCost)}</div>
+          <div style={styles.metricLabel}>Purchases This Month</div>
+        </div>
+      </div>
+
+      {/* Two Column Grid - Recent Sales & Top Products */}
+      <div style={styles.twoColGrid}>
+        {/* Recent Sales */}
+        <div style={styles.card}>
+          <div style={styles.cardHeader}>
+            <h2 style={styles.cardTitle}><span>💹</span> Recent Sales</h2>
+            <Link href="/sales" style={styles.viewBtn}>View All →</Link>
           </div>
           
-          {categories && categories.length > 0 ? (
+          {recentSales && recentSales.length > 0 ? (
             <div style={{ overflowX: 'auto' }}>
-              <table style={dashboardStyles.table}>
+              <table style={styles.table}>
                 <thead>
                   <tr>
-                    <th style={{ ...dashboardStyles.th, borderRadius: '8px 0 0 0' }}>Category</th>
-                    <th style={dashboardStyles.th}>Products</th>
-                    <th style={dashboardStyles.th}>Total Stock</th>
-                    <th style={{ ...dashboardStyles.th, borderRadius: '0 8px 0 0' }}>Inventory Value</th>
+                    <th style={{ ...styles.th, borderRadius: '8px 0 0 0' }}>Product</th>
+                    <th style={styles.th}>Qty</th>
+                    <th style={styles.th}>Amount</th>
+                    <th style={{ ...styles.th, borderRadius: '0 8px 0 0' }}>Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {categories.map((category, index) => (
-                    <tr key={index}>
-                      <td style={{ ...dashboardStyles.td, fontWeight: '600' }}>
-                        {category.CategoryName}
-                      </td>
-                      <td style={dashboardStyles.td}>
-                        <span style={{ 
-                          background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)', 
-                          color: '#3b82f6', 
-                          padding: '0.25rem 0.75rem', 
-                          borderRadius: '20px', 
-                          fontSize: '13px',
-                          fontWeight: '600'
-                        }}>
-                          {formatNumber(category.ProductCount)}
-                        </span>
-                      </td>
-                      <td style={dashboardStyles.td}>{formatNumber(category.TotalStock)} units</td>
-                      <td style={{ ...dashboardStyles.td, color: '#22c55e', fontWeight: '600' }}>{formatCurrency(category.InventoryValue)}</td>
+                  {recentSales.map((sale) => (
+                    <tr key={sale.SaleID}>
+                      <td style={{ ...styles.td, fontWeight: '500' }}>{sale.ProductName}</td>
+                      <td style={styles.td}>{sale.Quantity}</td>
+                      <td style={{ ...styles.td, color: '#4ade80', fontWeight: '600' }}>{formatCurrency(sale.TotalAmount)}</td>
+                      <td style={{ ...styles.td, color: 'rgba(148, 163, 184, 0.8)' }}>{new Date(sale.SaleDate).toLocaleDateString()}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <div style={dashboardStyles.emptyState}>
-              <p>📁 No categories found</p>
-            </div>
+            <div style={styles.emptyState}>📭 No recent sales</div>
           )}
         </div>
 
-        {/* Quick Actions */}
-        <div style={dashboardStyles.quickActionsCard}>
-          <h2 style={dashboardStyles.quickActionsTitle}>
-            <span>⚡</span> Quick Actions
-          </h2>
-          <div style={dashboardStyles.quickActionsGrid}>
-            <Link 
-              href="/products/add" 
-              style={{ 
-                ...dashboardStyles.actionBtn, 
-                background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)',
-              }}
-            >
-              ➕ Add Product
-            </Link>
-            <Link 
-              href="/sales/add" 
-              style={{ 
-                ...dashboardStyles.actionBtn, 
-                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(34, 197, 94, 0.4)',
-              }}
-            >
-              🛒 New Sale
-            </Link>
-            <Link 
-              href="/purchases/add" 
-              style={{ 
-                ...dashboardStyles.actionBtn, 
-                background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(6, 182, 212, 0.4)',
-              }}
-            >
-              📥 New Purchase
-            </Link>
-            <Link 
-              href="/alerts/low-stock" 
-              style={{ 
-                ...dashboardStyles.actionBtn, 
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)',
-              }}
-            >
-              ⚠️ View Low Stock
-            </Link>
-            <Link 
-              href="/alerts" 
-              style={{ 
-                ...dashboardStyles.actionBtn, 
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-              }}
-            >
-              🔔 View Alerts
-            </Link>
+        {/* Top Products */}
+        <div style={styles.card}>
+          <div style={styles.cardHeader}>
+            <h2 style={styles.cardTitle}><span>🏆</span> Top Selling Products</h2>
+            <span style={styles.badge}>This Month</span>
           </div>
+          
+          {topProducts && topProducts.length > 0 ? (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={styles.table}>
+                <thead>
+                  <tr>
+                    <th style={{ ...styles.th, borderRadius: '8px 0 0 0' }}>Product</th>
+                    <th style={styles.th}>Units Sold</th>
+                    <th style={{ ...styles.th, borderRadius: '0 8px 0 0' }}>Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topProducts.map((product, index) => (
+                    <tr key={product.ProductID}>
+                      <td style={{ ...styles.td, fontWeight: '500' }}>
+                        <span style={{ 
+                          ...styles.rankBadge,
+                          background: index === 0 ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' : 
+                                     index === 1 ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' : 
+                                     index === 2 ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' : 'rgba(59, 130, 246, 0.3)',
+                          color: 'white',
+                        }}>
+                          {index + 1}
+                        </span>
+                        {product.ProductName}
+                      </td>
+                      <td style={styles.td}>{formatNumber(product.UnitsSold)}</td>
+                      <td style={{ ...styles.td, color: '#4ade80', fontWeight: '600' }}>{formatCurrency(product.Revenue)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={styles.emptyState}>📊 No sales data for this month</div>
+          )}
+        </div>
+      </div>
+
+      {/* Category Distribution */}
+      <div style={styles.card}>
+        <div style={styles.cardHeader}>
+          <h2 style={styles.cardTitle}><span>🏷️</span> Category Distribution</h2>
+          <Link href="/categories" style={styles.viewBtn}>Manage Categories →</Link>
+        </div>
+        
+        {categories && categories.length > 0 ? (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={styles.table}>
+              <thead>
+                <tr>
+                  <th style={{ ...styles.th, borderRadius: '8px 0 0 0' }}>Category</th>
+                  <th style={styles.th}>Products</th>
+                  <th style={styles.th}>Total Stock</th>
+                  <th style={{ ...styles.th, borderRadius: '0 8px 0 0' }}>Inventory Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {categories.map((category, index) => (
+                  <tr key={index}>
+                    <td style={{ ...styles.td, fontWeight: '600' }}>{category.CategoryName}</td>
+                    <td style={styles.td}>
+                      <span style={styles.countBadge}>{formatNumber(category.ProductCount)}</span>
+                    </td>
+                    <td style={styles.td}>{formatNumber(category.TotalStock)} units</td>
+                    <td style={{ ...styles.td, color: '#4ade80', fontWeight: '600' }}>{formatCurrency(category.InventoryValue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div style={styles.emptyState}>📁 No categories found</div>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <div style={styles.quickActions}>
+        <h2 style={styles.quickTitle}><span>⚡</span> Quick Actions</h2>
+        <div style={styles.actionsGrid}>
+          <Link href="/products/add" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.35)' }}>
+            ➕ Add Product
+          </Link>
+          <Link href="/sales/add" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', color: 'white', boxShadow: '0 4px 15px rgba(34, 197, 94, 0.35)' }}>
+            🛒 New Sale
+          </Link>
+          <Link href="/purchases/add" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', color: 'white', boxShadow: '0 4px 15px rgba(6, 182, 212, 0.35)' }}>
+            📥 New Purchase
+          </Link>
+          <Link href="/alerts/low-stock" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.35)' }}>
+            ⚠️ View Low Stock
+          </Link>
+          <Link href="/alerts" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.35)' }}>
+            🔔 View Alerts
+          </Link>
         </div>
       </div>
       
-      {/* Global keyframe animation */}
+      {/* Keyframe animation */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
