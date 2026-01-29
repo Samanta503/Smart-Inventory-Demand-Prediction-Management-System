@@ -424,10 +424,10 @@ a:hover {
 .main-content {
   flex: 1;
   margin-left: 280px;
-  padding: var(--spacing-xl);
+  padding: 0;
   min-height: 100vh;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background-color: var(--bg-secondary);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
 }
 
 .sidebar-collapsed ~ .main-content,
