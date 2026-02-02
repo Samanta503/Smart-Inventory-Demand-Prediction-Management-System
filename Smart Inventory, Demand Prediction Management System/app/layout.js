@@ -19,7 +19,7 @@ import { useState } from 'react';
 /**
  * Sidebar Navigation Component
  * ----------------------------
- * Professional navigation menu with smooth animationss
+ * Professional navigation menu with smooth animations
  */
 function Sidebar() {
   const pathname = usePathname();
