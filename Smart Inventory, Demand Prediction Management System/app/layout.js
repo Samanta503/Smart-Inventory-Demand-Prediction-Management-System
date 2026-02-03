@@ -21,6 +21,7 @@ import { useState } from 'react';
  * ----------------------------
  * Professional navigation menu with smooth animations
  */
+
 function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
