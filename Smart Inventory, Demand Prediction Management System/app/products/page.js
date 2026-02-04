@@ -106,15 +106,20 @@ export default function ProductsPage() {
     <div>
       {/* Page Header */}
       <div className="page-header">
-        <div>
-          <h1 className="page-title">Products</h1>
+        <div className="page-header-content">
+          <h1 className="page-title">
+            <span className="page-title-icon">📦</span>
+            Products
+          </h1>
           <p className="page-subtitle">
-            Manage your product inventory ({products.length} products)
+            Manage your product inventory • {products.length} products total
           </p>
         </div>
-        <Link href="/products/add" className="btn btn-primary">
-          ➕ Add Product
-        </Link>
+        <div className="page-header-actions">
+          <Link href="/products/add" className="btn btn-primary">
+            ✨ Add Product
+          </Link>
+        </div>
       </div>
 
       {/* Search and Filter */}
@@ -123,9 +128,14 @@ export default function ProductsPage() {
           <input
             type="text"
             className="form-input"
-            placeholder="Search by name, code, or category..."
+            placeholder="🔍 Search by name, code, or category..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            style={{ 
+              padding: '14px 18px',
+              fontSize: '15px',
+              borderRadius: '10px'
+            }}
           />
         </div>
       </div>
