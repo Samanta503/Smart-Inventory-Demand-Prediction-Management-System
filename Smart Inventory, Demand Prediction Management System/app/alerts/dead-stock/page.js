@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineExclamationTriangle, HiOutlineArrowPath, HiOutlineNoSymbol, HiOutlineBanknotes, HiOutlineSparkles, HiOutlineLightBulb, HiOutlineArrowTrendingUp, HiOutlineArrowLeft } from 'react-icons/hi2';
+
 /**
  * Dead Stock Page
  * ===============
@@ -68,7 +70,7 @@ export default function DeadStockPage() {
   if (error) {
     return (
       <div className="alert alert-danger">
-        <span>⚠️</span>
+        <span><HiOutlineExclamationTriangle size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span>
         Error: {error}
         <button className="btn btn-sm btn-secondary" onClick={fetchDeadStock} style={{ marginLeft: 'auto' }}>
           Retry
@@ -82,13 +84,13 @@ export default function DeadStockPage() {
       {/* Page Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">💀 Dead Stock Analysis</h1>
+          <h1 className="page-title"><HiOutlineNoSymbol size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Dead Stock Analysis</h1>
           <p className="page-subtitle">
             Products with no sales in {days}+ days
           </p>
         </div>
         <button className="btn btn-secondary" onClick={fetchDeadStock}>
-          🔄 Refresh
+          <HiOutlineArrowPath size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Refresh
         </button>
       </div>
 
@@ -116,22 +118,22 @@ export default function DeadStockPage() {
       {summary && (
         <div className="stats-grid">
           <div className="stat-card danger">
-            <span className="stat-icon">💀</span>
+            <span className="stat-icon"><HiOutlineNoSymbol size={24} /></span>
             <span className="stat-value">{summary.totalDeadStockProducts}</span>
             <span className="stat-label">Dead Stock Items</span>
           </div>
           <div className="stat-card warning">
-            <span className="stat-icon">🚫</span>
+            <span className="stat-icon"><HiOutlineNoSymbol size={24} /></span>
             <span className="stat-value">{summary.neverSoldCount}</span>
             <span className="stat-label">Never Sold</span>
           </div>
           <div className="stat-card danger">
-            <span className="stat-icon">💸</span>
+            <span className="stat-icon"><HiOutlineBanknotes size={24} /></span>
             <span className="stat-value">{formatCurrency(summary.totalDeadStockValue)}</span>
             <span className="stat-label">Capital Tied Up</span>
           </div>
           <div className="stat-card info">
-            <span className="stat-icon">💰</span>
+            <span className="stat-icon"><HiOutlineBanknotes size={24} /></span>
             <span className="stat-value">{formatCurrency(summary.potentialRevenueAtFullPrice)}</span>
             <span className="stat-label">Potential Revenue</span>
           </div>
@@ -214,7 +216,7 @@ export default function DeadStockPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">🎉</span>
+            <span className="icon"><HiOutlineSparkles size={48} /></span>
             <h3>No dead stock!</h3>
             <p>All products have been sold within the last {days} days.</p>
           </div>
@@ -223,7 +225,7 @@ export default function DeadStockPage() {
 
       {/* Tips Card */}
       <div className="card">
-        <h3 className="card-title">💡 Tips for Managing Dead Stock</h3>
+        <h3 className="card-title"><HiOutlineLightBulb size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Tips for Managing Dead Stock</h3>
         <ul style={{ marginTop: '1rem', paddingLeft: '1.5rem' }}>
           <li style={{ marginBottom: '0.5rem' }}>
             <strong>Run promotional campaigns</strong> - Offer discounts to move slow-moving items
@@ -247,10 +249,10 @@ export default function DeadStockPage() {
       <div className="card">
         <div style={{ display: 'flex', gap: '1rem' }}>
           <Link href="/alerts" className="btn btn-secondary">
-            ← Back to Alerts
+            <HiOutlineArrowLeft size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Back to Alerts
           </Link>
           <Link href="/analytics/sales" className="btn btn-primary">
-            📈 View Sales Analytics
+            <HiOutlineArrowTrendingUp size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> View Sales Analytics
           </Link>
         </div>
       </div>

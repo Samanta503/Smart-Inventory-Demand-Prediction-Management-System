@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineInboxArrowDown, HiOutlinePlusCircle, HiOutlineExclamationTriangle, HiOutlinePencilSquare, HiOutlineCube, HiOutlineBanknotes } from 'react-icons/hi2';
+
 /**
  * Purchases Page
  * ==============
@@ -58,34 +60,34 @@ export default function PurchasesPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">📥 Purchases</h1>
+          <h1 className="page-title"><HiOutlineInboxArrowDown size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Purchases</h1>
           <p className="page-subtitle">Track incoming stock from suppliers</p>
         </div>
         <Link href="/purchases/add" className="btn btn-primary">
-          ➕ New Purchase
+          <HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> New Purchase
         </Link>
       </div>
 
       {error && (
         <div className="alert alert-danger">
-          <span>⚠️</span> {error}
+          <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span> {error}
         </div>
       )}
 
       {summary && (
         <div className="stats-grid">
           <div className="stat-card primary">
-            <span className="stat-icon">📝</span>
+            <span className="stat-icon"><HiOutlinePencilSquare size={20} /></span>
             <span className="stat-value">{summary.totalPurchases}</span>
             <span className="stat-label">Total Purchases</span>
           </div>
           <div className="stat-card info">
-            <span className="stat-icon">📦</span>
+            <span className="stat-icon"><HiOutlineCube size={20} /></span>
             <span className="stat-value">{summary.totalUnits}</span>
             <span className="stat-label">Units Received</span>
           </div>
           <div className="stat-card warning">
-            <span className="stat-icon">💰</span>
+            <span className="stat-icon"><HiOutlineBanknotes size={20} /></span>
             <span className="stat-value">{formatCurrency(summary.totalCost)}</span>
             <span className="stat-label">Total Cost</span>
           </div>
@@ -181,7 +183,7 @@ export default function PurchasesPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">📥</span>
+            <span className="icon"><HiOutlineInboxArrowDown size={24} /></span>
             <h3>No purchases yet</h3>
             <p>Record your first purchase to start tracking inventory</p>
             <Link href="/purchases/add" className="btn btn-primary" style={{ marginTop: '1rem' }}>

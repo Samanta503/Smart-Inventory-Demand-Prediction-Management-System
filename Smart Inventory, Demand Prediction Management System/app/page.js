@@ -13,6 +13,25 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import {
+  HiOutlineChartBar,
+  HiOutlineCube,
+  HiOutlineBanknotes,
+  HiOutlineShoppingCart,
+  HiOutlineInboxArrowDown,
+  HiOutlineExclamationTriangle,
+  HiOutlineXCircle,
+  HiOutlineBell,
+  HiOutlineArrowPath,
+  HiOutlineTag,
+  HiOutlineArrowTrendingUp,
+  HiOutlinePlusCircle,
+  HiOutlineBolt,
+  HiOutlineCalendarDays,
+  HiOutlineTrophy,
+  HiOutlineInboxStack,
+  HiOutlineFolderOpen,
+} from 'react-icons/hi2';
 
 // Month names for display
 const MONTHS = [
@@ -584,7 +603,7 @@ export default function Dashboard() {
     return (
       <div style={styles.container}>
         <div style={styles.errorCard}>
-          <span style={{ fontSize: '2rem' }}>⚠️</span>
+          <span style={{ fontSize: '2rem', display: 'flex', alignItems: 'center' }}><HiOutlineExclamationTriangle size={32} /></span>
           <div style={{ flex: 1 }}>
             <p style={{ fontWeight: '600', color: '#fca5a5', marginBottom: '0.25rem' }}>Error Loading Dashboard</p>
             <p style={{ color: '#f87171', fontSize: '14px' }}>{error}</p>
@@ -597,7 +616,7 @@ export default function Dashboard() {
               boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
             }}
           >
-            🔄 Retry
+            <HiOutlineArrowPath size={16} style={{display:'inline', verticalAlign:'middle'}} /> Retry
           </button>
         </div>
       </div>
@@ -620,7 +639,7 @@ export default function Dashboard() {
                 borderRadius: '10px',
                 display: 'inline-flex',
                 marginRight: '0.5rem'
-              }}>📊</span>
+              }}><HiOutlineChartBar size={24} /></span>
               Dashboard
             </h1>
             <p style={styles.headerSubtitle}>
@@ -631,7 +650,7 @@ export default function Dashboard() {
             style={styles.refreshBtn} 
             onClick={() => fetchDashboardData(selectedYear, selectedMonth, selectedWeek)}
           >
-            🔄 Refresh Data
+            <HiOutlineArrowPath size={16} style={{display:'inline', verticalAlign:'middle'}} /> Refresh Data
           </button>
         </div>
       </div>
@@ -642,7 +661,7 @@ export default function Dashboard() {
         
         <div style={styles.financialHeader}>
           <h2 style={styles.sectionTitle}>
-            <span>💹</span> Financial Overview
+            <HiOutlineArrowTrendingUp size={20} style={{display:'inline', verticalAlign:'middle'}} /> Financial Overview
           </h2>
           
           {/* Date Selection Controls */}
@@ -676,14 +695,14 @@ export default function Dashboard() {
             </div>
 
             <button style={styles.resetBtn} onClick={resetToCurrentPeriod}>
-              ↻ Current Period
+              <HiOutlineArrowPath size={14} style={{display:'inline', verticalAlign:'middle'}} /> Current Period
             </button>
           </div>
         </div>
 
         {/* Period Badge */}
         <div style={styles.periodBadge}>
-          📅 Showing data for: <strong>{MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}</strong>
+          <HiOutlineCalendarDays size={16} style={{display:'inline', verticalAlign:'middle'}} /> Showing data for: <strong>{MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}</strong>
           {selectedWeek && <span> • <strong>Week {selectedWeek}</strong></span>}
         </div>
 
@@ -692,7 +711,7 @@ export default function Dashboard() {
           {/* Weekly Stats */}
           <div style={{ ...styles.periodCard, borderLeft: '3px solid #3b82f6' }}>
             <h3 style={{ ...styles.periodTitle, color: '#60a5fa' }}>
-              📅 Week {periodStats?.weekly?.weekNumber || periodStats?.currentWeek || 'Current'} {selectedWeek ? '' : '(Current)'}
+              <HiOutlineCalendarDays size={16} style={{display:'inline', verticalAlign:'middle'}} /> Week {periodStats?.weekly?.weekNumber || periodStats?.currentWeek || 'Current'} {selectedWeek ? '' : '(Current)'}
             </h3>
             <div>
               <div style={styles.periodRow}>
@@ -720,7 +739,7 @@ export default function Dashboard() {
           {/* Monthly Stats */}
           <div style={{ ...styles.periodCard, borderLeft: '3px solid #22c55e' }}>
             <h3 style={{ ...styles.periodTitle, color: '#4ade80' }}>
-              📆 {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}
+              <HiOutlineCalendarDays size={16} style={{display:'inline', verticalAlign:'middle'}} /> {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}
             </h3>
             <div>
               <div style={styles.periodRow}>
@@ -748,7 +767,7 @@ export default function Dashboard() {
           {/* Yearly Stats */}
           <div style={{ ...styles.periodCard, borderLeft: '3px solid #f59e0b' }}>
             <h3 style={{ ...styles.periodTitle, color: '#fbbf24' }}>
-              📅 Year {selectedYear}
+              <HiOutlineCalendarDays size={16} style={{display:'inline', verticalAlign:'middle'}} /> Year {selectedYear}
             </h3>
             <div>
               <div style={styles.periodRow}>
@@ -780,7 +799,7 @@ export default function Dashboard() {
         {/* Total Products */}
         <div style={styles.metricCard}>
           <div style={{ ...styles.metricGlow, background: '#3b82f6' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}>📦</div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}><HiOutlineCube size={24} /></div>
           <div style={styles.metricValue}>{formatNumber(inventory?.TotalProducts)}</div>
           <div style={styles.metricLabel}>Total Products</div>
         </div>
@@ -788,7 +807,7 @@ export default function Dashboard() {
         {/* Inventory Value */}
         <div style={styles.metricCard}>
           <div style={{ ...styles.metricGlow, background: '#06b6d4' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }}>💎</div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }}><HiOutlineBanknotes size={24} /></div>
           <div style={styles.metricValue}>{formatCurrency(inventory?.TotalInventoryValue)}</div>
           <div style={styles.metricLabel}>Inventory Value</div>
         </div>
@@ -796,7 +815,7 @@ export default function Dashboard() {
         {/* Monthly Revenue */}
         <div style={styles.metricCard}>
           <div style={{ ...styles.metricGlow, background: '#22c55e' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}>💰</div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}><HiOutlineBanknotes size={24} /></div>
           <div style={styles.metricValue}>{formatCurrency(sales?.TotalRevenue)}</div>
           <div style={styles.metricLabel}>This Month's Revenue</div>
         </div>
@@ -804,7 +823,7 @@ export default function Dashboard() {
         {/* Sales Count */}
         <div style={styles.metricCard}>
           <div style={{ ...styles.metricGlow, background: '#8b5cf6' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}>🛒</div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}><HiOutlineShoppingCart size={24} /></div>
           <div style={styles.metricValue}>{formatNumber(sales?.TotalSales)}</div>
           <div style={styles.metricLabel}>Sales This Month</div>
         </div>
@@ -812,7 +831,7 @@ export default function Dashboard() {
         {/* Low Stock */}
         <div style={styles.metricCard}>
           <div style={{ ...styles.metricGlow, background: '#f59e0b' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>⚠️</div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}><HiOutlineExclamationTriangle size={24} /></div>
           <div style={styles.metricValue}>{formatNumber(inventory?.LowStockProducts)}</div>
           <div style={styles.metricLabel}>Low Stock Items</div>
         </div>
@@ -820,7 +839,7 @@ export default function Dashboard() {
         {/* Out of Stock */}
         <div style={styles.metricCard}>
           <div style={{ ...styles.metricGlow, background: '#ef4444' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}>❌</div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}><HiOutlineXCircle size={24} /></div>
           <div style={styles.metricValue}>{formatNumber(inventory?.OutOfStockProducts)}</div>
           <div style={styles.metricLabel}>Out of Stock</div>
         </div>
@@ -828,7 +847,7 @@ export default function Dashboard() {
         {/* Active Alerts */}
         <div style={styles.metricCard}>
           <div style={{ ...styles.metricGlow, background: '#f43f5e' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' }}>🔔</div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' }}><HiOutlineBell size={24} /></div>
           <div style={styles.metricValue}>{formatNumber(alerts?.TotalUnresolvedAlerts)}</div>
           <div style={styles.metricLabel}>Active Alerts</div>
         </div>
@@ -836,7 +855,7 @@ export default function Dashboard() {
         {/* Purchases */}
         <div style={styles.metricCard}>
           <div style={{ ...styles.metricGlow, background: '#0ea5e9' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}>📥</div>
+          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}><HiOutlineInboxArrowDown size={24} /></div>
           <div style={styles.metricValue}>{formatCurrency(purchases?.TotalPurchaseCost)}</div>
           <div style={styles.metricLabel}>Purchases This Month</div>
         </div>
@@ -847,7 +866,7 @@ export default function Dashboard() {
         {/* Recent Sales */}
         <div style={styles.card}>
           <div style={styles.cardHeader}>
-            <h2 style={styles.cardTitle}><span>💹</span> Recent Sales</h2>
+            <h2 style={styles.cardTitle}><HiOutlineArrowTrendingUp size={20} style={{display:'inline', verticalAlign:'middle'}} /> Recent Sales</h2>
             <Link href="/sales" style={styles.viewBtn}>View All →</Link>
           </div>
           
@@ -875,14 +894,14 @@ export default function Dashboard() {
               </table>
             </div>
           ) : (
-            <div style={styles.emptyState}>📭 No recent sales</div>
+            <div style={styles.emptyState}><HiOutlineInboxStack size={16} style={{display:'inline', verticalAlign:'middle'}} /> No recent sales</div>
           )}
         </div>
 
         {/* Top Products */}
         <div style={styles.card}>
           <div style={styles.cardHeader}>
-            <h2 style={styles.cardTitle}><span>🏆</span> Top Selling Products</h2>
+            <h2 style={styles.cardTitle}><HiOutlineTrophy size={20} style={{display:'inline', verticalAlign:'middle'}} /> Top Selling Products</h2>
             <span style={styles.badge}>This Month</span>
           </div>
           
@@ -919,7 +938,7 @@ export default function Dashboard() {
               </table>
             </div>
           ) : (
-            <div style={styles.emptyState}>📊 No sales data for this month</div>
+            <div style={styles.emptyState}><HiOutlineChartBar size={16} style={{display:'inline', verticalAlign:'middle'}} /> No sales data for this month</div>
           )}
         </div>
       </div>
@@ -927,7 +946,7 @@ export default function Dashboard() {
       {/* Category Distribution */}
       <div style={styles.card}>
         <div style={styles.cardHeader}>
-          <h2 style={styles.cardTitle}><span>🏷️</span> Category Distribution</h2>
+          <h2 style={styles.cardTitle}><HiOutlineTag size={20} style={{display:'inline', verticalAlign:'middle'}} /> Category Distribution</h2>
           <Link href="/categories" style={styles.viewBtn}>Manage Categories →</Link>
         </div>
         
@@ -957,28 +976,28 @@ export default function Dashboard() {
             </table>
           </div>
         ) : (
-          <div style={styles.emptyState}>📁 No categories found</div>
+          <div style={styles.emptyState}><HiOutlineFolderOpen size={16} style={{display:'inline', verticalAlign:'middle'}} /> No categories found</div>
         )}
       </div>
 
       {/* Quick Actions */}
       <div style={styles.quickActions}>
-        <h2 style={styles.quickTitle}><span>⚡</span> Quick Actions</h2>
+        <h2 style={styles.quickTitle}><HiOutlineBolt size={20} style={{display:'inline', verticalAlign:'middle'}} /> Quick Actions</h2>
         <div style={styles.actionsGrid}>
           <Link href="/products/add" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.35)' }}>
-            ➕ Add Product
+            <HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle'}} /> Add Product
           </Link>
           <Link href="/sales/add" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', color: 'white', boxShadow: '0 4px 15px rgba(34, 197, 94, 0.35)' }}>
-            🛒 New Sale
+            <HiOutlineShoppingCart size={16} style={{display:'inline', verticalAlign:'middle'}} /> New Sale
           </Link>
           <Link href="/purchases/add" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', color: 'white', boxShadow: '0 4px 15px rgba(6, 182, 212, 0.35)' }}>
-            📥 New Purchase
+            <HiOutlineInboxArrowDown size={16} style={{display:'inline', verticalAlign:'middle'}} /> New Purchase
           </Link>
           <Link href="/alerts/low-stock" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.35)' }}>
-            ⚠️ View Low Stock
+            <HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle'}} /> View Low Stock
           </Link>
           <Link href="/alerts" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.35)' }}>
-            🔔 View Alerts
+            <HiOutlineBell size={16} style={{display:'inline', verticalAlign:'middle'}} /> View Alerts
           </Link>
         </div>
       </div>

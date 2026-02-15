@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineInboxArrowDown, HiOutlineCheckCircle, HiOutlineExclamationTriangle, HiOutlineFolderOpen, HiOutlinePlusCircle, HiOutlineXMark, HiOutlineArrowLeft } from 'react-icons/hi2';
+
 /**
  * Add Purchase Page
  * =================
@@ -218,21 +220,21 @@ export default function AddPurchasePage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">📥 New Purchase</h1>
+          <h1 className="page-title"><HiOutlineInboxArrowDown size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> New Purchase</h1>
           <p className="page-subtitle">Record incoming stock with multiple items</p>
         </div>
-        <Link href="/purchases" className="btn btn-secondary">← Back to Purchases</Link>
+        <Link href="/purchases" className="btn btn-secondary"><HiOutlineArrowLeft size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Back to Purchases</Link>
       </div>
 
       {success && (
         <div className="alert alert-success">
-          <span>✅</span> Purchase recorded successfully! Redirecting...
+          <span><HiOutlineCheckCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span> Purchase recorded successfully! Redirecting...
         </div>
       )}
 
       {error && (
         <div className="alert alert-danger">
-          <span>⚠️</span> {error}
+          <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span> {error}
         </div>
       )}
 
@@ -274,7 +276,7 @@ export default function AddPurchasePage() {
               border: '2px dashed var(--primary-color)'
             }}>
               <label className="form-label" style={{ color: 'var(--primary-color)', fontWeight: 'bold' }}>
-                📂 Step 1: Select Category (Optional)
+                <HiOutlineFolderOpen size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Step 1: Select Category (Optional)
               </label>
               <select
                 value={categoryId}
@@ -325,7 +327,7 @@ export default function AddPurchasePage() {
                 </select>
                 {categoryId && suppliers.length === 0 && (
                   <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--danger-color)' }}>
-                    ⚠️ No suppliers found for this category. Please assign suppliers to this category first.
+                    <HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> No suppliers found for this category. Please assign suppliers to this category first.
                   </p>
                 )}
               </div>
@@ -414,7 +416,7 @@ export default function AddPurchasePage() {
                   onClick={addToCart}
                   disabled={!currentItem.productId || !currentItem.quantity || !currentItem.unitCost}
                 >
-                  ➕ Add
+                  <HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add
                 </button>
               </div>
             </div>
@@ -450,7 +452,7 @@ export default function AddPurchasePage() {
                           className="btn btn-sm btn-danger"
                           onClick={() => removeFromCart(index)}
                         >
-                          ✕
+                          <HiOutlineXMark size={16} />
                         </button>
                       </td>
                     </tr>
@@ -495,7 +497,7 @@ export default function AddPurchasePage() {
             style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }}
             disabled={submitting || !supplierId || !warehouseId || cartItems.length === 0}
           >
-            {submitting ? 'Processing...' : '📥 Record Purchase'}
+            {submitting ? 'Processing...' : <><HiOutlineInboxArrowDown size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Record Purchase</>}
           </button>
         </div>
       </div>

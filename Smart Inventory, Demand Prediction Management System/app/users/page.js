@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineShieldCheck, HiOutlineClipboardDocumentList, HiOutlineBanknotes, HiOutlineBuildingOffice, HiOutlineXMark, HiOutlinePlusCircle, HiOutlineExclamationTriangle, HiOutlineCheckCircle, HiOutlinePencil, HiOutlineCheck, HiOutlineUser, HiOutlineBriefcase, HiOutlineMagnifyingGlass, HiOutlineNoSymbol } from 'react-icons/hi2';
+
 /**
  * Users Management Page (Admin)
  * =============================
@@ -20,10 +22,10 @@ const roleBadgeColor = {
 };
 
 const roleIcons = {
-  ADMIN: '🛡️',
-  MANAGER: '📋',
-  SALES: '💰',
-  WAREHOUSE: '🏭',
+  ADMIN: <HiOutlineShieldCheck size={14} style={{display:'inline', verticalAlign:'middle'}} />,
+  MANAGER: <HiOutlineClipboardDocumentList size={14} style={{display:'inline', verticalAlign:'middle'}} />,
+  SALES: <HiOutlineBanknotes size={14} style={{display:'inline', verticalAlign:'middle'}} />,
+  WAREHOUSE: <HiOutlineBuildingOffice size={14} style={{display:'inline', verticalAlign:'middle'}} />,
 };
 
 export default function UsersPage() {
@@ -191,18 +193,18 @@ export default function UsersPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">🛡️ User Management</h1>
+          <h1 className="page-title"><HiOutlineShieldCheck size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> User Management</h1>
           <p className="page-subtitle">Manage system users and roles (Admin Panel)</p>
         </div>
         <button className="btn btn-primary" onClick={() => { showForm ? handleCancelForm() : setShowForm(true); }}>
-          {showForm ? '✕ Cancel' : '➕ Add User'}
+          {showForm ? <><HiOutlineXMark size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Cancel</> : <><HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add User</>}
         </button>
       </div>
 
       {/* Alerts */}
       {error && (
         <div className="alert alert-danger" style={{ marginBottom: '1rem' }}>
-          <span>⚠️</span> {error}
+          <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle'}} /></span> {error}
         </div>
       )}
       {successMsg && (
@@ -217,7 +219,7 @@ export default function UsersPage() {
           alignItems: 'center',
           gap: '0.5rem'
         }}>
-          <span>✅</span> {successMsg}
+          <span><HiOutlineCheckCircle size={16} style={{display:'inline', verticalAlign:'middle'}} /></span> {successMsg}
         </div>
       )}
 
@@ -225,7 +227,7 @@ export default function UsersPage() {
       {showForm && (
         <div className="card" style={{ marginBottom: '1.5rem' }}>
           <h3 style={{ marginBottom: '1rem' }}>
-            {editingUser ? `✏️ Edit User: ${editingUser.FullName}` : '➕ Add New User'}
+            {editingUser ? <><HiOutlinePencil size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Edit User: {editingUser.FullName}</> : <><HiOutlinePlusCircle size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add New User</>}
           </h3>
           <form onSubmit={handleSubmit}>
             <div className="form-row">
@@ -289,7 +291,7 @@ export default function UsersPage() {
               <button type="submit" className="btn btn-primary" disabled={submitting}>
                 {submitting
                   ? (editingUser ? 'Updating...' : 'Creating...')
-                  : (editingUser ? '💾 Update User' : '➕ Create User')
+                  : (editingUser ? <><HiOutlineCheck size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Update User</> : <><HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Create User</>)
                 }
               </button>
               <button type="button" className="btn btn-secondary" onClick={handleCancelForm}>
@@ -303,22 +305,22 @@ export default function UsersPage() {
       {/* Stats */}
       <div className="stats-grid">
         <div className="stat-card primary">
-          <span className="stat-icon">👤</span>
+          <span className="stat-icon"><HiOutlineUser size={24} /></span>
           <span className="stat-value">{users.length}</span>
           <span className="stat-label">Total Users</span>
         </div>
         <div className="stat-card success">
-          <span className="stat-icon">✅</span>
+          <span className="stat-icon"><HiOutlineCheckCircle size={24} /></span>
           <span className="stat-value">{activeUsers}</span>
           <span className="stat-label">Active Users</span>
         </div>
         <div className="stat-card warning">
-          <span className="stat-icon">🛡️</span>
+          <span className="stat-icon"><HiOutlineShieldCheck size={24} /></span>
           <span className="stat-value">{adminCount}</span>
           <span className="stat-label">Admins</span>
         </div>
         <div className="stat-card info">
-          <span className="stat-icon">💼</span>
+          <span className="stat-icon"><HiOutlineBriefcase size={24} /></span>
           <span className="stat-value">{totalSalesActivity}</span>
           <span className="stat-label">Total Sales Made</span>
         </div>
@@ -330,7 +332,7 @@ export default function UsersPage() {
           <div className="form-group" style={{ flex: '1', minWidth: '200px', marginBottom: 0 }}>
             <input
               type="text"
-              placeholder="🔍 Search by name or username..."
+              placeholder="Search by name or username..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               className="form-input"
@@ -468,7 +470,7 @@ export default function UsersPage() {
                             cursor: 'pointer'
                           }}
                         >
-                          ✏️ Edit
+                          <HiOutlinePencil size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Edit
                         </button>
                         <button
                           className="btn btn-sm"
@@ -488,7 +490,7 @@ export default function UsersPage() {
                             cursor: 'pointer'
                           }}
                         >
-                          {user.IsActive ? '🚫 Deactivate' : '✅ Activate'}
+                          {user.IsActive ? <><HiOutlineNoSymbol size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Deactivate</> : <><HiOutlineCheckCircle size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Activate</>}
                         </button>
                       </div>
                     </td>
@@ -499,7 +501,7 @@ export default function UsersPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">👤</span>
+            <span className="icon"><HiOutlineUser size={24} /></span>
             <h3>No users found</h3>
             <p>{searchTerm || filterRole !== 'ALL' || filterStatus !== 'ALL'
               ? 'Try adjusting your search or filters'
