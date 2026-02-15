@@ -25,7 +25,7 @@ export default function SalesAnalyticsPage() {
       const response = await fetch('/api/analytics/monthly-sales');
       const result = await response.json();
       if (result.success) {
-        setMonthlyData(result.data || []);
+        setMonthlyData(result.monthlySummary || result.data || []);
       } else {
         throw new Error(result.message);
       }
@@ -43,10 +43,19 @@ export default function SalesAnalyticsPage() {
   }
 
   // Calculate summary statistics
-  const totalRevenue = monthlyData.reduce((sum, m) => sum + (m.TotalRevenue || 0), 0);
-  const totalUnits = monthlyData.reduce((sum, m) => sum + (m.TotalUnitsSold || 0), 0);
+  function toNumber(value) {
+    if (value === null || value === undefined || value === '') {
+      return 0;
+    }
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  const totalRevenue = monthlyData.reduce((sum, m) => sum + toNumber(m.TotalRevenue), 0);
+  const totalUnits = monthlyData.reduce((sum, m) => sum + toNumber(m.TotalUnitsSold), 0);
   const avgMonthlyRevenue = monthlyData.length > 0 ? totalRevenue / monthlyData.length : 0;
-  const maxMonth = monthlyData.reduce((max, m) => (m.TotalRevenue > (max?.TotalRevenue || 0)) ? m : max, null);
+  const maxMonth = monthlyData.reduce((max, m) => (toNumber(m.TotalRevenue) > toNumber(max?.TotalRevenue)) ? m : max, null);
+  const maxRevenue = monthlyData.reduce((max, m) => Math.max(max, toNumber(m.TotalRevenue)), 0);
 
   if (loading) {
     return (
@@ -123,7 +132,7 @@ export default function SalesAnalyticsPage() {
                           {month.SalesYear}
                         </span>
                       </td>
-                      <td>{month.TotalSales}</td>
+                      <td>{month.TotalSales ?? month.TotalTransactions}</td>
                       <td>{month.TotalUnitsSold}</td>
                       <td>
                         <strong style={{ color: 'var(--success-color)' }}>
@@ -142,8 +151,7 @@ export default function SalesAnalyticsPage() {
             <h3 style={{ marginBottom: '1rem' }}>📈 Revenue Trend</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {monthlyData.map((month, index) => {
-                const maxRevenue = Math.max(...monthlyData.map(m => m.TotalRevenue));
-                const percentage = maxRevenue > 0 ? (month.TotalRevenue / maxRevenue) * 100 : 0;
+                const percentage = maxRevenue > 0 ? (toNumber(month.TotalRevenue) / maxRevenue) * 100 : 0;
                 
                 return (
                   <div key={index}>
@@ -203,7 +211,7 @@ export default function SalesAnalyticsPage() {
               <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>Growth Trend</div>
               <div className="text-muted" style={{ fontSize: '13px' }}>
                 {monthlyData.length >= 2 
-                  ? monthlyData[0].TotalRevenue > monthlyData[1]?.TotalRevenue
+                  ? toNumber(monthlyData[0].TotalRevenue) > toNumber(monthlyData[1]?.TotalRevenue)
                     ? 'Revenue increasing'
                     : 'Revenue stabilizing'
                   : 'More data needed'}
