@@ -9,6 +9,7 @@
 
 import { NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
+import bcrypt from 'bcryptjs';
 
 /**
  * GET /api/users
@@ -74,11 +75,15 @@ export async function POST(request) {
       );
     }
 
+    // Hash the password before storing
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const insertQuery = `
       INSERT INTO Users (FullName, Username, PasswordHash, Role, IsActive)
       VALUES (?, ?, ?, ?, 1)
     `;
-    await executeQuery(insertQuery, [fullName, username, password, role || 'SALES']);
+    await executeQuery(insertQuery, [fullName, username, hashedPassword, role || 'SALES']);
 
     return NextResponse.json({
       success: true,
