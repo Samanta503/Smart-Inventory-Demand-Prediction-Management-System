@@ -176,7 +176,7 @@ export async function GET(request) {
         0
       ).toFixed(2),
       totalTransactions: monthlySummaryData.reduce(
-        (sum, m) => sum + parseInt(m.TotalTransactions || 0),
+        (sum, m) => sum + parseInt((m.TotalSales ?? m.TotalTransactions) || 0),
         0
       ),
       totalUnitsSold: monthlySummaryData.reduce(
@@ -196,6 +196,7 @@ export async function GET(request) {
       message: 'Monthly sales analytics fetched successfully',
       overallStats,
       monthlySummary: monthlySummaryData,
+      data: monthlySummaryData,
       topProducts: topProductsData,
       categoryPerformance: categoryPerformanceData,
       dailyTrend: dailyTrendData,
