@@ -1,20 +1,5 @@
-/**
- * Dead Stock Products API Route
- * =============================
- * 
- * GET /api/products/dead-stock
- * Returns products that have not been sold in the last 90 days
- * 
- * Dead stock represents inventory that isn't selling and ties up capital.
- * This endpoint helps identify products that may need:
- * - Clearance sales
- * - Marketing campaigns
- * - Return to supplier
- * - Write-off decisions
- */
-
 import { NextResponse } from 'next/server';
-import { executeStoredProcedure, executeQuery } from '@/lib/db';
+import { executeQuery } from '@/lib/db';
 
 /**
  * GET /api/products/dead-stock
@@ -57,28 +42,29 @@ export async function GET(request) {
         -- Calculate the value of dead stock (money tied up)
         (p.CurrentStock * p.CostPrice) AS DeadStockValue,
         -- Get the last sale date
-        MAX(sa.SaleDate) AS LastSaleDate,
+        MAX(sh.SaleDate) AS LastSaleDate,
         -- Calculate days since last sale
         CASE 
-          WHEN MAX(sa.SaleDate) IS NULL THEN 'Never Sold'
-          ELSE CONCAT(DATEDIFF(NOW(), MAX(sa.SaleDate)), ' days')
+          WHEN MAX(sh.SaleDate) IS NULL THEN 'Never Sold'
+          ELSE CONCAT(DATEDIFF(NOW(), MAX(sh.SaleDate)), ' days')
         END AS DaysSinceLastSale,
         -- Numeric days for sorting
         CASE 
-          WHEN MAX(sa.SaleDate) IS NULL THEN 9999
-          ELSE DATEDIFF(NOW(), MAX(sa.SaleDate))
+          WHEN MAX(sh.SaleDate) IS NULL THEN 9999
+          ELSE DATEDIFF(NOW(), MAX(sh.SaleDate))
         END AS DaysSinceLastSaleNum,
         -- Recommendation based on age
         CASE 
-          WHEN MAX(sa.SaleDate) IS NULL THEN 'Review product viability - Never sold'
-          WHEN DATEDIFF(NOW(), MAX(sa.SaleDate)) >= 180 THEN 'Consider clearance sale or return to supplier'
-          WHEN DATEDIFF(NOW(), MAX(sa.SaleDate)) >= 120 THEN 'Run promotional campaign'
+          WHEN MAX(sh.SaleDate) IS NULL THEN 'Review product viability - Never sold'
+          WHEN DATEDIFF(NOW(), MAX(sh.SaleDate)) >= 180 THEN 'Consider clearance sale or return to supplier'
+          WHEN DATEDIFF(NOW(), MAX(sh.SaleDate)) >= 120 THEN 'Run promotional campaign'
           ELSE 'Monitor closely'
         END AS Recommendation
       FROM Products p
       INNER JOIN Categories c ON p.CategoryID = c.CategoryID
       INNER JOIN Suppliers s ON p.SupplierID = s.SupplierID
-      LEFT JOIN Sales sa ON p.ProductID = sa.ProductID
+      LEFT JOIN SalesItems si ON p.ProductID = si.ProductID
+      LEFT JOIN SalesHeaders sh ON si.SaleID = sh.SaleID
       WHERE p.IsActive = 1
         AND p.CurrentStock > 0
       GROUP BY 
@@ -94,8 +80,8 @@ export async function GET(request) {
         p.SellingPrice
       HAVING 
         -- Never sold OR no sales in specified period
-        MAX(sa.SaleDate) IS NULL
-        OR DATEDIFF(NOW(), MAX(sa.SaleDate)) >= @daysWithoutSale
+        MAX(sh.SaleDate) IS NULL
+        OR DATEDIFF(NOW(), MAX(sh.SaleDate)) >= @daysWithoutSale
       ORDER BY DaysSinceLastSaleNum DESC
     `;
 
