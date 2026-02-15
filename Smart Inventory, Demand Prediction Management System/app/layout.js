@@ -6,6 +6,8 @@
  * It wraps all pages and provides:
  * - Global CSS styles
  * - HTML structure
+ * - Authentication gating (login required)
+ * - Role-based access (Admin sees full app, others see under construction)
  * - Professional sidebar navigation with smooth transitions
  */
 
@@ -15,6 +17,8 @@ import './globals.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { AuthProvider, useAuth } from '@/lib/AuthContext';
+import LoginPage from '@/app/login/page';
 
 /**
  * Sidebar Navigation Component
@@ -26,6 +30,7 @@ import { useState } from 'react';
 function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { user, logout } = useAuth();
 
   const navSections = [
     {
@@ -146,12 +151,155 @@ function Sidebar() {
             </svg>
           </div>
           <div className="user-info">
-            <span className="user-name">Admin User</span>
-            <span className="user-role">Administrator</span>
+            <span className="user-name">{user?.fullName || 'User'}</span>
+            <span className="user-role">{user?.role || 'Role'}</span>
           </div>
+          <button
+            onClick={logout}
+            title="Logout"
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              fontSize: '1.2rem',
+              padding: '4px',
+              marginLeft: 'auto',
+              borderRadius: '6px',
+              transition: 'color 0.2s',
+            }}
+            onMouseEnter={(e) => e.target.style.color = '#ef4444'}
+            onMouseLeave={(e) => e.target.style.color = '#94a3b8'}
+          >
+            🚪
+          </button>
         </div>
       </div>
     </aside>
+  );
+}
+
+/**
+ * Under Construction Page
+ * -----------------------
+ * Shown to non-Admin users after login
+ */
+function UnderConstructionPage() {
+  const { user, logout } = useAuth();
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+      padding: '2rem',
+    }}>
+      <div style={{ textAlign: 'center', maxWidth: '500px' }}>
+        <div style={{ fontSize: '5rem', marginBottom: '1rem' }}>🚧</div>
+        <h1 style={{
+          fontSize: '2rem',
+          fontWeight: '700',
+          color: '#f1f5f9',
+          marginBottom: '0.75rem',
+        }}>
+          Page Under Construction
+        </h1>
+        <p style={{
+          color: '#94a3b8',
+          fontSize: '1.1rem',
+          marginBottom: '0.5rem',
+        }}>
+          Welcome, <strong style={{ color: '#6366f1' }}>{user?.fullName}</strong>!
+        </p>
+        <p style={{
+          color: '#64748b',
+          fontSize: '0.95rem',
+          marginBottom: '2rem',
+          lineHeight: '1.6',
+        }}>
+          Your dashboard is currently under development. Only administrators have access to the
+          inventory management system at this time. Please check back later.
+        </p>
+        <div style={{
+          display: 'inline-block',
+          padding: '0.5rem 1rem',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          border: '1px solid rgba(99, 102, 241, 0.3)',
+          borderRadius: '8px',
+          color: '#818cf8',
+          fontSize: '0.85rem',
+          marginBottom: '2rem',
+        }}>
+          Role: {user?.role}
+        </div>
+        <br />
+        <button
+          onClick={logout}
+          style={{
+            padding: '0.75rem 2rem',
+            background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '10px',
+            fontSize: '0.95rem',
+            fontWeight: '600',
+            cursor: 'pointer',
+            boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)',
+          }}
+        >
+          🚪 Logout
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * App Shell
+ * ---------
+ * Handles auth gating: login → role check → render
+ */
+function AppShell({ children }) {
+  const { user, loading, isAdmin } = useAuth();
+
+  // Still loading auth state from localStorage
+  if (loading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#0f172a',
+        color: '#94a3b8',
+        fontSize: '1.1rem',
+      }}>
+        <div className="spinner" style={{ marginRight: '0.75rem' }}></div>
+        Loading...
+      </div>
+    );
+  }
+
+  // Not logged in → show login page
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  // Logged in but NOT admin → under construction
+  if (!isAdmin) {
+    return <UnderConstructionPage />;
+  }
+
+  // Admin → full app
+  return (
+    <div className="layout">
+      <Sidebar />
+      <main className="main-content">
+        {children}
+      </main>
+    </div>
   );
 }
 
@@ -168,12 +316,9 @@ export default function RootLayout({ children }) {
         <meta name="description" content="A comprehensive inventory and demand prediction management system" />
       </head>
       <body>
-        <div className="layout">
-          <Sidebar />
-          <main className="main-content">
-            {children}
-          </main>
-        </div>
+        <AuthProvider>
+          <AppShell>{children}</AppShell>
+        </AuthProvider>
       </body>
     </html>
   );
