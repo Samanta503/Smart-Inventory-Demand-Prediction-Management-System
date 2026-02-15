@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineBuildingStorefront, HiOutlineXMark, HiOutlinePlusCircle, HiOutlineExclamationTriangle, HiOutlineEnvelope, HiOutlinePhone, HiOutlinePencil, HiOutlineCube, HiOutlineCheck } from 'react-icons/hi2';
+
 /**
  * Suppliers Page
  * ==============
@@ -167,17 +169,17 @@ export default function SuppliersPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">🏢 Suppliers</h1>
+          <h1 className="page-title"><HiOutlineBuildingStorefront size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Suppliers</h1>
           <p className="page-subtitle">Manage your product suppliers</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? '✕ Cancel' : '➕ Add Supplier'}
+          {showForm ? <><HiOutlineXMark size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Cancel</> : <><HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add Supplier</>}
         </button>
       </div>
 
       {error && (
         <div className="alert alert-danger">
-          <span>⚠️</span> {error}
+          <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle'}} /></span> {error}
         </div>
       )}
 
@@ -294,7 +296,7 @@ export default function SuppliersPage() {
                       onChange={() => toggleNewSupplierCategory(cat.CategoryID)}
                       style={{ display: 'none' }}
                     />
-                    {newSupplier.categoryIds.includes(cat.CategoryID) ? '✓ ' : ''}{cat.CategoryName}
+                    {newSupplier.categoryIds.includes(cat.CategoryID) ? <><HiOutlineCheck size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'2px'}} /> </> : ''}{cat.CategoryName}
                   </label>
                 ))}
               </div>
@@ -349,8 +351,8 @@ export default function SuppliersPage() {
                         </div>
                       </td>
                       <td>
-                        {sup.Email && <div style={{ fontSize: '13px' }}>✉️ {sup.Email}</div>}
-                        {sup.Phone && <div style={{ fontSize: '13px' }}>📞 {sup.Phone}</div>}
+                        {sup.Email && <div style={{ fontSize: '13px' }}><HiOutlineEnvelope size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> {sup.Email}</div>}
+                        {sup.Phone && <div style={{ fontSize: '13px' }}><HiOutlinePhone size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> {sup.Phone}</div>}
                       </td>
                       <td>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
@@ -390,7 +392,7 @@ export default function SuppliersPage() {
                           onClick={() => startEditingCategories(sup)}
                           style={{ padding: '4px 8px', fontSize: '12px' }}
                         >
-                          ✏️ Categories
+                          <HiOutlinePencil size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Categories
                         </button>
                       </td>
                     </tr>
@@ -401,7 +403,7 @@ export default function SuppliersPage() {
                         <td colSpan="8" style={{ backgroundColor: 'var(--bg-color)', padding: '16px' }}>
                           <div>
                             <h4 style={{ marginBottom: '12px' }}>
-                              📦 Categories for {sup.SupplierName}
+                              <HiOutlineCube size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Categories for {sup.SupplierName}
                             </h4>
                             
                             {editingCategories === sup.SupplierID ? (
@@ -442,7 +444,7 @@ export default function SuppliersPage() {
                                         onChange={() => toggleCategory(cat.CategoryID)}
                                         style={{ display: 'none' }}
                                       />
-                                      {selectedCategories.includes(cat.CategoryID) ? '✓ ' : ''}{cat.CategoryName}
+                                      {selectedCategories.includes(cat.CategoryID) ? <><HiOutlineCheck size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'2px'}} /> </> : ''}{cat.CategoryName}
                                     </label>
                                   ))}
                                 </div>
@@ -452,7 +454,7 @@ export default function SuppliersPage() {
                                     onClick={() => handleUpdateCategories(sup.SupplierID)}
                                     disabled={submitting}
                                   >
-                                    {submitting ? 'Saving...' : '💾 Save Categories'}
+                                    {submitting ? 'Saving...' : <><HiOutlineCheck size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Save Categories</>}
                                   </button>
                                   <button 
                                     className="btn"
@@ -489,7 +491,7 @@ export default function SuppliersPage() {
                                   onClick={() => startEditingCategories(sup)}
                                   style={{ marginTop: '12px' }}
                                 >
-                                  ✏️ Edit Categories
+                                  <HiOutlinePencil size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Edit Categories
                                 </button>
                               </div>
                             )}
@@ -504,7 +506,7 @@ export default function SuppliersPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">🏢</span>
+            <span className="icon"><HiOutlineBuildingStorefront size={24} /></span>
             <h3>No suppliers yet</h3>
             <p>Add your first supplier to start managing inventory</p>
           </div>

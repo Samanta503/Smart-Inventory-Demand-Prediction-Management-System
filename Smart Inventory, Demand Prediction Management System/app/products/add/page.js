@@ -11,6 +11,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { HiOutlineArrowLeft, HiOutlineCheckCircle, HiOutlineExclamationTriangle, HiOutlineLightBulb, HiOutlinePlusCircle } from 'react-icons/hi2';
 
 export default function AddProductPage() {
   // Router for navigation after form submission
@@ -180,14 +181,14 @@ export default function AddProductPage() {
           </p>
         </div>
         <Link href="/products" className="btn btn-secondary">
-          ← Back to Products
+          <HiOutlineArrowLeft size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Back to Products
         </Link>
       </div>
 
       {/* Success Message */}
       {success && (
         <div className="alert alert-success">
-          <span>✅</span>
+          <span><HiOutlineCheckCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span>
           Product added successfully! Redirecting...
         </div>
       )}
@@ -195,7 +196,7 @@ export default function AddProductPage() {
       {/* Error Message */}
       {error && (
         <div className="alert alert-danger">
-          <span>⚠️</span>
+          <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span>
           {error}
         </div>
       )}
@@ -415,7 +416,7 @@ export default function AddProductPage() {
           {/* Profit Margin Display */}
           {formData.costPrice && formData.sellingPrice && (
             <div className="alert alert-info" style={{ marginTop: '1rem' }}>
-              <span>💡</span>
+              <span><HiOutlineLightBulb size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span>
               Profit Margin: ${(parseFloat(formData.sellingPrice) - parseFloat(formData.costPrice)).toFixed(2)} 
               ({((parseFloat(formData.sellingPrice) - parseFloat(formData.costPrice)) / parseFloat(formData.costPrice) * 100).toFixed(1)}%)
             </div>
@@ -434,7 +435,7 @@ export default function AddProductPage() {
                   Adding...
                 </>
               ) : (
-                <>➕ Add Product</>
+                <><HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add Product</>
               )}
             </button>
             <Link href="/products" className="btn btn-secondary btn-lg">

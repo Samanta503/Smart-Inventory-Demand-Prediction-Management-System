@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineExclamationTriangle, HiOutlineBanknotes, HiOutlineShoppingCart, HiOutlinePencilSquare, HiOutlineArrowTrendingUp, HiOutlineCube, HiOutlineBuildingOffice } from 'react-icons/hi2';
+
 /**
  * Sales List Page
  * ===============
@@ -69,7 +71,7 @@ export default function SalesPage() {
   if (error) {
     return (
       <div className="alert alert-danger">
-        <span>⚠️</span>
+        <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span>
         Error: {error}
         <button className="btn btn-sm btn-secondary" onClick={fetchSales} style={{ marginLeft: 'auto' }}>
           Retry
@@ -83,13 +85,13 @@ export default function SalesPage() {
       {/* Page Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">💰 Sales</h1>
+          <h1 className="page-title"><HiOutlineBanknotes size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Sales</h1>
           <p className="page-subtitle">
             View and manage sales transactions
           </p>
         </div>
         <Link href="/sales/add" className="btn btn-primary">
-          🛒 New Sale
+          <HiOutlineShoppingCart size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> New Sale
         </Link>
       </div>
 
@@ -97,22 +99,22 @@ export default function SalesPage() {
       {summary && (
         <div className="stats-grid">
           <div className="stat-card primary">
-            <span className="stat-icon">📝</span>
+            <span className="stat-icon"><HiOutlinePencilSquare size={20} /></span>
             <span className="stat-value">{summary.totalSales}</span>
             <span className="stat-label">Total Sales</span>
           </div>
           <div className="stat-card success">
-            <span className="stat-icon">💰</span>
+            <span className="stat-icon"><HiOutlineBanknotes size={20} /></span>
             <span className="stat-value">{formatCurrency(summary.totalRevenue)}</span>
             <span className="stat-label">Total Revenue</span>
           </div>
           <div className="stat-card info">
-            <span className="stat-icon">📈</span>
+            <span className="stat-icon"><HiOutlineArrowTrendingUp size={20} /></span>
             <span className="stat-value">{formatCurrency(summary.totalProfit)}</span>
             <span className="stat-label">Total Profit</span>
           </div>
           <div className="stat-card warning">
-            <span className="stat-icon">📦</span>
+            <span className="stat-icon"><HiOutlineCube size={20} /></span>
             <span className="stat-value">{summary.totalItemsSold || 0}</span>
             <span className="stat-label">Items Sold</span>
           </div>
@@ -164,7 +166,7 @@ export default function SalesPage() {
                       <td>{new Date(sale.SaleDate).toLocaleDateString()}</td>
                       <td><strong>{sale.CustomerName}</strong></td>
                       <td>
-                        <span style={{ fontSize: '12px' }}>🏭 {sale.WarehouseName}</span>
+                        <span style={{ fontSize: '12px' }}><HiOutlineBuildingOffice size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> {sale.WarehouseName}</span>
                       </td>
                       <td>
                         <span className="badge badge-info">{sale.ItemCount} items</span>
@@ -224,7 +226,7 @@ export default function SalesPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">💰</span>
+            <span className="icon"><HiOutlineBanknotes size={24} /></span>
             <h3>No sales found</h3>
             <p>Record your first sale to get started</p>
             <Link href="/sales/add" className="btn btn-primary" style={{ marginTop: '1rem' }}>

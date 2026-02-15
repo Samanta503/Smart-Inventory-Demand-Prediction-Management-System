@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineShoppingCart, HiOutlineCheckCircle, HiOutlineExclamationTriangle, HiOutlinePlusCircle, HiOutlineXMark, HiOutlineBanknotes, HiOutlineArrowLeft } from 'react-icons/hi2';
+
 /**
  * Add Sale Page
  * =============
@@ -173,21 +175,21 @@ export default function AddSalePage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">🛒 New Sale</h1>
+          <h1 className="page-title"><HiOutlineShoppingCart size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> New Sale</h1>
           <p className="page-subtitle">Create a sale with multiple items</p>
         </div>
-        <Link href="/sales" className="btn btn-secondary">← Back to Sales</Link>
+        <Link href="/sales" className="btn btn-secondary"><HiOutlineArrowLeft size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Back to Sales</Link>
       </div>
 
       {success && (
         <div className="alert alert-success">
-          <span>✅</span> Sale recorded successfully! Redirecting...
+          <span><HiOutlineCheckCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span> Sale recorded successfully! Redirecting...
         </div>
       )}
 
       {error && (
         <div className="alert alert-danger">
-          <span>⚠️</span> {error}
+          <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span> {error}
         </div>
       )}
 
@@ -298,7 +300,7 @@ export default function AddSalePage() {
                   onClick={addToCart}
                   disabled={!currentItem.productId || !currentItem.quantity}
                 >
-                  ➕ Add
+                  <HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add
                 </button>
               </div>
             </div>
@@ -334,7 +336,7 @@ export default function AddSalePage() {
                           className="btn btn-sm btn-danger"
                           onClick={() => removeFromCart(index)}
                         >
-                          ✕
+                          <HiOutlineXMark size={16} />
                         </button>
                       </td>
                     </tr>
@@ -379,7 +381,7 @@ export default function AddSalePage() {
             style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }}
             disabled={submitting || !customerId || !warehouseId || cartItems.length === 0}
           >
-            {submitting ? 'Processing...' : '💰 Complete Sale'}
+            {submitting ? 'Processing...' : <><HiOutlineBanknotes size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Complete Sale</>}
           </button>
         </div>
       </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineBuildingOffice, HiOutlineXMark, HiOutlinePlusCircle, HiOutlineExclamationTriangle, HiOutlineCube, HiOutlineMapPin } from 'react-icons/hi2';
+
 /**
  * Warehouses Page
  * ===============
@@ -89,17 +91,17 @@ export default function WarehousesPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">🏭 Warehouses</h1>
+          <h1 className="page-title"><HiOutlineBuildingOffice size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Warehouses</h1>
           <p className="page-subtitle">Manage warehouse locations and stock levels</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? '✕ Cancel' : '➕ Add Warehouse'}
+          {showForm ? <><HiOutlineXMark size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Cancel</> : <><HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add Warehouse</>}
         </button>
       </div>
 
       {error && (
         <div className="alert alert-danger">
-          <span>⚠️</span> {error}
+          <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle'}} /></span> {error}
         </div>
       )}
 
@@ -163,12 +165,12 @@ export default function WarehousesPage() {
       {/* Stats */}
       <div className="stats-grid">
         <div className="stat-card primary">
-          <span className="stat-icon">🏭</span>
+          <span className="stat-icon"><HiOutlineBuildingOffice size={24} /></span>
           <span className="stat-value">{warehouses.length}</span>
           <span className="stat-label">Total Warehouses</span>
         </div>
         <div className="stat-card info">
-          <span className="stat-icon">📦</span>
+          <span className="stat-icon"><HiOutlineCube size={24} /></span>
           <span className="stat-value">{totalStock.toLocaleString()}</span>
           <span className="stat-label">Total Stock Units</span>
         </div>
@@ -182,7 +184,7 @@ export default function WarehousesPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1rem' }}>
                 <div>
                   <h3 style={{ margin: 0, color: 'var(--text-primary)' }}>
-                    🏭 {warehouse.WarehouseName}
+                    <HiOutlineBuildingOffice size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> {warehouse.WarehouseName}
                   </h3>
                   <p style={{ margin: '0.25rem 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
                     {warehouse.City}{warehouse.Country ? `, ${warehouse.Country}` : ''}
@@ -208,7 +210,7 @@ export default function WarehousesPage() {
 
               {warehouse.Address && (
                 <p style={{ margin: '1rem 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>
-                  📍 {warehouse.Address}
+                  <HiOutlineMapPin size={14} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> {warehouse.Address}
                 </p>
               )}
             </div>
@@ -216,7 +218,7 @@ export default function WarehousesPage() {
         ) : (
           <div className="card" style={{ gridColumn: '1 / -1' }}>
             <div className="empty-state">
-              <span className="icon">🏭</span>
+              <span className="icon"><HiOutlineBuildingOffice size={24} /></span>
               <h3>No warehouses yet</h3>
               <p>Add your first warehouse to start managing inventory locations</p>
             </div>

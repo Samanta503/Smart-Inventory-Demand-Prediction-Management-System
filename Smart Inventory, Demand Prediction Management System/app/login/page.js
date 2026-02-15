@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineExclamationTriangle, HiOutlineUser, HiOutlineLockClosed, HiOutlineClock, HiOutlineKey } from 'react-icons/hi2';
+
 /**
  * Login Page
  * ==========
@@ -97,7 +99,7 @@ export default function LoginPage() {
               alignItems: 'center',
               gap: '0.5rem',
             }}>
-              <span>⚠️</span> {error}
+              <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span> {error}
             </div>
           )}
 
@@ -120,7 +122,7 @@ export default function LoginPage() {
                   transform: 'translateY(-50%)',
                   color: '#64748b',
                   fontSize: '1.1rem',
-                }}>👤</span>
+                }}><HiOutlineUser size={18} /></span>
                 <input
                   type="text"
                   value={username}
@@ -162,7 +164,7 @@ export default function LoginPage() {
                   transform: 'translateY(-50%)',
                   color: '#64748b',
                   fontSize: '1.1rem',
-                }}>🔒</span>
+                }}><HiOutlineLockClosed size={18} /></span>
                 <input
                   type="password"
                   value={password}
@@ -205,7 +207,7 @@ export default function LoginPage() {
                 boxShadow: loading ? 'none' : '0 4px 15px rgba(99, 102, 241, 0.3)',
               }}
             >
-              {loading ? '⏳ Signing in...' : '🔐 Sign In'}
+              {loading ? <><HiOutlineClock size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Signing in...</> : <><HiOutlineKey size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Sign In</>}
             </button>
           </form>
         </div>

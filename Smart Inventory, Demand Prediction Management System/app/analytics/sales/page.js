@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineChartBar, HiOutlineExclamationTriangle, HiOutlineBanknotes, HiOutlineCube, HiOutlineCalendarDays, HiOutlineTrophy, HiOutlineArrowTrendingUp, HiOutlineLightBulb, HiOutlineBolt, HiOutlineArrowPath, HiOutlineArrowLeft } from 'react-icons/hi2';
+
 /**
  * Sales Analytics Page
  * ====================
@@ -70,39 +72,39 @@ export default function SalesAnalyticsPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">📊 Sales Analytics</h1>
+          <h1 className="page-title"><HiOutlineChartBar size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Sales Analytics</h1>
           <p className="page-subtitle">Monthly sales trends and demand analysis</p>
         </div>
         <Link href="/" className="btn btn-ghost">
-          ← Back to Dashboard
+          <HiOutlineArrowLeft size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Back to Dashboard
         </Link>
       </div>
 
       {error && (
         <div className="alert alert-danger">
-          <span>⚠️</span> {error}
+          <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span> {error}
         </div>
       )}
 
       {/* Summary Stats */}
       <div className="stats-grid">
         <div className="stat-card primary">
-          <span className="stat-icon">💰</span>
+          <span className="stat-icon"><HiOutlineBanknotes size={24} /></span>
           <span className="stat-value">{formatCurrency(totalRevenue)}</span>
           <span className="stat-label">Total Revenue</span>
         </div>
         <div className="stat-card success">
-          <span className="stat-icon">📦</span>
+          <span className="stat-icon"><HiOutlineCube size={24} /></span>
           <span className="stat-value">{totalUnits.toLocaleString()}</span>
           <span className="stat-label">Units Sold</span>
         </div>
         <div className="stat-card info">
-          <span className="stat-icon">📅</span>
+          <span className="stat-icon"><HiOutlineCalendarDays size={24} /></span>
           <span className="stat-value">{formatCurrency(avgMonthlyRevenue)}</span>
           <span className="stat-label">Avg Monthly Revenue</span>
         </div>
         <div className="stat-card warning">
-          <span className="stat-icon">🏆</span>
+          <span className="stat-icon"><HiOutlineTrophy size={24} /></span>
           <span className="stat-value">{maxMonth ? `${maxMonth.MonthName} ${maxMonth.SalesYear}` : 'N/A'}</span>
           <span className="stat-label">Best Month</span>
         </div>
@@ -112,7 +114,7 @@ export default function SalesAnalyticsPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
           {/* Monthly Breakdown Table */}
           <div className="card">
-            <h3 style={{ marginBottom: '1rem' }}>📅 Monthly Breakdown</h3>
+            <h3 style={{ marginBottom: '1rem' }}><HiOutlineCalendarDays size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Monthly Breakdown</h3>
             <div className="table-container">
               <table className="table">
                 <thead>
@@ -148,7 +150,7 @@ export default function SalesAnalyticsPage() {
 
           {/* Revenue Visualization */}
           <div className="card">
-            <h3 style={{ marginBottom: '1rem' }}>📈 Revenue Trend</h3>
+            <h3 style={{ marginBottom: '1rem' }}><HiOutlineArrowTrendingUp size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Revenue Trend</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {monthlyData.map((month, index) => {
                 const percentage = maxRevenue > 0 ? (toNumber(month.TotalRevenue) / maxRevenue) * 100 : 0;
@@ -186,7 +188,7 @@ export default function SalesAnalyticsPage() {
       ) : (
         <div className="card">
           <div className="empty-state">
-            <span className="icon">📊</span>
+            <span className="icon"><HiOutlineChartBar size={24} /></span>
             <h3>No sales data available</h3>
             <p>Start recording sales to see analytics</p>
             <Link href="/sales/add" className="btn btn-primary" style={{ marginTop: '1rem' }}>
@@ -199,7 +201,7 @@ export default function SalesAnalyticsPage() {
       {/* Analysis Insights */}
       {monthlyData.length > 0 && (
         <div className="card" style={{ marginTop: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>💡 Demand Insights</h3>
+          <h3 style={{ marginBottom: '1rem' }}><HiOutlineLightBulb size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Demand Insights</h3>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
             <div style={{ 
               padding: '1rem', 
@@ -207,7 +209,7 @@ export default function SalesAnalyticsPage() {
               borderRadius: '8px',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📈</div>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}><HiOutlineArrowTrendingUp size={24} /></div>
               <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>Growth Trend</div>
               <div className="text-muted" style={{ fontSize: '13px' }}>
                 {monthlyData.length >= 2 
@@ -223,7 +225,7 @@ export default function SalesAnalyticsPage() {
               borderRadius: '8px',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🎯</div>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}><HiOutlineBolt size={24} /></div>
               <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>Avg Basket Size</div>
               <div className="text-muted" style={{ fontSize: '13px' }}>
                 {totalUnits > 0 
@@ -237,7 +239,7 @@ export default function SalesAnalyticsPage() {
               borderRadius: '8px',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>🔄</div>
+              <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}><HiOutlineArrowPath size={24} /></div>
               <div style={{ fontWeight: '600', marginBottom: '0.25rem' }}>Sales Velocity</div>
               <div className="text-muted" style={{ fontSize: '13px' }}>
                 {monthlyData.length > 0 

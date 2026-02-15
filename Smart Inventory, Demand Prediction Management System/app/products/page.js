@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { HiOutlineCube, HiOutlineSparkles, HiOutlineMagnifyingGlass, HiOutlineExclamationTriangle } from 'react-icons/hi2';
 
 export default function ProductsPage() {
   // State variables
@@ -93,7 +94,7 @@ export default function ProductsPage() {
   if (error) {
     return (
       <div className="alert alert-danger">
-        <span>⚠️</span>
+        <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span>
         Error: {error}
         <button className="btn btn-sm btn-secondary" onClick={fetchProducts} style={{ marginLeft: 'auto' }}>
           Retry
@@ -108,7 +109,7 @@ export default function ProductsPage() {
       <div className="page-header">
         <div className="page-header-content">
           <h1 className="page-title">
-            <span className="page-title-icon">📦</span>
+            <span className="page-title-icon"><HiOutlineCube size={24} /></span>
             Products
           </h1>
           <p className="page-subtitle">
@@ -117,7 +118,7 @@ export default function ProductsPage() {
         </div>
         <div className="page-header-actions">
           <Link href="/products/add" className="btn btn-primary">
-            ✨ Add Product
+            <HiOutlineSparkles size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add Product
           </Link>
         </div>
       </div>
@@ -125,18 +126,21 @@ export default function ProductsPage() {
       {/* Search and Filter */}
       <div className="card">
         <div className="form-group" style={{ marginBottom: 0 }}>
-          <input
-            type="text"
-            className="form-input"
-            placeholder="🔍 Search by name, code, or category..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ 
-              padding: '14px 18px',
-              fontSize: '15px',
-              borderRadius: '10px'
-            }}
-          />
+          <div style={{ position: 'relative' }}>
+            <HiOutlineMagnifyingGlass size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              className="form-input"
+              placeholder="Search by name, code, or category..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ 
+                padding: '14px 18px 14px 38px',
+                fontSize: '15px',
+                borderRadius: '10px'
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -223,7 +227,7 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">📦</span>
+            <span className="icon"><HiOutlineCube size={24} /></span>
             <h3>No products found</h3>
             <p>
               {searchTerm 

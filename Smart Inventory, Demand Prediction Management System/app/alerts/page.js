@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineExclamationTriangle, HiOutlineBell, HiOutlineArrowPath, HiOutlineExclamationCircle, HiOutlineXCircle, HiOutlineArrowTrendingDown, HiOutlineCheckCircle, HiOutlineSparkles, HiOutlineNoSymbol, HiOutlineInboxArrowDown, HiOutlineCube } from 'react-icons/hi2';
+
 /**
  * Alerts Page
  * ===========
@@ -118,7 +120,7 @@ export default function AlertsPage() {
   if (error) {
     return (
       <div className="alert alert-danger">
-        <span>⚠️</span>
+        <span><HiOutlineExclamationTriangle size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span>
         Error: {error}
         <button className="btn btn-sm btn-secondary" onClick={fetchAlerts} style={{ marginLeft: 'auto' }}>
           Retry
@@ -132,13 +134,13 @@ export default function AlertsPage() {
       {/* Page Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">🔔 Inventory Alerts</h1>
+          <h1 className="page-title"><HiOutlineBell size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Inventory Alerts</h1>
           <p className="page-subtitle">
             Monitor and manage inventory alerts
           </p>
         </div>
         <button className="btn btn-primary" onClick={fetchAlerts}>
-          🔄 Refresh
+          <HiOutlineArrowPath size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Refresh
         </button>
       </div>
 
@@ -146,22 +148,22 @@ export default function AlertsPage() {
       {summary && (
         <div className="stats-grid">
           <div className="stat-card danger">
-            <span className="stat-icon">🚨</span>
+            <span className="stat-icon"><HiOutlineExclamationCircle size={24} /></span>
             <span className="stat-value">{summary.criticalCount}</span>
             <span className="stat-label">Critical</span>
           </div>
           <div className="stat-card warning">
-            <span className="stat-icon">⚠️</span>
+            <span className="stat-icon"><HiOutlineExclamationTriangle size={24} /></span>
             <span className="stat-value">{summary.highCount}</span>
             <span className="stat-label">High Priority</span>
           </div>
           <div className="stat-card danger">
-            <span className="stat-icon">❌</span>
+            <span className="stat-icon"><HiOutlineXCircle size={24} /></span>
             <span className="stat-value">{summary.outOfStockCount}</span>
             <span className="stat-label">Out of Stock</span>
           </div>
           <div className="stat-card warning">
-            <span className="stat-icon">📉</span>
+            <span className="stat-icon"><HiOutlineArrowTrendingDown size={24} /></span>
             <span className="stat-value">{summary.lowStockCount}</span>
             <span className="stat-label">Low Stock</span>
           </div>
@@ -255,7 +257,7 @@ export default function AlertsPage() {
                             className="btn btn-sm btn-success"
                             onClick={() => resolveAlert(alert.AlertID)}
                           >
-                            ✓ Resolve
+                            <HiOutlineCheckCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Resolve
                           </button>
                         )}
                       </td>
@@ -267,7 +269,7 @@ export default function AlertsPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">🎉</span>
+            <span className="icon"><HiOutlineSparkles size={48} /></span>
             <h3>No {filter} alerts</h3>
             <p>
               {filter === 'unresolved' 
@@ -283,13 +285,13 @@ export default function AlertsPage() {
         <h3 className="card-title">Quick Links</h3>
         <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
           <Link href="/alerts/low-stock" className="btn btn-warning" style={{ backgroundColor: 'var(--warning-color)', color: 'white' }}>
-            ⚠️ View Low Stock Products
+            <HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> View Low Stock Products
           </Link>
           <Link href="/alerts/dead-stock" className="btn btn-secondary">
-            💀 View Dead Stock
+            <HiOutlineNoSymbol size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> View Dead Stock
           </Link>
           <Link href="/purchases/add" className="btn btn-info" style={{ backgroundColor: 'var(--info-color)', color: 'white' }}>
-            📥 Create Purchase Order
+            <HiOutlineInboxArrowDown size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Create Purchase Order
           </Link>
         </div>
       </div>

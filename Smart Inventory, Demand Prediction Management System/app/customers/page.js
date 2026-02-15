@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineUserGroup, HiOutlineXMark, HiOutlinePlusCircle, HiOutlineExclamationTriangle, HiOutlineBanknotes, HiOutlineShoppingCart, HiOutlineDocumentText } from 'react-icons/hi2';
+
 /**
  * Customers Page
  * ==============
@@ -90,17 +92,17 @@ export default function CustomersPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">👥 Customers</h1>
+          <h1 className="page-title"><HiOutlineUserGroup size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Customers</h1>
           <p className="page-subtitle">Manage your customers</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? '✕ Cancel' : '➕ Add Customer'}
+          {showForm ? <><HiOutlineXMark size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Cancel</> : <><HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add Customer</>}
         </button>
       </div>
 
       {error && (
         <div className="alert alert-danger">
-          <span>⚠️</span> {error}
+          <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle'}} /></span> {error}
         </div>
       )}
 
@@ -186,17 +188,17 @@ export default function CustomersPage() {
       {/* Stats */}
       <div className="stats-grid">
         <div className="stat-card primary">
-          <span className="stat-icon">👥</span>
+          <span className="stat-icon"><HiOutlineUserGroup size={24} /></span>
           <span className="stat-value">{customers.length}</span>
           <span className="stat-label">Total Customers</span>
         </div>
         <div className="stat-card success">
-          <span className="stat-icon">💰</span>
+          <span className="stat-icon"><HiOutlineBanknotes size={24} /></span>
           <span className="stat-value">{formatCurrency(customers.reduce((sum, c) => sum + parseFloat(c.TotalSpent || 0), 0))}</span>
           <span className="stat-label">Total Revenue</span>
         </div>
         <div className="stat-card info">
-          <span className="stat-icon">🛒</span>
+          <span className="stat-icon"><HiOutlineShoppingCart size={24} /></span>
           <span className="stat-value">{customers.reduce((sum, c) => sum + parseInt(c.TotalOrders || 0), 0)}</span>
           <span className="stat-label">Total Orders</span>
         </div>
@@ -281,7 +283,7 @@ export default function CustomersPage() {
                             </div>
 
                             {/* Purchase History */}
-                            <h4 style={{ marginBottom: '0.75rem', fontSize: '14px' }}>📜 Purchase History</h4>
+                            <h4 style={{ marginBottom: '0.75rem', fontSize: '14px' }}><HiOutlineDocumentText size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Purchase History</h4>
                             {customer.purchaseHistory && customer.purchaseHistory.length > 0 ? (
                               <table className="table" style={{ marginBottom: 0 }}>
                                 <thead>
@@ -343,7 +345,7 @@ export default function CustomersPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">👥</span>
+            <span className="icon"><HiOutlineUserGroup size={24} /></span>
             <h3>No customers yet</h3>
             <p>Add your first customer to get started</p>
           </div>

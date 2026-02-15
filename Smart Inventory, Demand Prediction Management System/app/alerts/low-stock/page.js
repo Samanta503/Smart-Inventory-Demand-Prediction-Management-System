@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineExclamationTriangle, HiOutlineArrowPath, HiOutlineInboxArrowDown, HiOutlineCube, HiOutlineXCircle, HiOutlineExclamationCircle, HiOutlineBanknotes, HiOutlinePhone, HiOutlineEnvelope, HiOutlineCheckCircle, HiOutlineArrowLeft } from 'react-icons/hi2';
+
 /**
  * Low Stock Alerts Page
  * =====================
@@ -76,7 +78,7 @@ export default function LowStockPage() {
   if (error) {
     return (
       <div className="alert alert-danger">
-        <span>⚠️</span>
+        <span><HiOutlineExclamationTriangle size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span>
         Error: {error}
         <button className="btn btn-sm btn-secondary" onClick={fetchLowStock} style={{ marginLeft: 'auto' }}>
           Retry
@@ -90,17 +92,17 @@ export default function LowStockPage() {
       {/* Page Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">⚠️ Low Stock Products</h1>
+          <h1 className="page-title"><HiOutlineExclamationTriangle size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Low Stock Products</h1>
           <p className="page-subtitle">
             Products that need to be reordered
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <button className="btn btn-secondary" onClick={fetchLowStock}>
-            🔄 Refresh
+            <HiOutlineArrowPath size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Refresh
           </button>
           <Link href="/purchases/add" className="btn btn-primary">
-            📥 Create Purchase Order
+            <HiOutlineInboxArrowDown size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Create Purchase Order
           </Link>
         </div>
       </div>
@@ -109,22 +111,22 @@ export default function LowStockPage() {
       {summary && (
         <div className="stats-grid">
           <div className="stat-card warning">
-            <span className="stat-icon">📦</span>
+            <span className="stat-icon"><HiOutlineCube size={24} /></span>
             <span className="stat-value">{summary.totalLowStockProducts}</span>
             <span className="stat-label">Low Stock Products</span>
           </div>
           <div className="stat-card danger">
-            <span className="stat-icon">❌</span>
+            <span className="stat-icon"><HiOutlineXCircle size={24} /></span>
             <span className="stat-value">{summary.outOfStockCount}</span>
             <span className="stat-label">Out of Stock</span>
           </div>
           <div className="stat-card danger">
-            <span className="stat-icon">🚨</span>
+            <span className="stat-icon"><HiOutlineExclamationCircle size={24} /></span>
             <span className="stat-value">{summary.criticalCount}</span>
             <span className="stat-label">Critical Priority</span>
           </div>
           <div className="stat-card info">
-            <span className="stat-icon">💰</span>
+            <span className="stat-icon"><HiOutlineBanknotes size={24} /></span>
             <span className="stat-value">{formatCurrency(summary.totalEstimatedRestockCost)}</span>
             <span className="stat-label">Est. Restock Cost</span>
           </div>
@@ -183,12 +185,12 @@ export default function LowStockPage() {
                       <div>{product.SupplierName}</div>
                       {product.SupplierPhone && (
                         <div className="text-muted" style={{ fontSize: '11px' }}>
-                          📞 {product.SupplierPhone}
+                          <HiOutlinePhone size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> {product.SupplierPhone}
                         </div>
                       )}
                       {product.SupplierEmail && (
                         <div className="text-muted" style={{ fontSize: '11px' }}>
-                          ✉️ {product.SupplierEmail}
+                          <HiOutlineEnvelope size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> {product.SupplierEmail}
                         </div>
                       )}
                     </td>
@@ -199,7 +201,7 @@ export default function LowStockPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">✅</span>
+            <span className="icon"><HiOutlineCheckCircle size={48} /></span>
             <h3>All stocked up!</h3>
             <p>No products are currently below their reorder level.</p>
           </div>
@@ -210,7 +212,7 @@ export default function LowStockPage() {
       <div className="card">
         <div style={{ display: 'flex', gap: '1rem' }}>
           <Link href="/alerts" className="btn btn-secondary">
-            ← Back to Alerts
+            <HiOutlineArrowLeft size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Back to Alerts
           </Link>
           <Link href="/products" className="btn btn-secondary">
             View All Products

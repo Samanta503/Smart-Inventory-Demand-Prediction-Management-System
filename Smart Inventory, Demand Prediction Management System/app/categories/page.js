@@ -1,5 +1,7 @@
 'use client';
 
+import { HiOutlineTag, HiOutlineXMark, HiOutlinePlusCircle, HiOutlineExclamationTriangle } from 'react-icons/hi2';
+
 /**
  * Categories Page
  * ===============
@@ -79,17 +81,17 @@ export default function CategoriesPage() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">🏷️ Categories</h1>
+          <h1 className="page-title"><HiOutlineTag size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Categories</h1>
           <p className="page-subtitle">Manage product categories</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
-          {showForm ? '✕ Cancel' : '➕ Add Category'}
+          {showForm ? <><HiOutlineXMark size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Cancel</> : <><HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add Category</>}
         </button>
       </div>
 
       {error && (
         <div className="alert alert-danger">
-          <span>⚠️</span> {error}
+          <span><HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle'}} /></span> {error}
         </div>
       )}
 
@@ -155,7 +157,7 @@ export default function CategoriesPage() {
           </div>
         ) : (
           <div className="empty-state">
-            <span className="icon">🏷️</span>
+            <span className="icon"><HiOutlineTag size={24} /></span>
             <h3>No categories yet</h3>
             <p>Add your first category to organize products</p>
           </div>

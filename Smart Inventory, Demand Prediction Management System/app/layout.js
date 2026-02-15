@@ -13,6 +13,7 @@
 
 'use client';
 
+import { HiOutlineChartBar, HiOutlineCube, HiOutlinePlusCircle, HiOutlineTag, HiOutlineBuildingOffice, HiOutlineBanknotes, HiOutlineShoppingCart, HiOutlineInboxArrowDown, HiOutlineClipboardDocumentList, HiOutlineUserGroup, HiOutlineBuildingStorefront, HiOutlineBell, HiOutlineExclamationTriangle, HiOutlineNoSymbol, HiOutlineChartBarSquare, HiOutlineShieldCheck, HiOutlineArrowRightOnRectangle, HiOutlineWrench } from 'react-icons/hi2';
 import './globals.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -36,52 +37,52 @@ function Sidebar() {
     {
       title: 'Overview',
       items: [
-        { href: '/', icon: '📊', label: 'Dashboard' },
+        { href: '/', icon: <HiOutlineChartBar size={20} />, label: 'Dashboard' },
       ]
     },
     {
       title: 'Inventory',
       items: [
-        { href: '/products', icon: '📦', label: 'Products' },
-        { href: '/products/add', icon: '➕', label: 'Add Product' },
-        { href: '/categories', icon: '🏷️', label: 'Categories' },
-        { href: '/warehouses', icon: '🏭', label: 'Warehouses' },
+        { href: '/products', icon: <HiOutlineCube size={20} />, label: 'Products' },
+        { href: '/products/add', icon: <HiOutlinePlusCircle size={20} />, label: 'Add Product' },
+        { href: '/categories', icon: <HiOutlineTag size={20} />, label: 'Categories' },
+        { href: '/warehouses', icon: <HiOutlineBuildingOffice size={20} />, label: 'Warehouses' },
       ]
     },
     {
       title: 'Transactions',
       items: [
-        { href: '/sales', icon: '💰', label: 'Sales' },
-        { href: '/sales/add', icon: '🛒', label: 'New Sale' },
-        { href: '/purchases', icon: '📥', label: 'Purchases' },
-        { href: '/purchases/add', icon: '📋', label: 'New Purchase' },
+        { href: '/sales', icon: <HiOutlineBanknotes size={20} />, label: 'Sales' },
+        { href: '/sales/add', icon: <HiOutlineShoppingCart size={20} />, label: 'New Sale' },
+        { href: '/purchases', icon: <HiOutlineInboxArrowDown size={20} />, label: 'Purchases' },
+        { href: '/purchases/add', icon: <HiOutlineClipboardDocumentList size={20} />, label: 'New Purchase' },
       ]
     },
     {
       title: 'Partners',
       items: [
-        { href: '/customers', icon: '👥', label: 'Customers' },
-        { href: '/suppliers', icon: '🏢', label: 'Suppliers' },
+        { href: '/customers', icon: <HiOutlineUserGroup size={20} />, label: 'Customers' },
+        { href: '/suppliers', icon: <HiOutlineBuildingStorefront size={20} />, label: 'Suppliers' },
       ]
     },
     {
       title: 'Alerts & Reports',
       items: [
-        { href: '/alerts', icon: '🔔', label: 'Alerts' },
-        { href: '/alerts/low-stock', icon: '⚠️', label: 'Low Stock' },
-        { href: '/alerts/dead-stock', icon: '💀', label: 'Dead Stock' },
+        { href: '/alerts', icon: <HiOutlineBell size={20} />, label: 'Alerts' },
+        { href: '/alerts/low-stock', icon: <HiOutlineExclamationTriangle size={20} />, label: 'Low Stock' },
+        { href: '/alerts/dead-stock', icon: <HiOutlineNoSymbol size={20} />, label: 'Dead Stock' },
       ]
     },
     {
       title: 'Analytics',
       items: [
-        { href: '/analytics/sales', icon: '📈', label: 'Sales Analytics' },
+        { href: '/analytics/sales', icon: <HiOutlineChartBarSquare size={20} />, label: 'Sales Analytics' },
       ]
     },
     {
       title: 'Administration',
       items: [
-        { href: '/users', icon: '🛡️', label: 'User Management' },
+        { href: '/users', icon: <HiOutlineShieldCheck size={20} />, label: 'User Management' },
       ]
     },
   ];
@@ -171,7 +172,7 @@ function Sidebar() {
             onMouseEnter={(e) => e.target.style.color = '#ef4444'}
             onMouseLeave={(e) => e.target.style.color = '#94a3b8'}
           >
-            🚪
+            <HiOutlineArrowRightOnRectangle size={20} />
           </button>
         </div>
       </div>
@@ -197,7 +198,7 @@ function UnderConstructionPage() {
       padding: '2rem',
     }}>
       <div style={{ textAlign: 'center', maxWidth: '500px' }}>
-        <div style={{ fontSize: '5rem', marginBottom: '1rem' }}>🚧</div>
+        <div style={{ fontSize: '5rem', marginBottom: '1rem' }}><HiOutlineWrench size={48} /></div>
         <h1 style={{
           fontSize: '2rem',
           fontWeight: '700',
@@ -249,7 +250,7 @@ function UnderConstructionPage() {
             boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)',
           }}
         >
-          🚪 Logout
+          <><HiOutlineArrowRightOnRectangle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Logout</>
         </button>
       </div>
     </div>
