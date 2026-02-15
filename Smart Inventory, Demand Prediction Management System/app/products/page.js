@@ -250,7 +250,7 @@ export default function ProductsPage() {
             </div>
             <div className="stat-card info">
               <span className="stat-value">
-                {formatCurrency(products.reduce((sum, p) => sum + (p.StockValue || 0), 0))}
+                {formatCurrency(products.reduce((sum, p) => sum + (parseFloat(p.StockValue) || 0), 0))}
               </span>
               <span className="stat-label">Total Inventory Value</span>
             </div>
