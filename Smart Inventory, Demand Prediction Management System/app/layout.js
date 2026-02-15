@@ -73,6 +73,12 @@ function Sidebar() {
         { href: '/analytics/sales', icon: '📈', label: 'Sales Analytics' },
       ]
     },
+    {
+      title: 'Administration',
+      items: [
+        { href: '/users', icon: '🛡️', label: 'User Management' },
+      ]
+    },
   ];
 
   const isActive = (href) => {
