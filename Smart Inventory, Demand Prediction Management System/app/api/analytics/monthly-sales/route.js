@@ -33,27 +33,32 @@ export async function GET(request) {
     // MONTHLY SUMMARY
     // ===============================
 
+    const monthCondition = month ? 'AND MONTH(sh.SaleDate) = @month' : '';
+    const monthConditionSub = month ? 'AND MONTH(sh2.SaleDate) = @month' : '';
+
     const monthlySummaryQuery = `
       SELECT 
-        YEAR(s.SaleDate) AS SaleYear,
-        MONTH(s.SaleDate) AS SaleMonth,
-        MONTHNAME(s.SaleDate) AS MonthName,
-        COUNT(DISTINCT s.SaleID) AS TotalTransactions,
-        SUM(s.Quantity) AS TotalUnitsSold,
-        SUM(s.Quantity * s.UnitPrice) AS TotalRevenue,
-        SUM((s.Quantity * s.UnitPrice) - (s.Quantity * p.CostPrice)) AS TotalProfit,
-        AVG(s.Quantity * s.UnitPrice) AS AverageTransactionValue,
-        COUNT(DISTINCT s.ProductID) AS UniqueProductsSold,
-        COUNT(DISTINCT s.CustomerName) AS UniqueCustomers
-      FROM Sales s
-      INNER JOIN Products p ON s.ProductID = p.ProductID
-      WHERE YEAR(s.SaleDate) = @year
-        ${month ? 'AND MONTH(s.SaleDate) = @month' : ''}
+        YEAR(sh.SaleDate) AS SalesYear,
+        MONTH(sh.SaleDate) AS SalesMonth,
+        MONTHNAME(sh.SaleDate) AS MonthName,
+        COUNT(DISTINCT sh.SaleID) AS TotalSales,
+        IFNULL(SUM(si.Quantity), 0) AS TotalUnitsSold,
+        IFNULL(SUM(si.LineTotal), 0) AS TotalRevenue,
+        IFNULL(SUM(si.Quantity * (si.UnitPrice - p.CostPrice)), 0) AS TotalProfit,
+        IFNULL(AVG(si.LineTotal), 0) AS AverageTransactionValue,
+        COUNT(DISTINCT si.ProductID) AS UniqueProductsSold,
+        COUNT(DISTINCT sh.CustomerID) AS UniqueCustomers
+      FROM SalesHeaders sh
+      LEFT JOIN SalesItems si ON sh.SaleID = si.SaleID
+      LEFT JOIN Products p ON si.ProductID = p.ProductID
+      WHERE YEAR(sh.SaleDate) = @year
+        AND sh.Status = 'COMPLETED'
+        ${monthCondition}
       GROUP BY 
-        YEAR(s.SaleDate),
-        MONTH(s.SaleDate),
-        MONTHNAME(s.SaleDate)
-      ORDER BY SaleYear DESC, SaleMonth DESC
+        YEAR(sh.SaleDate),
+        MONTH(sh.SaleDate),
+        MONTHNAME(sh.SaleDate)
+      ORDER BY SalesYear DESC, SalesMonth DESC
     `;
 
     const monthlySummary = await executeQuery(monthlySummaryQuery, { year, month });
@@ -68,16 +73,18 @@ export async function GET(request) {
         p.ProductCode,
         p.ProductName,
         c.CategoryName,
-        SUM(s.Quantity) AS TotalUnitsSold,
-        SUM(s.Quantity * s.UnitPrice) AS TotalRevenue,
-        SUM((s.Quantity * s.UnitPrice) - (s.Quantity * p.CostPrice)) AS TotalProfit,
-        COUNT(s.SaleID) AS NumberOfSales,
-        AVG(s.Quantity) AS AvgUnitsPerSale
-      FROM Sales s
-      INNER JOIN Products p ON s.ProductID = p.ProductID
+        SUM(si.Quantity) AS TotalUnitsSold,
+        SUM(si.LineTotal) AS TotalRevenue,
+        SUM(si.Quantity * (si.UnitPrice - p.CostPrice)) AS TotalProfit,
+        COUNT(DISTINCT sh.SaleID) AS NumberOfSales,
+        AVG(si.Quantity) AS AvgUnitsPerSale
+      FROM SalesItems si
+      INNER JOIN SalesHeaders sh ON sh.SaleID = si.SaleID
+      INNER JOIN Products p ON si.ProductID = p.ProductID
       INNER JOIN Categories c ON p.CategoryID = c.CategoryID
-      WHERE YEAR(s.SaleDate) = @year
-        ${month ? 'AND MONTH(s.SaleDate) = @month' : ''}
+      WHERE YEAR(sh.SaleDate) = @year
+        AND sh.Status = 'COMPLETED'
+        ${monthCondition}
       GROUP BY 
         p.ProductID,
         p.ProductCode,
@@ -97,20 +104,27 @@ export async function GET(request) {
       SELECT 
         c.CategoryID,
         c.CategoryName,
-        COUNT(DISTINCT s.SaleID) AS TotalTransactions,
-        SUM(s.Quantity) AS TotalUnitsSold,
-        SUM(s.Quantity * s.UnitPrice) AS TotalRevenue,
-        SUM((s.Quantity * s.UnitPrice) - (s.Quantity * p.CostPrice)) AS TotalProfit,
+        COUNT(DISTINCT sh.SaleID) AS TotalTransactions,
+        SUM(si.Quantity) AS TotalUnitsSold,
+        SUM(si.LineTotal) AS TotalRevenue,
+        SUM(si.Quantity * (si.UnitPrice - p.CostPrice)) AS TotalProfit,
         COUNT(DISTINCT p.ProductID) AS UniqueProductsSold,
-        -- Calculate percentage of total revenue
-        CAST(SUM(s.Quantity * s.UnitPrice) * 100.0 / 
-          (SELECT SUM(Quantity * UnitPrice) FROM Sales WHERE YEAR(SaleDate) = @year 
-           ${month ? 'AND MONTH(SaleDate) = @month' : ''}) AS DECIMAL(5,2)) AS RevenuePercentage
-      FROM Sales s
-      INNER JOIN Products p ON s.ProductID = p.ProductID
+        CAST(SUM(si.LineTotal) * 100.0 / NULLIF(
+          (SELECT SUM(si2.LineTotal)
+           FROM SalesHeaders sh2
+           JOIN SalesItems si2 ON sh2.SaleID = si2.SaleID
+           WHERE YEAR(sh2.SaleDate) = @year
+             AND sh2.Status = 'COMPLETED'
+             ${monthConditionSub}
+          ), 0
+        ) AS DECIMAL(5,2)) AS RevenuePercentage
+      FROM SalesItems si
+      INNER JOIN SalesHeaders sh ON sh.SaleID = si.SaleID
+      INNER JOIN Products p ON si.ProductID = p.ProductID
       INNER JOIN Categories c ON p.CategoryID = c.CategoryID
-      WHERE YEAR(s.SaleDate) = @year
-        ${month ? 'AND MONTH(s.SaleDate) = @month' : ''}
+      WHERE YEAR(sh.SaleDate) = @year
+        AND sh.Status = 'COMPLETED'
+        ${monthCondition}
       GROUP BY 
         c.CategoryID,
         c.CategoryName
@@ -125,14 +139,16 @@ export async function GET(request) {
 
     const dailyTrendQuery = `
       SELECT 
-        DATE(s.SaleDate) AS SaleDate,
-        COUNT(DISTINCT s.SaleID) AS Transactions,
-        SUM(s.Quantity) AS UnitsSold,
-        SUM(s.Quantity * s.UnitPrice) AS Revenue
-      FROM Sales s
-      WHERE YEAR(s.SaleDate) = @year
-        ${month ? 'AND MONTH(s.SaleDate) = @month' : ''}
-      GROUP BY DATE(s.SaleDate)
+        DATE(sh.SaleDate) AS SaleDate,
+        COUNT(DISTINCT sh.SaleID) AS Transactions,
+        IFNULL(SUM(si.Quantity), 0) AS UnitsSold,
+        IFNULL(SUM(si.LineTotal), 0) AS Revenue
+      FROM SalesHeaders sh
+      LEFT JOIN SalesItems si ON sh.SaleID = si.SaleID
+      WHERE YEAR(sh.SaleDate) = @year
+        AND sh.Status = 'COMPLETED'
+        ${monthCondition}
+      GROUP BY DATE(sh.SaleDate)
       ORDER BY SaleDate DESC
     `;
 
