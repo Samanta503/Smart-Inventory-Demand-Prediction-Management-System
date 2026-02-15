@@ -36,7 +36,7 @@ export async function GET(request) {
         COUNT(*) AS TotalProducts,
         SUM(CurrentStock) AS TotalUnits,
         SUM(CurrentStock * CostPrice) AS TotalInventoryValue,
-        SUM(CASE WHEN CurrentStock <= ReorderLevel THEN 1 ELSE 0 END) AS LowStockProducts,
+        SUM(CASE WHEN CurrentStock > 0 AND CurrentStock <= ReorderLevel THEN 1 ELSE 0 END) AS LowStockProducts,
         SUM(CASE WHEN CurrentStock = 0 THEN 1 ELSE 0 END) AS OutOfStockProducts,
         AVG(CAST(CurrentStock AS DECIMAL)) AS AverageStock
       FROM Products
