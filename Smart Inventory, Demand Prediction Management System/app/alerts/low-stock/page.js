@@ -1,13 +1,13 @@
 'use client';
 
 /**
- * Low Stock Alerts Page
- * =====================
+ * Low Stock & Out of Stock Page
+ * ==============================
  *
- * Displays products that are running low on stock
- * and need to be reordered.
+ * Combined view of all products that are either low on stock
+ * or completely out of stock, with filter tabs.
  *
- * Professional Dark Theme - Matching Dashboard & Products
+ * Professional Dark Theme
  */
 
 import { useState, useEffect } from 'react';
@@ -25,6 +25,9 @@ import {
   HiOutlineArrowLeft,
   HiOutlineMagnifyingGlass,
   HiOutlineArchiveBox,
+  HiOutlineFunnel,
+  HiOutlineArrowTrendingDown,
+  HiOutlineNoSymbol,
 } from 'react-icons/hi2';
 
 // ─── Professional Dark Theme Styles ──────────────────────────────
@@ -80,7 +83,7 @@ const s = {
   },
   // Stats
   statsGrid: {
-    display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+    display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
     gap: '1rem', marginBottom: '1.25rem',
   },
   statCard: {
@@ -117,6 +120,35 @@ const s = {
     position: 'absolute', top: '-50%', right: '-50%', width: '200%', height: '200%',
     background: 'radial-gradient(circle at 70% 30%, rgba(245,158,11,0.04), transparent 40%)',
     pointerEvents: 'none',
+  },
+  // Filter Tabs
+  filterWrap: {
+    display: 'flex', gap: '0.6rem', position: 'relative', zIndex: 1,
+    flexWrap: 'wrap', alignItems: 'center',
+  },
+  filterLabel: {
+    color: 'rgba(148,163,184,0.7)', fontSize: '13px', fontWeight: '500',
+    display: 'flex', alignItems: 'center', gap: '0.4rem', marginRight: '0.5rem',
+  },
+  filterBtnActive: {
+    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+    border: 'none', padding: '0.55rem 1.15rem', borderRadius: '10px',
+    color: '#fff', fontWeight: '600', fontSize: '13px', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', gap: '0.4rem',
+    boxShadow: '0 3px 14px rgba(59,130,246,0.3)',
+    transition: 'all 0.2s ease',
+  },
+  filterBtn: {
+    background: 'rgba(59,130,246,0.08)',
+    border: '1px solid rgba(59,130,246,0.15)', padding: '0.55rem 1.15rem',
+    borderRadius: '10px', color: 'rgba(148,163,184,0.7)', fontWeight: '500',
+    fontSize: '13px', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', gap: '0.4rem',
+    transition: 'all 0.2s ease',
+  },
+  filterCount: {
+    background: 'rgba(255,255,255,0.12)', padding: '1px 7px',
+    borderRadius: '10px', fontSize: '11px', fontWeight: '700',
   },
   // Search
   searchWrap: { position: 'relative', zIndex: 1 },
@@ -171,12 +203,26 @@ const s = {
     width: '6px', height: '6px', borderRadius: '50%',
     background: color, boxShadow: `0 0 6px ${color}80`,
   }),
+  // Stock status badge
+  badgeOutOfStock: {
+    display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+    padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
+    background: 'rgba(239,68,68,0.12)', color: '#f87171',
+    border: '1px solid rgba(239,68,68,0.25)',
+  },
+  badgeLowStock: {
+    display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+    padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
+    background: 'rgba(245,158,11,0.12)', color: '#fbbf24',
+    border: '1px solid rgba(245,158,11,0.25)',
+  },
   // Product name
   productName: { color: '#e2e8f0', fontWeight: '600', fontSize: '13.5px' },
   productCode: {
     background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.15)',
     padding: '2px 7px', borderRadius: '4px', fontSize: '10.5px',
     fontFamily: "'SF Mono','Fira Code',monospace", color: '#60a5fa',
+    display: 'inline-block', marginTop: '3px',
   },
   // Stock value
   stockDanger: { color: '#f87171', fontWeight: '700', fontSize: '14px' },
@@ -242,25 +288,34 @@ const s = {
     display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
     transition: 'all 0.2s ease', textDecoration: 'none',
   },
+  navBtnDanger: {
+    background: 'rgba(239,68,68,0.1)',
+    border: '1px solid rgba(239,68,68,0.2)',
+    padding: '0.6rem 1.25rem', borderRadius: '10px',
+    color: '#f87171', fontWeight: '500', fontSize: '13.5px', cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+    transition: 'all 0.2s ease', textDecoration: 'none',
+  },
 };
 
 const onFocus = (e) => { e.target.style.borderColor = 'rgba(59,130,246,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)'; };
 const onBlur  = (e) => { e.target.style.borderColor = 'rgba(59,130,246,0.2)'; e.target.style.boxShadow = 'none'; };
 
-export default function LowStockPage() {
+export default function LowStockOutOfStockPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState('all');
 
-  useEffect(() => { fetchLowStock(); }, []);
+  useEffect(() => { fetchProducts(); }, [filter]);
 
-  async function fetchLowStock() {
+  async function fetchProducts() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('/api/products/low-stock');
+      const response = await fetch(`/api/products/low-stock?filter=${filter}`);
       const result = await response.json();
       if (!result.success) throw new Error(result.message);
       setProducts(result.data || []);
@@ -301,7 +356,7 @@ export default function LowStockPage() {
       <div style={s.loadingContainer}>
         <div style={s.spinner}></div>
         <span style={{ color: 'rgba(148,163,184,0.8)', fontSize: '15px', fontWeight: '500' }}>
-          Loading low stock products...
+          Loading stock alerts...
         </span>
       </div>
     );
@@ -314,7 +369,7 @@ export default function LowStockPage() {
         <div style={s.errorAlert}>
           <HiOutlineExclamationTriangle size={18} />
           <span>Error: {error}</span>
-          <button onClick={fetchLowStock} style={s.retryBtn}>
+          <button onClick={fetchProducts} style={s.retryBtn}>
             <HiOutlineArrowPath size={14} /> Retry
           </button>
         </div>
@@ -323,10 +378,13 @@ export default function LowStockPage() {
   }
 
   const statItems = summary ? [
-    { label: 'Low Stock Products', value: summary.totalLowStockProducts, icon: HiOutlineCube, color: '#fbbf24', bg: 'rgba(245,158,11,0.15)' },
+    { label: 'Total Products', value: summary.totalProducts, icon: HiOutlineCube, color: '#60a5fa', bg: 'rgba(59,130,246,0.15)' },
+    { label: 'Low Stock', value: summary.lowStockCount, icon: HiOutlineArrowTrendingDown, color: '#fbbf24', bg: 'rgba(245,158,11,0.15)' },
     { label: 'Out of Stock', value: summary.outOfStockCount, icon: HiOutlineXCircle, color: '#f87171', bg: 'rgba(239,68,68,0.15)' },
-    { label: 'Est. Restock Cost', value: formatCurrency(summary.totalEstimatedRestockCost), icon: HiOutlineBanknotes, color: '#60a5fa', bg: 'rgba(59,130,246,0.15)' },
+    { label: 'Est. Restock Cost', value: formatCurrency(summary.totalEstimatedRestockCost), icon: HiOutlineBanknotes, color: '#4ade80', bg: 'rgba(34,197,94,0.15)' },
   ] : [];
+
+  const filterLabel = filter === 'all' ? '' : filter === 'low-stock' ? 'low stock' : 'out of stock';
 
   return (
     <div style={s.page}>
@@ -336,12 +394,12 @@ export default function LowStockPage() {
         <div style={s.headerLeft}>
           <h1 style={s.headerTitle}>
             <span style={s.titleIcon}><HiOutlineExclamationTriangle size={22} /></span>
-            Low Stock Products
+            Low Stock & Out of Stock
           </h1>
-          <p style={s.headerSub}>Products that need to be reordered</p>
+          <p style={s.headerSub}>Products that need attention — reorder or restock immediately</p>
         </div>
         <div style={s.headerActions}>
-          <button style={s.refreshBtn} onClick={fetchLowStock}>
+          <button style={s.refreshBtn} onClick={fetchProducts}>
             <HiOutlineArrowPath size={16} /> Refresh
           </button>
           <Link href="/purchases/add" style={s.purchaseBtn}>
@@ -369,6 +427,37 @@ export default function LowStockPage() {
         </div>
       )}
 
+      {/* ─── Filter Tabs ─── */}
+      <div style={s.card}>
+        <div style={s.cardGlow}></div>
+        <div style={s.filterWrap}>
+          <span style={s.filterLabel}>
+            <HiOutlineFunnel size={14} /> Filter:
+          </span>
+          <button
+            style={filter === 'all' ? s.filterBtnActive : s.filterBtn}
+            onClick={() => setFilter('all')}
+          >
+            All
+            {summary && <span style={s.filterCount}>{summary.totalProducts}</span>}
+          </button>
+          <button
+            style={filter === 'low-stock' ? s.filterBtnActive : s.filterBtn}
+            onClick={() => setFilter('low-stock')}
+          >
+            <HiOutlineArrowTrendingDown size={13} /> Low Stock
+            {summary && <span style={s.filterCount}>{summary.lowStockCount}</span>}
+          </button>
+          <button
+            style={filter === 'out-of-stock' ? s.filterBtnActive : s.filterBtn}
+            onClick={() => setFilter('out-of-stock')}
+          >
+            <HiOutlineXCircle size={13} /> Out of Stock
+            {summary && <span style={s.filterCount}>{summary.outOfStockCount}</span>}
+          </button>
+        </div>
+      </div>
+
       {/* ─── Search ─── */}
       <div style={s.card}>
         <div style={s.cardGlow}></div>
@@ -384,7 +473,7 @@ export default function LowStockPage() {
           />
         </div>
         <div style={s.resultCount}>
-          Showing {filteredProducts.length} of {products.length} low stock products
+          Showing {filteredProducts.length} of {products.length} {filterLabel || 'stock alert'} products
         </div>
       </div>
 
@@ -396,7 +485,7 @@ export default function LowStockPage() {
             <table style={s.table}>
               <thead>
                 <tr>
-                  {['Urgency', 'Product', 'Category', 'Current Stock', 'Reorder Level', 'Units Needed', 'Suggested Order', 'Est. Cost', 'Supplier'].map(h => (
+                  {['Status', 'Urgency', 'Product', 'Category', 'Current Stock', 'Reorder Level', 'Units Needed', 'Suggested Order', 'Est. Cost', 'Supplier'].map(h => (
                     <th key={h} style={s.th}>{h}</th>
                   ))}
                 </tr>
@@ -408,6 +497,16 @@ export default function LowStockPage() {
                     onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.04)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                   >
+                    {/* Stock Status */}
+                    <td style={s.td}>
+                      <span style={product.StockStatus === 'OUT_OF_STOCK' ? s.badgeOutOfStock : s.badgeLowStock}>
+                        {product.StockStatus === 'OUT_OF_STOCK' ? (
+                          <><HiOutlineXCircle size={12} /> Out of Stock</>
+                        ) : (
+                          <><HiOutlineArrowTrendingDown size={12} /> Low Stock</>
+                        )}
+                      </span>
+                    </td>
                     {/* Urgency */}
                     <td style={s.td}>
                       <span style={getUrgencyBadge(product.UrgencyLevel)}>
@@ -480,7 +579,11 @@ export default function LowStockPage() {
             <p style={s.emptyText}>
               {searchTerm
                 ? 'Try adjusting your search terms'
-                : 'No products are currently below their reorder level.'}
+                : filter === 'out-of-stock'
+                  ? 'No products are currently out of stock.'
+                  : filter === 'low-stock'
+                    ? 'No products are below their reorder level.'
+                    : 'All products have sufficient stock levels.'}
             </p>
           </div>
         )}
@@ -492,6 +595,9 @@ export default function LowStockPage() {
         <div style={s.footerLinks}>
           <Link href="/alerts" style={s.navBtn}>
             <HiOutlineArrowLeft size={14} /> Back to Alerts
+          </Link>
+          <Link href="/alerts/dead-stock" style={s.navBtnDanger}>
+            <HiOutlineNoSymbol size={14} /> Dead Stock Analysis
           </Link>
           <Link href="/products" style={s.navBtn}>
             <HiOutlineCube size={14} /> View All Products

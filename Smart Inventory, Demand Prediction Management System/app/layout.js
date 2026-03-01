@@ -46,7 +46,7 @@ function Sidebar() {
       const lowStockData = await lowStockRes.json();
       const deadStockData = await deadStockRes.json();
       if (lowStockData.success) {
-        setLowStockCount(lowStockData.summary?.totalLowStockProducts || 0);
+        setLowStockCount(lowStockData.summary?.totalProducts || 0);
       }
       if (deadStockData.success) {
         setDeadStockCount(deadStockData.summary?.totalDeadStockProducts || 0);
@@ -99,7 +99,7 @@ function Sidebar() {
       title: 'Alerts & Reports',
       items: [
         { href: '/alerts', icon: <HiOutlineBell size={20} />, label: 'Alerts' },
-        { href: '/alerts/low-stock', icon: <HiOutlineExclamationTriangle size={20} />, label: 'Low Stock', badge: lowStockCount },
+        { href: '/alerts/low-stock', icon: <HiOutlineExclamationTriangle size={20} />, label: 'Low & Out of Stock', badge: lowStockCount },
         { href: '/alerts/dead-stock', icon: <HiOutlineNoSymbol size={20} />, label: 'Dead Stock', badge: deadStockCount },
       ]
     },

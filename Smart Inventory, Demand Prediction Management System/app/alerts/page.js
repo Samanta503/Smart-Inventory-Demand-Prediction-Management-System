@@ -622,7 +622,7 @@ export default function AlertsPage() {
         </h3>
         <div style={s.linksGrid}>
           <Link href="/alerts/low-stock" style={s.navBtnWarning}>
-            <HiOutlineExclamationTriangle size={14} /> Low Stock Products
+            <HiOutlineExclamationTriangle size={14} /> Low Stock & Out of Stock
           </Link>
           <Link href="/alerts/dead-stock" style={s.navBtnDanger}>
             <HiOutlineNoSymbol size={14} /> Dead Stock Analysis
