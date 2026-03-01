@@ -417,6 +417,7 @@ BEGIN
       AND AlertType IN ('LOW_STOCK','OUT_OF_STOCK');
 
     IF v_Exists = 0 THEN
+      -- No existing unresolved alert -> create new one
       INSERT INTO InventoryAlerts(ProductID, WarehouseID, AlertType, Message, CurrentStock, ReorderLevel)
       VALUES (
         NEW.ProductID,
@@ -429,6 +430,25 @@ BEGIN
         v_New,
         v_Reorder
       );
+    ELSEIF v_New = 0 THEN
+      -- Existing alert exists AND stock just hit zero -> upgrade to OUT_OF_STOCK
+      UPDATE InventoryAlerts
+      SET AlertType = 'OUT_OF_STOCK',
+          Message = CONCAT('Product "', v_ProductName, '" is OUT OF STOCK in this warehouse!'),
+          CurrentStock = 0,
+          CreatedAt = NOW()
+      WHERE ProductID = NEW.ProductID
+        AND WarehouseID = v_WarehouseID
+        AND IsResolved = 0
+        AND AlertType = 'LOW_STOCK';
+    ELSE
+      -- Existing alert, stock still > 0 -> update the recorded stock level
+      UPDATE InventoryAlerts
+      SET CurrentStock = v_New,
+          Message = CONCAT('Product "', v_ProductName, '" is LOW STOCK. Stock: ', v_New, ', Reorder: ', v_Reorder)
+      WHERE ProductID = NEW.ProductID
+        AND WarehouseID = v_WarehouseID
+        AND IsResolved = 0;
     END IF;
   END IF;
 END$$
