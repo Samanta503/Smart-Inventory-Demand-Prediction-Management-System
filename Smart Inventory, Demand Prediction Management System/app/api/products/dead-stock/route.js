@@ -25,7 +25,8 @@ export async function GET(request) {
       );
     }
 
-    // Query finds products with no sales or no sales in the specified period
+    // Use raw SQL query instead of stored procedure for more control
+    // This query finds products with no sales or no sales in the specified period
     const query = `
       SELECT 
         p.ProductID,
@@ -114,7 +115,6 @@ export async function GET(request) {
       summary,
       data: data,
     });
-    
   } catch (error) {
     console.error('Error fetching dead stock products:', error);
 
@@ -127,4 +127,4 @@ export async function GET(request) {
       { status: 500 }
     );
   }
-}
+} 
