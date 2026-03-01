@@ -1,13 +1,15 @@
 'use client';
 
-import { HiOutlineShoppingCart, HiOutlineCheckCircle, HiOutlineExclamationTriangle, HiOutlinePlusCircle, HiOutlineXMark, HiOutlineBanknotes, HiOutlineArrowLeft } from 'react-icons/hi2';
+import { HiOutlineShoppingCart, HiOutlineCheckCircle, HiOutlineExclamationTriangle, HiOutlinePlusCircle, HiOutlineXMark, HiOutlineBanknotes, HiOutlineArrowLeft, HiOutlineBuildingStorefront, HiOutlineInformationCircle } from 'react-icons/hi2';
 
 /**
  * Add Sale Page
  * =============
  * 
  * Form to record a new sale with multiple items.
- * Supports customer selection, warehouse selection, and multi-item cart.
+ * Auto-detects which warehouse(s) have the selected product in stock.
+ * Once a warehouse is chosen (or auto-selected), subsequent products
+ * are filtered to that warehouse.
  */
 
 import { useState, useEffect } from 'react';
@@ -31,6 +33,9 @@ export default function AddSalePage() {
     quantity: '',
     unitPrice: ''
   });
+
+  // Available warehouses for the currently selected product
+  const [availableWarehouses, setAvailableWarehouses] = useState([]);
 
   // Data for dropdowns
   const [products, setProducts] = useState([]);
@@ -61,12 +66,7 @@ export default function AddSalePage() {
       
       if (productsData.success) setProducts(productsData.data || []);
       if (customersData.success) setCustomers(customersData.data || []);
-      if (warehousesData.success) {
-        setWarehouses(warehousesData.data || []);
-        if (warehousesData.data && warehousesData.data.length > 0) {
-          setWarehouseId(warehousesData.data[0].WarehouseID.toString());
-        }
-      }
+      if (warehousesData.success) setWarehouses(warehousesData.data || []);
     } catch (err) {
       setError('Failed to load data');
     } finally {
@@ -78,19 +78,93 @@ export default function AddSalePage() {
     return products.find(p => p.ProductID === parseInt(currentItem.productId));
   }
 
+  /**
+   * Get the stock available in the currently selected warehouse for a product
+   */
+  function getWarehouseStock(product, whId) {
+    if (!product || !product.warehouseStocks || !whId) return 0;
+    const ws = product.warehouseStocks.find(s => s.warehouseId === parseInt(whId));
+    return ws ? ws.quantity : 0;
+  }
+
+  /**
+   * When a product is selected, detect which warehouses have it in stock
+   */
+  function handleProductSelect(productId) {
+    const prod = products.find(p => p.ProductID === parseInt(productId));
+    
+    setCurrentItem({
+      productId: productId,
+      quantity: '',
+      unitPrice: prod?.SellingPrice || ''
+    });
+
+    if (prod && prod.warehouseStocks && prod.warehouseStocks.length > 0) {
+      setAvailableWarehouses(prod.warehouseStocks);
+      
+      // If warehouse is already set (from a previous item), keep it if this product is available there
+      if (warehouseId) {
+        const existsInCurrent = prod.warehouseStocks.find(ws => ws.warehouseId === parseInt(warehouseId));
+        if (!existsInCurrent) {
+          // Product not available in current warehouse - auto-switch if only one option
+          if (prod.warehouseStocks.length === 1) {
+            setWarehouseId(prod.warehouseStocks[0].warehouseId.toString());
+          } else {
+            // Multiple warehouses - let admin choose, clear current warehouse
+            setWarehouseId('');
+          }
+        }
+      } else {
+        // No warehouse selected yet - auto-select if only one warehouse has this product
+        if (prod.warehouseStocks.length === 1) {
+          setWarehouseId(prod.warehouseStocks[0].warehouseId.toString());
+        }
+      }
+    } else {
+      setAvailableWarehouses([]);
+    }
+  }
+
+  /**
+   * Get products filtered by the selected warehouse (if one is selected)
+   * Shows products that have stock in the selected warehouse
+   */
+  function getFilteredProducts() {
+    if (warehouseId) {
+      // Only show products with stock in selected warehouse
+      return products.filter(p => 
+        p.warehouseStocks && 
+        p.warehouseStocks.some(ws => ws.warehouseId === parseInt(warehouseId) && ws.quantity > 0)
+      );
+    }
+    // No warehouse selected yet - show all products with any stock
+    return products.filter(p => p.CurrentStock > 0);
+  }
+
   function addToCart() {
     const product = getSelectedProduct();
-    if (!product || !currentItem.quantity) return;
+    if (!product || !currentItem.quantity || !warehouseId) return;
 
     const unitPrice = currentItem.unitPrice || product.SellingPrice;
+    const warehouseStock = getWarehouseStock(product, warehouseId);
+    
+    // Validate quantity against warehouse stock
+    if (parseInt(currentItem.quantity) > warehouseStock) {
+      setError(`Only ${warehouseStock} units available in the selected warehouse`);
+      return;
+    }
     
     // Check if product already in cart
     const existingIndex = cartItems.findIndex(item => item.productId === parseInt(currentItem.productId));
     
     if (existingIndex >= 0) {
-      // Update quantity
+      const newQty = cartItems[existingIndex].quantity + parseInt(currentItem.quantity);
+      if (newQty > warehouseStock) {
+        setError(`Only ${warehouseStock} units available. You already have ${cartItems[existingIndex].quantity} in cart.`);
+        return;
+      }
       const updatedCart = [...cartItems];
-      updatedCart[existingIndex].quantity += parseInt(currentItem.quantity);
+      updatedCart[existingIndex].quantity = newQty;
       setCartItems(updatedCart);
     } else {
       setCartItems([...cartItems, {
@@ -99,16 +173,22 @@ export default function AddSalePage() {
         productCode: product.ProductCode,
         quantity: parseInt(currentItem.quantity),
         unitPrice: parseFloat(unitPrice),
-        maxStock: product.CurrentStock
+        maxStock: warehouseStock
       }]);
     }
 
-    // Reset current item
+    setError(null);
     setCurrentItem({ productId: '', quantity: '', unitPrice: '' });
+    setAvailableWarehouses([]);
   }
 
   function removeFromCart(index) {
-    setCartItems(cartItems.filter((_, i) => i !== index));
+    const newCart = cartItems.filter((_, i) => i !== index);
+    setCartItems(newCart);
+    // If cart is empty, allow warehouse to be changed
+    if (newCart.length === 0) {
+      setWarehouseId('');
+    }
   }
 
   function calculateTotal() {
@@ -122,7 +202,7 @@ export default function AddSalePage() {
 
     try {
       if (!customerId || !warehouseId || cartItems.length === 0) {
-        throw new Error('Please select customer, warehouse, and add at least one item');
+        throw new Error('Please select customer, add at least one item');
       }
 
       const response = await fetch('/api/sales', {
@@ -162,6 +242,11 @@ export default function AddSalePage() {
     }).format(value || 0);
   }
 
+  // Get the selected product's stock in selected warehouse
+  const selectedProduct = getSelectedProduct();
+  const currentWarehouseStock = selectedProduct ? getWarehouseStock(selectedProduct, warehouseId) : 0;
+  const filteredProducts = getFilteredProducts();
+
   if (loading) {
     return (
       <div className="loading">
@@ -196,7 +281,7 @@ export default function AddSalePage() {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '1.5rem', alignItems: 'start' }}>
         {/* Left: Form */}
         <div>
-          {/* Customer & Warehouse Selection */}
+          {/* Customer & Notes Selection */}
           <div className="card" style={{ marginBottom: '1rem' }}>
             <h3 style={{ marginBottom: '1rem' }}>Sale Details</h3>
             <div className="form-row">
@@ -217,69 +302,195 @@ export default function AddSalePage() {
                 </select>
               </div>
               <div className="form-group">
-                <label className="form-label">Warehouse *</label>
-                <select
-                  value={warehouseId}
-                  onChange={(e) => setWarehouseId(e.target.value)}
+                <label className="form-label">Notes</label>
+                <input
+                  type="text"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
                   className="form-input"
-                  required
-                >
-                  <option value="">Select warehouse...</option>
-                  {warehouses.map(w => (
-                    <option key={w.WarehouseID} value={w.WarehouseID}>
-                      {w.WarehouseName} (Stock: {w.TotalStock})
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Optional notes..."
+                />
               </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">Notes</label>
-              <input
-                type="text"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                className="form-input"
-                placeholder="Optional notes..."
-              />
             </div>
           </div>
 
-          {/* Add Items */}
+          {/* Add Items - with auto warehouse detection */}
           <div className="card" style={{ marginBottom: '1rem' }}>
             <h3 style={{ marginBottom: '1rem' }}>Add Items</h3>
-            <div className="form-row">
-              <div className="form-group" style={{ flex: 2 }}>
-                <label className="form-label">Product</label>
-                <select
-                  value={currentItem.productId}
-                  onChange={(e) => {
-                    const prod = products.find(p => p.ProductID === parseInt(e.target.value));
-                    setCurrentItem({
-                      productId: e.target.value,
-                      quantity: '',
-                      unitPrice: prod?.SellingPrice || ''
-                    });
-                  }}
-                  className="form-input"
-                >
-                  <option value="">Select product...</option>
-                  {products.filter(p => p.CurrentStock > 0).map(p => (
+            
+            {/* Product selection */}
+            <div className="form-group">
+              <label className="form-label">Product</label>
+              <select
+                value={currentItem.productId}
+                onChange={(e) => handleProductSelect(e.target.value)}
+                className="form-input"
+              >
+                <option value="">Select product...</option>
+                {filteredProducts.map(p => {
+                  // Show warehouse-specific stock if warehouse is selected, else total stock
+                  const stock = warehouseId 
+                    ? getWarehouseStock(p, warehouseId) 
+                    : p.CurrentStock;
+                  return (
                     <option key={p.ProductID} value={p.ProductID}>
-                      {p.ProductCode} - {p.ProductName} (Stock: {p.CurrentStock})
+                      {p.ProductCode} - {p.ProductName} (Stock: {stock})
                     </option>
-                  ))}
-                </select>
+                  );
+                })}
+              </select>
+            </div>
+
+            {/* Warehouse auto-detection display */}
+            {selectedProduct && (
+              <div style={{ 
+                background: 'linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%)',
+                border: '1px solid #bfdbfe',
+                borderRadius: '10px',
+                padding: '0.85rem 1rem',
+                marginBottom: '1rem',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <HiOutlineBuildingStorefront size={16} style={{ color: '#2563eb' }} />
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#1e40af' }}>
+                    Warehouse Availability for "{selectedProduct.ProductName}"
+                  </span>
+                </div>
+
+                {selectedProduct.warehouseStocks && selectedProduct.warehouseStocks.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {selectedProduct.warehouseStocks.map((ws) => {
+                      const isSelected = parseInt(warehouseId) === ws.warehouseId;
+                      const isDisabled = cartItems.length > 0 && parseInt(warehouseId) !== ws.warehouseId;
+                      return (
+                        <button
+                          key={ws.warehouseId}
+                          type="button"
+                          onClick={() => {
+                            if (!isDisabled) {
+                              setWarehouseId(ws.warehouseId.toString());
+                            }
+                          }}
+                          disabled={isDisabled}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            padding: '0.5rem 0.85rem',
+                            borderRadius: '8px',
+                            border: isSelected ? '2px solid #2563eb' : '1px solid #cbd5e1',
+                            background: isSelected 
+                              ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' 
+                              : isDisabled ? '#f1f5f9' : '#ffffff',
+                            color: isSelected ? '#ffffff' : isDisabled ? '#94a3b8' : '#334155',
+                            cursor: isDisabled ? 'not-allowed' : 'pointer',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                            transition: 'all 0.2s ease',
+                            opacity: isDisabled ? 0.5 : 1,
+                          }}
+                        >
+                          <HiOutlineBuildingStorefront size={14} />
+                          <span>{ws.warehouseName}</span>
+                          <span style={{
+                            background: isSelected ? 'rgba(255,255,255,0.25)' : '#e0f2fe',
+                            color: isSelected ? '#ffffff' : '#0369a1',
+                            padding: '1px 8px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                          }}>
+                            {ws.quantity} units
+                          </span>
+                          {isSelected && <HiOutlineCheckCircle size={16} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '13px', color: '#dc2626' }}>
+                    <HiOutlineExclamationTriangle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+                    This product is not available in any warehouse
+                  </div>
+                )}
+
+                {cartItems.length > 0 && selectedProduct.warehouseStocks?.length > 1 && (
+                  <div style={{ 
+                    marginTop: '0.5rem', 
+                    fontSize: '11px', 
+                    color: '#6b7280',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.3rem'
+                  }}>
+                    <HiOutlineInformationCircle size={13} />
+                    Warehouse is locked to "{warehouses.find(w => w.WarehouseID == warehouseId)?.WarehouseName}" because you have items in cart. Remove all items to change warehouse.
+                  </div>
+                )}
               </div>
+            )}
+
+            {/* Selected warehouse indicator (when no product is selected but warehouse is set) */}
+            {!selectedProduct && warehouseId && (
+              <div style={{
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '8px',
+                padding: '0.6rem 0.85rem',
+                marginBottom: '1rem',
+                fontSize: '13px',
+                color: '#166534',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+              }}>
+                <HiOutlineBuildingStorefront size={15} />
+                <span>
+                  Selling from: <strong>{warehouses.find(w => w.WarehouseID == warehouseId)?.WarehouseName}</strong>
+                </span>
+                {cartItems.length === 0 && (
+                  <button 
+                    type="button"
+                    onClick={() => setWarehouseId('')}
+                    style={{
+                      marginLeft: 'auto',
+                      background: 'none',
+                      border: 'none',
+                      color: '#dc2626',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Change
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Quantity and Price row */}
+            <div className="form-row">
               <div className="form-group">
-                <label className="form-label">Qty</label>
+                <label className="form-label">
+                  Qty
+                  {selectedProduct && warehouseId && (
+                    <span style={{ 
+                      fontWeight: '400', 
+                      color: currentWarehouseStock > 0 ? '#16a34a' : '#dc2626',
+                      marginLeft: '6px'
+                    }}>
+                      (Available: {currentWarehouseStock})
+                    </span>
+                  )}
+                </label>
                 <input
                   type="number"
                   value={currentItem.quantity}
                   onChange={(e) => setCurrentItem({...currentItem, quantity: e.target.value})}
                   className="form-input"
                   min="1"
-                  max={getSelectedProduct()?.CurrentStock || 999}
+                  max={currentWarehouseStock || 999}
+                  placeholder={currentWarehouseStock ? `Max: ${currentWarehouseStock}` : ''}
                 />
               </div>
               <div className="form-group">
@@ -298,7 +509,8 @@ export default function AddSalePage() {
                   type="button"
                   className="btn btn-primary"
                   onClick={addToCart}
-                  disabled={!currentItem.productId || !currentItem.quantity}
+                  disabled={!currentItem.productId || !currentItem.quantity || !warehouseId}
+                  title={!warehouseId ? 'Select a product first to auto-detect warehouse' : ''}
                 >
                   <HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Add
                 </button>
@@ -345,7 +557,7 @@ export default function AddSalePage() {
               </table>
             ) : (
               <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                No items added yet. Select products above.
+                No items added yet. Select a product above — the warehouse will be auto-detected.
               </div>
             )}
           </div>
@@ -360,9 +572,26 @@ export default function AddSalePage() {
               <span>Customer:</span>
               <strong>{customers.find(c => c.CustomerID == customerId)?.CustomerName || '-'}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', alignItems: 'center' }}>
               <span>Warehouse:</span>
-              <strong>{warehouses.find(w => w.WarehouseID == warehouseId)?.WarehouseName || '-'}</strong>
+              {warehouseId ? (
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: '#eff6ff',
+                  color: '#1d4ed8',
+                  padding: '2px 10px',
+                  borderRadius: '6px',
+                  fontWeight: '600',
+                  fontSize: '13px',
+                }}>
+                  <HiOutlineBuildingStorefront size={13} />
+                  {warehouses.find(w => w.WarehouseID == warehouseId)?.WarehouseName}
+                </span>
+              ) : (
+                <span style={{ color: '#94a3b8', fontSize: '13px', fontStyle: 'italic' }}>Auto-detected on product select</span>
+              )}
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>Items:</span>
@@ -383,6 +612,21 @@ export default function AddSalePage() {
           >
             {submitting ? 'Processing...' : <><HiOutlineBanknotes size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Complete Sale</>}
           </button>
+
+          {(!warehouseId && cartItems.length === 0) && (
+            <div style={{ 
+              marginTop: '0.75rem', 
+              fontSize: '12px', 
+              color: '#6b7280', 
+              textAlign: 'center',
+              background: '#f9fafb',
+              padding: '0.6rem',
+              borderRadius: '8px',
+            }}>
+              <HiOutlineInformationCircle size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
+              Warehouse is auto-selected when you choose a product
+            </div>
+          )}
         </div>
       </div>
     </div>

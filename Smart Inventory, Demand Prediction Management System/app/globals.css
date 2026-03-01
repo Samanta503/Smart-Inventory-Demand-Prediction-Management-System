@@ -339,6 +339,43 @@ a:hover {
   white-space: nowrap;
 }
 
+/* Sidebar Alert Badge */
+.nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: auto;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5);
+  animation: badgePulse 2s ease-in-out infinite;
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar-collapsed .nav-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+  padding: 0 4px;
+  margin-left: 0;
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 2px 8px rgba(239, 68, 68, 0.5); }
+  50% { box-shadow: 0 2px 14px rgba(239, 68, 68, 0.8); }
+}
+
 .nav-indicator {
   position: absolute;
   right: 0;

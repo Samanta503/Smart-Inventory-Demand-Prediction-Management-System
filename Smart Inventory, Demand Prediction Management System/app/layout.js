@@ -17,7 +17,7 @@ import { HiOutlineChartBar, HiOutlineCube, HiOutlinePlusCircle, HiOutlineTag, Hi
 import './globals.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import LoginPage from '@/app/login/page';
 
@@ -32,6 +32,36 @@ function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { user, logout } = useAuth();
+
+  // Alert counts for sidebar badges
+  const [lowStockCount, setLowStockCount] = useState(0);
+  const [deadStockCount, setDeadStockCount] = useState(0);
+
+  const fetchAlertCounts = useCallback(async () => {
+    try {
+      const [lowStockRes, deadStockRes] = await Promise.all([
+        fetch('/api/products/low-stock'),
+        fetch('/api/products/dead-stock')
+      ]);
+      const lowStockData = await lowStockRes.json();
+      const deadStockData = await deadStockRes.json();
+      if (lowStockData.success) {
+        setLowStockCount(lowStockData.summary?.totalLowStockProducts || 0);
+      }
+      if (deadStockData.success) {
+        setDeadStockCount(deadStockData.summary?.totalDeadStockProducts || 0);
+      }
+    } catch (err) {
+      // Silently fail - badges just won't show
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAlertCounts();
+    // Refresh counts every 60 seconds
+    const interval = setInterval(fetchAlertCounts, 60000);
+    return () => clearInterval(interval);
+  }, [fetchAlertCounts]);
 
   const navSections = [
     {
@@ -69,8 +99,8 @@ function Sidebar() {
       title: 'Alerts & Reports',
       items: [
         { href: '/alerts', icon: <HiOutlineBell size={20} />, label: 'Alerts' },
-        { href: '/alerts/low-stock', icon: <HiOutlineExclamationTriangle size={20} />, label: 'Low Stock' },
-        { href: '/alerts/dead-stock', icon: <HiOutlineNoSymbol size={20} />, label: 'Dead Stock' },
+        { href: '/alerts/low-stock', icon: <HiOutlineExclamationTriangle size={20} />, label: 'Low Stock', badge: lowStockCount },
+        { href: '/alerts/dead-stock', icon: <HiOutlineNoSymbol size={20} />, label: 'Dead Stock', badge: deadStockCount },
       ]
     },
     {
@@ -133,6 +163,9 @@ function Sidebar() {
                   >
                     <span className="nav-icon">{item.icon}</span>
                     <span className="nav-label">{item.label}</span>
+                    {item.badge > 0 && (
+                      <span className="nav-badge">{item.badge}</span>
+                    )}
                     {isActive(item.href) && <span className="nav-indicator" />}
                   </Link>
                 </li>
