@@ -1,3 +1,17 @@
+/**
+ * Monthly Sales Analytics API Route
+ * ==================================
+ * 
+ * GET /api/analytics/monthly-sales
+ * Returns monthly sales data for trend analysis and demand prediction
+ * 
+ * This endpoint provides:
+ * - Monthly revenue and unit sales
+ * - Top selling products
+ * - Category performance
+ * - Year-over-year comparisons
+ */
+
 import { NextResponse } from 'next/server';
 import { executeQuery } from '@/lib/db';
 
@@ -200,4 +214,3 @@ export async function GET(request) {
     );
   }
 }
-
