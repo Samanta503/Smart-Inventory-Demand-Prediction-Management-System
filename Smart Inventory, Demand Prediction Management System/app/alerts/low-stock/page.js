@@ -1,43 +1,268 @@
 'use client';
 
-import { HiOutlineExclamationTriangle, HiOutlineArrowPath, HiOutlineInboxArrowDown, HiOutlineCube, HiOutlineXCircle, HiOutlineExclamationCircle, HiOutlineBanknotes, HiOutlinePhone, HiOutlineEnvelope, HiOutlineCheckCircle, HiOutlineArrowLeft } from 'react-icons/hi2';
-
 /**
  * Low Stock Alerts Page
  * =====================
- * 
+ *
  * Displays products that are running low on stock
  * and need to be reordered.
+ *
+ * Professional Dark Theme - Matching Dashboard & Products
  */
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import {
+  HiOutlineExclamationTriangle,
+  HiOutlineArrowPath,
+  HiOutlineInboxArrowDown,
+  HiOutlineCube,
+  HiOutlineXCircle,
+  HiOutlineBanknotes,
+  HiOutlinePhone,
+  HiOutlineEnvelope,
+  HiOutlineCheckCircle,
+  HiOutlineArrowLeft,
+  HiOutlineMagnifyingGlass,
+  HiOutlineArchiveBox,
+} from 'react-icons/hi2';
+
+// ─── Professional Dark Theme Styles ──────────────────────────────
+const s = {
+  page: {
+    minHeight: '100vh',
+    background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+    padding: '1.5rem 2rem 2rem',
+  },
+  // Header
+  header: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    marginBottom: '1.5rem', padding: '1.5rem 1.75rem',
+    background: 'linear-gradient(145deg, rgba(30,41,59,0.8), rgba(15,23,42,0.9))',
+    borderRadius: '20px', border: '1px solid rgba(245,158,11,0.15)',
+    backdropFilter: 'blur(20px)', position: 'relative', overflow: 'hidden',
+  },
+  headerGlow: {
+    position: 'absolute', top: '-50%', left: '-50%', width: '200%', height: '200%',
+    background: 'radial-gradient(circle at 30% 30%, rgba(245,158,11,0.08), transparent 40%)',
+    pointerEvents: 'none',
+  },
+  headerLeft: { position: 'relative', zIndex: 1 },
+  headerTitle: {
+    fontSize: '1.75rem', fontWeight: '700', color: '#fff',
+    letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '0.75rem',
+  },
+  titleIcon: {
+    width: '42px', height: '42px',
+    background: 'linear-gradient(135deg, #f59e0b, #ef4444)',
+    borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    boxShadow: '0 4px 12px rgba(245,158,11,0.4)', color: '#fff',
+  },
+  headerSub: { color: 'rgba(148,163,184,0.8)', fontSize: '0.9rem', marginTop: '0.35rem' },
+  headerActions: {
+    display: 'flex', gap: '0.75rem', position: 'relative', zIndex: 1,
+  },
+  refreshBtn: {
+    background: 'rgba(59,130,246,0.15)',
+    border: '1px solid rgba(59,130,246,0.25)',
+    padding: '0.7rem 1.25rem', borderRadius: '12px',
+    color: '#60a5fa', fontWeight: '600', fontSize: '14px', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', gap: '0.5rem',
+    transition: 'all 0.2s ease',
+  },
+  purchaseBtn: {
+    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+    border: 'none', padding: '0.7rem 1.35rem', borderRadius: '12px',
+    color: '#fff', fontWeight: '600', fontSize: '14px', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', gap: '0.5rem',
+    boxShadow: '0 4px 16px rgba(59,130,246,0.35)',
+    transition: 'all 0.2s ease', textDecoration: 'none',
+  },
+  // Stats
+  statsGrid: {
+    display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '1rem', marginBottom: '1.25rem',
+  },
+  statCard: {
+    background: 'linear-gradient(145deg, rgba(30,41,59,0.7), rgba(15,23,42,0.85))',
+    borderRadius: '16px', padding: '1.25rem 1.35rem',
+    border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden',
+  },
+  statGlow: (color) => ({
+    position: 'absolute', top: '-30%', right: '-30%', width: '120%', height: '120%',
+    background: `radial-gradient(circle at 80% 20%, ${color}, transparent 50%)`,
+    pointerEvents: 'none', opacity: 0.12,
+  }),
+  statIconWrap: (bg) => ({
+    width: '40px', height: '40px', borderRadius: '10px', background: bg,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    marginBottom: '0.5rem', position: 'relative', zIndex: 1,
+  }),
+  statValue: {
+    color: '#fff', fontSize: '1.65rem', fontWeight: '700',
+    position: 'relative', zIndex: 1, display: 'block',
+  },
+  statLabel: {
+    color: 'rgba(148,163,184,0.7)', fontSize: '12px', fontWeight: '500',
+    textTransform: 'uppercase', letterSpacing: '0.4px',
+    position: 'relative', zIndex: 1,
+  },
+  // Card
+  card: {
+    background: 'linear-gradient(145deg, rgba(30,41,59,0.7), rgba(15,23,42,0.85))',
+    borderRadius: '18px', padding: '1.5rem', marginBottom: '1.25rem',
+    border: '1px solid rgba(255,255,255,0.05)', position: 'relative', overflow: 'hidden',
+  },
+  cardGlow: {
+    position: 'absolute', top: '-50%', right: '-50%', width: '200%', height: '200%',
+    background: 'radial-gradient(circle at 70% 30%, rgba(245,158,11,0.04), transparent 40%)',
+    pointerEvents: 'none',
+  },
+  // Search
+  searchWrap: { position: 'relative', zIndex: 1 },
+  searchIcon: {
+    position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)',
+    color: 'rgba(148,163,184,0.5)', pointerEvents: 'none',
+  },
+  searchInput: {
+    width: '100%', padding: '0.75rem 1rem 0.75rem 2.6rem', fontSize: '14px',
+    borderRadius: '12px', border: '1px solid rgba(59,130,246,0.2)',
+    background: 'rgba(15,23,42,0.6)', color: '#e2e8f0', outline: 'none',
+    transition: 'all 0.2s ease',
+  },
+  resultCount: {
+    fontSize: '12px', color: 'rgba(148,163,184,0.5)', marginTop: '0.6rem',
+    position: 'relative', zIndex: 1,
+  },
+  // Table
+  tableWrap: { overflowX: 'auto', position: 'relative', zIndex: 1 },
+  table: { width: '100%', borderCollapse: 'separate', borderSpacing: '0 0.35rem' },
+  th: {
+    padding: '0.7rem 0.85rem', fontSize: '11px', fontWeight: '600',
+    textTransform: 'uppercase', letterSpacing: '0.6px',
+    color: 'rgba(148,163,184,0.6)', textAlign: 'left', whiteSpace: 'nowrap',
+    borderBottom: '1px solid rgba(255,255,255,0.04)',
+  },
+  td: {
+    padding: '0.8rem 0.85rem', fontSize: '13.5px', color: '#cbd5e1',
+    borderBottom: '1px solid rgba(255,255,255,0.03)', whiteSpace: 'nowrap',
+    verticalAlign: 'middle',
+  },
+  // Urgency badges
+  badgeCritical: {
+    display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+    padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
+    background: 'rgba(239,68,68,0.12)', color: '#f87171',
+    border: '1px solid rgba(239,68,68,0.25)',
+  },
+  badgeHigh: {
+    display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+    padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
+    background: 'rgba(245,158,11,0.12)', color: '#fbbf24',
+    border: '1px solid rgba(245,158,11,0.25)',
+  },
+  badgeMedium: {
+    display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+    padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
+    background: 'rgba(59,130,246,0.12)', color: '#60a5fa',
+    border: '1px solid rgba(59,130,246,0.25)',
+  },
+  statusDot: (color) => ({
+    width: '6px', height: '6px', borderRadius: '50%',
+    background: color, boxShadow: `0 0 6px ${color}80`,
+  }),
+  // Product name
+  productName: { color: '#e2e8f0', fontWeight: '600', fontSize: '13.5px' },
+  productCode: {
+    background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.15)',
+    padding: '2px 7px', borderRadius: '4px', fontSize: '10.5px',
+    fontFamily: "'SF Mono','Fira Code',monospace", color: '#60a5fa',
+  },
+  // Stock value
+  stockDanger: { color: '#f87171', fontWeight: '700', fontSize: '14px' },
+  stockWarning: { color: '#fbbf24', fontWeight: '700', fontSize: '14px' },
+  stockUnit: { color: 'rgba(148,163,184,0.5)', fontSize: '12px', fontWeight: '400', marginLeft: '3px' },
+  // Suggested order
+  orderQty: {
+    display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+    padding: '3px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
+    background: 'rgba(34,197,94,0.1)', color: '#4ade80',
+    border: '1px solid rgba(34,197,94,0.2)',
+  },
+  // Cost
+  costText: { color: '#4ade80', fontWeight: '600', fontSize: '13.5px' },
+  // Supplier pill
+  supplierName: { color: '#e2e8f0', fontWeight: '500', fontSize: '13px' },
+  supplierDetail: {
+    color: 'rgba(148,163,184,0.5)', fontSize: '11px',
+    display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '2px',
+  },
+  // Error
+  errorAlert: {
+    background: 'linear-gradient(135deg, rgba(239,68,68,0.15), rgba(15,23,42,0.9))',
+    borderRadius: '14px', padding: '1rem 1.25rem', marginBottom: '1.25rem',
+    display: 'flex', alignItems: 'center', gap: '0.6rem',
+    border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', fontSize: '14px', fontWeight: '500',
+  },
+  retryBtn: {
+    marginLeft: 'auto', padding: '5px 14px', borderRadius: '8px', fontSize: '12px',
+    fontWeight: '600', cursor: 'pointer',
+    background: 'rgba(239,68,68,0.15)', color: '#f87171',
+    border: '1px solid rgba(239,68,68,0.3)',
+    display: 'flex', alignItems: 'center', gap: '0.3rem',
+  },
+  // Empty
+  empty: { textAlign: 'center', padding: '3rem 1rem', position: 'relative', zIndex: 1 },
+  emptyIconWrap: {
+    width: '68px', height: '68px', borderRadius: '18px', margin: '0 auto 1rem',
+    background: 'rgba(34,197,94,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+  },
+  emptyTitle: { color: '#e2e8f0', fontSize: '1.1rem', fontWeight: '600', marginBottom: '0.4rem' },
+  emptyText: { color: 'rgba(148,163,184,0.6)', fontSize: '14px', marginBottom: '1rem' },
+  // Loading
+  loadingContainer: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    justifyContent: 'center', minHeight: '80vh', gap: '1.5rem',
+    background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+  },
+  spinner: {
+    width: '50px', height: '50px',
+    border: '3px solid rgba(245,158,11,0.2)', borderTop: '3px solid #f59e0b',
+    borderRadius: '50%', animation: 'spin 1s linear infinite',
+  },
+  // Footer links
+  footerLinks: {
+    display: 'flex', gap: '0.75rem', position: 'relative', zIndex: 1,
+  },
+  navBtn: {
+    background: 'rgba(59,130,246,0.1)',
+    border: '1px solid rgba(59,130,246,0.2)',
+    padding: '0.6rem 1.25rem', borderRadius: '10px',
+    color: '#60a5fa', fontWeight: '500', fontSize: '13.5px', cursor: 'pointer',
+    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+    transition: 'all 0.2s ease', textDecoration: 'none',
+  },
+};
+
+const onFocus = (e) => { e.target.style.borderColor = 'rgba(59,130,246,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)'; };
+const onBlur  = (e) => { e.target.style.borderColor = 'rgba(59,130,246,0.2)'; e.target.style.boxShadow = 'none'; };
 
 export default function LowStockPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    fetchLowStock();
-  }, []);
+  useEffect(() => { fetchLowStock(); }, []);
 
-  /**
-   * Fetch low stock products from API
-   */
   async function fetchLowStock() {
     try {
       setLoading(true);
       setError(null);
-
       const response = await fetch('/api/products/low-stock');
       const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.message);
-      }
-
+      if (!result.success) throw new Error(result.message);
       setProducts(result.data || []);
       setSummary(result.summary || null);
     } catch (err) {
@@ -47,150 +272,195 @@ export default function LowStockPage() {
     }
   }
 
-  /**
-   * Format currency
-   */
   function formatCurrency(value) {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value || 0);
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0);
   }
 
-  /**
-   * Get urgency badge
-   */
   function getUrgencyBadge(level) {
-    if (level.includes('CRITICAL')) return 'badge badge-danger';
-    if (level.includes('HIGH')) return 'badge badge-warning';
-    return 'badge badge-info';
+    if (level.includes('CRITICAL')) return s.badgeCritical;
+    if (level.includes('HIGH')) return s.badgeHigh;
+    return s.badgeMedium;
   }
 
+  function getUrgencyDotColor(level) {
+    if (level.includes('CRITICAL')) return '#f87171';
+    if (level.includes('HIGH')) return '#fbbf24';
+    return '#60a5fa';
+  }
+
+  const filteredProducts = products.filter(product =>
+    product.ProductName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.ProductCode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.CategoryName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.SupplierName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Loading state
   if (loading) {
     return (
-      <div className="loading">
-        <div className="spinner"></div>
-        Loading low stock products...
+      <div style={s.loadingContainer}>
+        <div style={s.spinner}></div>
+        <span style={{ color: 'rgba(148,163,184,0.8)', fontSize: '15px', fontWeight: '500' }}>
+          Loading low stock products...
+        </span>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="alert alert-danger">
-        <span><HiOutlineExclamationTriangle size={20} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /></span>
-        Error: {error}
-        <button className="btn btn-sm btn-secondary" onClick={fetchLowStock} style={{ marginLeft: 'auto' }}>
-          Retry
-        </button>
+      <div style={s.page}>
+        <div style={s.errorAlert}>
+          <HiOutlineExclamationTriangle size={18} />
+          <span>Error: {error}</span>
+          <button onClick={fetchLowStock} style={s.retryBtn}>
+            <HiOutlineArrowPath size={14} /> Retry
+          </button>
+        </div>
       </div>
     );
   }
 
+  const statItems = summary ? [
+    { label: 'Low Stock Products', value: summary.totalLowStockProducts, icon: HiOutlineCube, color: '#fbbf24', bg: 'rgba(245,158,11,0.15)' },
+    { label: 'Out of Stock', value: summary.outOfStockCount, icon: HiOutlineXCircle, color: '#f87171', bg: 'rgba(239,68,68,0.15)' },
+    { label: 'Est. Restock Cost', value: formatCurrency(summary.totalEstimatedRestockCost), icon: HiOutlineBanknotes, color: '#60a5fa', bg: 'rgba(59,130,246,0.15)' },
+  ] : [];
+
   return (
-    <div>
-      {/* Page Header */}
-      <div className="page-header">
-        <div>
-          <h1 className="page-title"><HiOutlineExclamationTriangle size={24} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Low Stock Products</h1>
-          <p className="page-subtitle">
-            Products that need to be reordered
-          </p>
+    <div style={s.page}>
+      {/* ─── Header ─── */}
+      <div style={s.header}>
+        <div style={s.headerGlow}></div>
+        <div style={s.headerLeft}>
+          <h1 style={s.headerTitle}>
+            <span style={s.titleIcon}><HiOutlineExclamationTriangle size={22} /></span>
+            Low Stock Products
+          </h1>
+          <p style={s.headerSub}>Products that need to be reordered</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button className="btn btn-secondary" onClick={fetchLowStock}>
-            <HiOutlineArrowPath size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Refresh
+        <div style={s.headerActions}>
+          <button style={s.refreshBtn} onClick={fetchLowStock}>
+            <HiOutlineArrowPath size={16} /> Refresh
           </button>
-          <Link href="/purchases/add" className="btn btn-primary">
-            <HiOutlineInboxArrowDown size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Create Purchase Order
+          <Link href="/purchases/add" style={s.purchaseBtn}>
+            <HiOutlineInboxArrowDown size={16} /> Create Purchase Order
           </Link>
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* ─── Stats ─── */}
       {summary && (
-        <div className="stats-grid">
-          <div className="stat-card warning">
-            <span className="stat-icon"><HiOutlineCube size={24} /></span>
-            <span className="stat-value">{summary.totalLowStockProducts}</span>
-            <span className="stat-label">Low Stock Products</span>
-          </div>
-          <div className="stat-card danger">
-            <span className="stat-icon"><HiOutlineXCircle size={24} /></span>
-            <span className="stat-value">{summary.outOfStockCount}</span>
-            <span className="stat-label">Out of Stock</span>
-          </div>
-          <div className="stat-card danger">
-            <span className="stat-icon"><HiOutlineExclamationCircle size={24} /></span>
-            <span className="stat-value">{summary.criticalCount}</span>
-            <span className="stat-label">Critical Priority</span>
-          </div>
-          <div className="stat-card info">
-            <span className="stat-icon"><HiOutlineBanknotes size={24} /></span>
-            <span className="stat-value">{formatCurrency(summary.totalEstimatedRestockCost)}</span>
-            <span className="stat-label">Est. Restock Cost</span>
-          </div>
+        <div style={s.statsGrid}>
+          {statItems.map((item, i) => {
+            const Icon = item.icon;
+            return (
+              <div key={i} style={s.statCard}>
+                <div style={s.statGlow(item.color)}></div>
+                <div style={s.statIconWrap(item.bg)}>
+                  <Icon size={20} style={{ color: item.color }} />
+                </div>
+                <span style={s.statValue}>{item.value}</span>
+                <span style={s.statLabel}>{item.label}</span>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* Products Table */}
-      <div className="card">
-        {products.length > 0 ? (
-          <div className="table-container">
-            <table className="table">
+      {/* ─── Search ─── */}
+      <div style={s.card}>
+        <div style={s.cardGlow}></div>
+        <div style={s.searchWrap}>
+          <HiOutlineMagnifyingGlass size={16} style={s.searchIcon} />
+          <input
+            type="text"
+            placeholder="Search by product name, code, category, or supplier..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onFocus={onFocus} onBlur={onBlur}
+            style={s.searchInput}
+          />
+        </div>
+        <div style={s.resultCount}>
+          Showing {filteredProducts.length} of {products.length} low stock products
+        </div>
+      </div>
+
+      {/* ─── Products Table ─── */}
+      <div style={s.card}>
+        <div style={s.cardGlow}></div>
+        {filteredProducts.length > 0 ? (
+          <div style={s.tableWrap}>
+            <table style={s.table}>
               <thead>
                 <tr>
-                  <th>Urgency</th>
-                  <th>Product</th>
-                  <th>Category</th>
-                  <th>Current Stock</th>
-                  <th>Reorder Level</th>
-                  <th>Units Needed</th>
-                  <th>Suggested Order</th>
-                  <th>Est. Cost</th>
-                  <th>Supplier</th>
+                  {['Urgency', 'Product', 'Category', 'Current Stock', 'Reorder Level', 'Units Needed', 'Suggested Order', 'Est. Cost', 'Supplier'].map(h => (
+                    <th key={h} style={s.th}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
-                  <tr key={product.ProductID}>
-                    <td>
-                      <span className={getUrgencyBadge(product.UrgencyLevel)}>
+                {filteredProducts.map((product) => (
+                  <tr
+                    key={product.ProductID}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.04)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    {/* Urgency */}
+                    <td style={s.td}>
+                      <span style={getUrgencyBadge(product.UrgencyLevel)}>
+                        <span style={s.statusDot(getUrgencyDotColor(product.UrgencyLevel))}></span>
                         {product.UrgencyLevel.split(' - ')[0]}
                       </span>
                     </td>
-                    <td>
-                      <strong>{product.ProductName}</strong>
-                      <div className="text-muted" style={{ fontSize: '12px' }}>
-                        {product.ProductCode}
-                      </div>
+                    {/* Product */}
+                    <td style={s.td}>
+                      <div style={s.productName}>{product.ProductName}</div>
+                      <span style={s.productCode}>{product.ProductCode}</span>
                     </td>
-                    <td>{product.CategoryName}</td>
-                    <td>
-                      <span className={product.CurrentStock === 0 ? 'text-danger' : 'text-warning'}>
-                        <strong>{product.CurrentStock}</strong>
+                    {/* Category */}
+                    <td style={s.td}>{product.CategoryName}</td>
+                    {/* Current Stock */}
+                    <td style={s.td}>
+                      <span style={product.CurrentStock === 0 ? s.stockDanger : s.stockWarning}>
+                        {product.CurrentStock}
                       </span>
-                      <span className="text-muted"> {product.Unit}</span>
+                      <span style={s.stockUnit}>{product.Unit}</span>
                     </td>
-                    <td>{product.ReorderLevel}</td>
-                    <td className="text-danger">
-                      <strong>{product.UnitsNeeded > 0 ? product.UnitsNeeded : 0}</strong>
+                    {/* Reorder Level */}
+                    <td style={s.td}>
+                      <span style={{ color: '#e2e8f0', fontWeight: '500' }}>{product.ReorderLevel}</span>
                     </td>
-                    <td>
-                      <strong>{product.SuggestedOrderQuantity}</strong>
-                      <span className="text-muted"> {product.Unit}</span>
+                    {/* Units Needed */}
+                    <td style={s.td}>
+                      <span style={{ color: '#f87171', fontWeight: '600' }}>
+                        {product.UnitsNeeded > 0 ? product.UnitsNeeded : 0}
+                      </span>
                     </td>
-                    <td>{formatCurrency(product.EstimatedRestockCost)}</td>
-                    <td>
-                      <div>{product.SupplierName}</div>
+                    {/* Suggested Order */}
+                    <td style={s.td}>
+                      <span style={s.orderQty}>
+                        <HiOutlineArchiveBox size={12} />
+                        {product.SuggestedOrderQuantity} {product.Unit}
+                      </span>
+                    </td>
+                    {/* Est. Cost */}
+                    <td style={s.td}>
+                      <span style={s.costText}>{formatCurrency(product.EstimatedRestockCost)}</span>
+                    </td>
+                    {/* Supplier */}
+                    <td style={s.td}>
+                      <div style={s.supplierName}>{product.SupplierName}</div>
                       {product.SupplierPhone && (
-                        <div className="text-muted" style={{ fontSize: '11px' }}>
-                          <HiOutlinePhone size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> {product.SupplierPhone}
+                        <div style={s.supplierDetail}>
+                          <HiOutlinePhone size={11} /> {product.SupplierPhone}
                         </div>
                       )}
                       {product.SupplierEmail && (
-                        <div className="text-muted" style={{ fontSize: '11px' }}>
-                          <HiOutlineEnvelope size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> {product.SupplierEmail}
+                        <div style={s.supplierDetail}>
+                          <HiOutlineEnvelope size={11} /> {product.SupplierEmail}
                         </div>
                       )}
                     </td>
@@ -200,22 +470,31 @@ export default function LowStockPage() {
             </table>
           </div>
         ) : (
-          <div className="empty-state">
-            <span className="icon"><HiOutlineCheckCircle size={48} /></span>
-            <h3>All stocked up!</h3>
-            <p>No products are currently below their reorder level.</p>
+          <div style={s.empty}>
+            <div style={s.emptyIconWrap}>
+              <HiOutlineCheckCircle size={30} style={{ color: '#4ade80' }} />
+            </div>
+            <h3 style={s.emptyTitle}>
+              {searchTerm ? 'No matching products' : 'All stocked up!'}
+            </h3>
+            <p style={s.emptyText}>
+              {searchTerm
+                ? 'Try adjusting your search terms'
+                : 'No products are currently below their reorder level.'}
+            </p>
           </div>
         )}
       </div>
 
-      {/* Back Link */}
-      <div className="card">
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <Link href="/alerts" className="btn btn-secondary">
-            <HiOutlineArrowLeft size={16} style={{display:'inline', verticalAlign:'middle', marginRight:'4px'}} /> Back to Alerts
+      {/* ─── Footer Navigation ─── */}
+      <div style={s.card}>
+        <div style={s.cardGlow}></div>
+        <div style={s.footerLinks}>
+          <Link href="/alerts" style={s.navBtn}>
+            <HiOutlineArrowLeft size={14} /> Back to Alerts
           </Link>
-          <Link href="/products" className="btn btn-secondary">
-            View All Products
+          <Link href="/products" style={s.navBtn}>
+            <HiOutlineCube size={14} /> View All Products
           </Link>
         </div>
       </div>

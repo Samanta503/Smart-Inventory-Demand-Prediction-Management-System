@@ -67,7 +67,6 @@ export async function GET() {
     const summary = {
       totalLowStockProducts: data.length,
       outOfStockCount: data.filter(p => p.CurrentStock === 0).length,
-      criticalCount: data.filter(p => p.Priority === 1 || p.Priority === 2).length,
       totalEstimatedRestockCost: data.reduce(
         (sum, p) => sum + parseFloat(p.EstimatedRestockCost || 0),
         0
