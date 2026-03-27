@@ -197,6 +197,75 @@ const s = {
   resultCount: {
     fontSize: '12px', color: 'rgba(148,163,184,0.5)', position: 'relative', zIndex: 1,
   },
+  /* filter section */
+  filterContainer: {
+    marginBottom: '1.25rem', padding: '1rem 1.75rem',
+    background: 'linear-gradient(145deg, rgba(30,41,59,0.6), rgba(15,23,42,0.75))',
+    borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)',
+  },
+  filterHeader: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    cursor: 'pointer', userSelect: 'none', padding: '0.5rem 0',
+  },
+  filterTitle: {
+    display: 'flex', alignItems: 'center', gap: '0.5rem',
+    fontSize: '0.95rem', fontWeight: '600', color: '#e2e8f0',
+  },
+  filterBadge: {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    minWidth: '1.5rem', height: '1.5rem',
+    background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+    color: '#fff', borderRadius: '50%', fontSize: '0.75rem', fontWeight: '700',
+    marginLeft: '0.5rem',
+  },
+  filterContent: {
+    marginTop: '1rem', paddingTop: '1rem',
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+  },
+  filterGrid: {
+    display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.25rem',
+    marginBottom: '1rem',
+  },
+  FilterGroup: {
+    padding: '1rem', borderRadius: '12px',
+    background: 'rgba(15,23,42,0.6)', border: '1px solid rgba(255,255,255,0.06)',
+    transition: 'all 0.3s ease',
+  },
+  filterLabel: {
+    display: 'block', fontSize: '0.82rem', fontWeight: '600',
+    color: 'rgba(148,163,184,0.85)', marginBottom: '0.5rem',
+  },
+  filterSelect: {
+    width: '100%', padding: '0.7rem 1rem',
+    background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '10px', color: '#e2e8f0', fontSize: '0.92rem',
+    outline: 'none', transition: 'border-color 0.2s ease', cursor: 'pointer',
+  },
+  filterInput: {
+    width: '100%', padding: '0.7rem 1rem',
+    background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '10px', color: '#e2e8f0', fontSize: '0.92rem',
+    outline: 'none', transition: 'border-color 0.2s ease',
+  },
+  rangeInputs: {
+    display: 'flex', alignItems: 'center', gap: '6px',
+  },
+  rangeInput: {
+    flex: 1, padding: '0.7rem 0.75rem',
+    background: 'rgba(15,23,42,0.8)', border: '1px solid rgba(255,255,255,0.08)',
+    borderRadius: '10px', color: '#e2e8f0', fontSize: '0.92rem',
+    outline: 'none', transition: 'border-color 0.2s ease', minWidth: 0,
+  },
+  rangeSeparator: {
+    color: 'rgba(148,163,184,0.5)', fontSize: '0.88rem', fontWeight: '500',
+  },
+  clearFiltersBtn: {
+    padding: '0.65rem 1.5rem', borderRadius: '10px',
+    background: 'linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.2))',
+    border: '1px solid rgba(239,68,68,0.25)', color: '#f87171',
+    fontWeight: '600', fontSize: '13px', cursor: 'pointer',
+    transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '0.4rem',
+  },
 };
 
 const onFocus = (e) => { e.target.style.borderColor = 'rgba(59,130,246,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1)'; };
@@ -209,8 +278,27 @@ export default function PurchasesPage() {
   const [summary, setSummary] = useState(null);
   const [expandedPurchase, setExpandedPurchase] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterSupplier, setFilterSupplier] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [minAmount, setMinAmount] = useState('');
+  const [maxAmount, setMaxAmount] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0);
 
   useEffect(() => { fetchPurchases(); }, []);
+
+  useEffect(() => {
+    let count = 0;
+    if (filterSupplier) count++;
+    if (startDate) count++;
+    if (endDate) count++;
+    if (minAmount) count++;
+    if (maxAmount) count++;
+    if (filterStatus) count++;
+    setActiveFiltersCount(count);
+  }, [filterSupplier, startDate, endDate, minAmount, maxAmount, filterStatus]);
 
   async function fetchPurchases() {
     try {
@@ -234,12 +322,41 @@ export default function PurchasesPage() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0);
   }
 
-  const filteredPurchases = purchases.filter(p =>
-    p.ReferenceNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.SupplierName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.WarehouseName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.Notes?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const getUniqueSuppliers = () => [...new Set(purchases.map(p => p.SupplierName).filter(Boolean))].sort();
+  const getUniqueStatuses = () => [...new Set(purchases.map(p => p.Status).filter(Boolean))].sort();
+
+  const clearPurchaseFilters = () => {
+    setFilterSupplier('');
+    setStartDate('');
+    setEndDate('');
+    setMinAmount('');
+    setMaxAmount('');
+    setFilterStatus('');
+  };
+
+  const filteredPurchases = purchases.filter(p => {
+    const q = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm || 
+      (p.ReferenceNumber?.toLowerCase().includes(q)) ||
+      (p.SupplierName?.toLowerCase().includes(q)) ||
+      (p.WarehouseName?.toLowerCase().includes(q)) ||
+      (p.Notes?.toLowerCase().includes(q));
+    
+    const matchesSupplier = !filterSupplier || (p.SupplierName || '').toLowerCase() === filterSupplier.toLowerCase();
+    const matchesStatus = !filterStatus || (p.Status || '').toLowerCase() === filterStatus.toLowerCase();
+    
+    let matchesDateRange = true;
+    if (startDate || endDate) {
+      const purchaseDate = new Date(p.PurchaseDate);
+      if (startDate) matchesDateRange = purchaseDate >= new Date(startDate);
+      if (endDate) matchesDateRange = matchesDateRange && purchaseDate <= new Date(endDate);
+    }
+    
+    const amount = parseFloat(p.TotalAmount) || 0;
+    const matchesAmount = (!minAmount || amount >= +minAmount) && (!maxAmount || amount <= +maxAmount);
+    
+    return matchesSearch && matchesSupplier && matchesStatus && matchesDateRange && matchesAmount;
+  });
 
   if (loading) {
     return (
@@ -320,6 +437,123 @@ export default function PurchasesPage() {
         </div>
         <div style={{ ...s.resultCount, marginBottom: '0.75rem' }}>
           Showing {filteredPurchases.length} of {purchases.length} purchases
+        </div>
+
+        {/* Filter Panel */}
+        <div style={s.filterContainer}>
+          <div style={s.filterHeader} onClick={() => setShowFilters(!showFilters)}>
+            <div style={s.filterTitle}>
+              <HiOutlineChevronDown size={18} style={{ marginRight: '0.5rem', transform: showFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }} />
+              <strong>Filters</strong>
+              {activeFiltersCount > 0 && (
+                <span style={s.filterBadge}>{activeFiltersCount}</span>
+              )}
+            </div>
+          </div>
+
+          {showFilters && (
+            <div style={s.filterContent}>
+              <div style={s.filterGrid}>
+                {/* Date Range */}
+                <div style={s.FilterGroup}>
+                  <label style={s.filterLabel}>Date Range (From)</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={e => setStartDate(e.target.value)}
+                    style={s.filterInput}
+                    onFocus={e => (e.target.style.borderColor = 'rgba(59,130,246,0.5)')}
+                    onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                  />
+                </div>
+
+                {/* Date Range To */}
+                <div style={s.FilterGroup}>
+                  <label style={s.filterLabel}>Date Range (To)</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={e => setEndDate(e.target.value)}
+                    style={s.filterInput}
+                    onFocus={e => (e.target.style.borderColor = 'rgba(59,130,246,0.5)')}
+                    onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                  />
+                </div>
+
+                {/* Supplier Filter */}
+                <div style={s.FilterGroup}>
+                  <label style={s.filterLabel}>Supplier</label>
+                  <select
+                    value={filterSupplier}
+                    onChange={e => setFilterSupplier(e.target.value)}
+                    style={s.filterSelect}
+                    onFocus={e => (e.target.style.borderColor = 'rgba(59,130,246,0.5)')}
+                    onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                  >
+                    <option value="">All Suppliers</option>
+                    {getUniqueSuppliers().map(supplier => (
+                      <option key={supplier} value={supplier}>{supplier}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status Filter */}
+                <div style={s.FilterGroup}>
+                  <label style={s.filterLabel}>Status</label>
+                  <select
+                    value={filterStatus}
+                    onChange={e => setFilterStatus(e.target.value)}
+                    style={s.filterSelect}
+                    onFocus={e => (e.target.style.borderColor = 'rgba(59,130,246,0.5)')}
+                    onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                  >
+                    <option value="">All Statuses</option>
+                    {getUniqueStatuses().map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Amount Range */}
+                <div style={s.FilterGroup}>
+                  <label style={s.filterLabel}>Amount Range</label>
+                  <div style={s.rangeInputs}>
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={minAmount}
+                      onChange={e => setMinAmount(e.target.value)}
+                      style={s.rangeInput}
+                      onFocus={e => (e.target.style.borderColor = 'rgba(59,130,246,0.5)')}
+                      onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                    />
+                    <span style={s.rangeSeparator}>-</span>
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={maxAmount}
+                      onChange={e => setMaxAmount(e.target.value)}
+                      style={s.rangeInput}
+                      onFocus={e => (e.target.style.borderColor = 'rgba(59,130,246,0.5)')}
+                      onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Clear Button */}
+              {activeFiltersCount > 0 && (
+                <button
+                  onClick={clearPurchaseFilters}
+                  style={s.clearFiltersBtn}
+                  onMouseEnter={e => (e.target.style.background = 'linear-gradient(135deg, rgba(239,68,68,0.3), rgba(220,38,38,0.3))')}
+                  onMouseLeave={e => (e.target.style.background = 'linear-gradient(135deg, rgba(239,68,68,0.2), rgba(220,38,38,0.2))')}
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {filteredPurchases.length > 0 ? (
