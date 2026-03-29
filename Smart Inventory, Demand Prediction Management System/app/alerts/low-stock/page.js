@@ -184,13 +184,13 @@ const s = {
   badgeCritical: {
     display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
     padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
-    background: 'rgba(239,68,68,0.12)', color: '#f87171',
-    border: '1px solid rgba(239,68,68,0.25)',
+    background: 'rgba(220,38,38,0.12)', color: '#dc2626',
+    border: '1px solid rgba(220,38,38,0.25)',
   },
   badgeHigh: {
     display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
     padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
-    background: 'rgba(245,158,11,0.12)', color: '#fbbf24',
+    background: 'rgba(245,158,11,0.12)', color: '#f59e0b',
     border: '1px solid rgba(245,158,11,0.25)',
   },
   badgeMedium: {
@@ -207,13 +207,13 @@ const s = {
   badgeOutOfStock: {
     display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
     padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
-    background: 'rgba(239,68,68,0.12)', color: '#f87171',
-    border: '1px solid rgba(239,68,68,0.25)',
+    background: 'rgba(220,38,38,0.12)', color: '#dc2626',
+    border: '1px solid rgba(220,38,38,0.25)',
   },
   badgeLowStock: {
     display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
     padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
-    background: 'rgba(245,158,11,0.12)', color: '#fbbf24',
+    background: 'rgba(245,158,11,0.12)', color: '#f59e0b',
     border: '1px solid rgba(245,158,11,0.25)',
   },
   // Product name
@@ -225,8 +225,8 @@ const s = {
     display: 'inline-block', marginTop: '3px',
   },
   // Stock value
-  stockDanger: { color: '#f87171', fontWeight: '700', fontSize: '14px' },
-  stockWarning: { color: '#fbbf24', fontWeight: '700', fontSize: '14px' },
+  stockDanger: { color: '#dc2626', fontWeight: '700', fontSize: '14px' },
+  stockWarning: { color: '#f59e0b', fontWeight: '700', fontSize: '14px' },
   stockUnit: { color: 'rgba(148,163,184,0.5)', fontSize: '12px', fontWeight: '400', marginLeft: '3px' },
   // Suggested order
   orderQty: {
@@ -332,14 +332,17 @@ export default function LowStockOutOfStockPage() {
   }
 
   function getUrgencyBadge(level) {
-    if (level.includes('CRITICAL')) return s.badgeCritical;
-    if (level.includes('HIGH')) return s.badgeHigh;
-    return s.badgeMedium;
+    // Out of Stock = CRITICAL (darker red)
+    if (level.includes('CRITICAL')) return { ...s.badgeCritical, background: 'rgba(220,38,38,0.15)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.3)' };
+    // Very Low = HIGH (orange)
+    if (level.includes('HIGH')) return { ...s.badgeHigh, background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' };
+    // Below Reorder = MEDIUM (blue)
+    return { ...s.badgeMedium, background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.3)' };
   }
 
   function getUrgencyDotColor(level) {
-    if (level.includes('CRITICAL')) return '#f87171';
-    if (level.includes('HIGH')) return '#fbbf24';
+    if (level.includes('CRITICAL')) return '#dc2626';
+    if (level.includes('HIGH')) return '#f59e0b';
     return '#60a5fa';
   }
 
@@ -379,8 +382,8 @@ export default function LowStockOutOfStockPage() {
 
   const statItems = summary ? [
     { label: 'Total Products', value: summary.totalProducts, icon: HiOutlineCube, color: '#60a5fa', bg: 'rgba(59,130,246,0.15)' },
-    { label: 'Low Stock', value: summary.lowStockCount, icon: HiOutlineArrowTrendingDown, color: '#fbbf24', bg: 'rgba(245,158,11,0.15)' },
-    { label: 'Out of Stock', value: summary.outOfStockCount, icon: HiOutlineXCircle, color: '#f87171', bg: 'rgba(239,68,68,0.15)' },
+    { label: 'Low Stock', value: summary.lowStockCount, icon: HiOutlineArrowTrendingDown, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+    { label: 'Out of Stock', value: summary.outOfStockCount, icon: HiOutlineXCircle, color: '#dc2626', bg: 'rgba(220,38,38,0.15)' },
     { label: 'Est. Restock Cost', value: formatCurrency(summary.totalEstimatedRestockCost), icon: HiOutlineBanknotes, color: '#4ade80', bg: 'rgba(34,197,94,0.15)' },
   ] : [];
 
@@ -438,18 +441,18 @@ export default function LowStockOutOfStockPage() {
             style={filter === 'all' ? s.filterBtnActive : s.filterBtn}
             onClick={() => setFilter('all')}
           >
-            All
+            All Products
             {summary && <span style={s.filterCount}>{summary.totalProducts}</span>}
           </button>
           <button
-            style={filter === 'low-stock' ? s.filterBtnActive : s.filterBtn}
+            style={filter === 'low-stock' ? { ...s.filterBtnActive, background: 'linear-gradient(135deg, #f59e0b, #f97316)', boxShadow: '0 3px 14px rgba(245,158,11,0.3)' } : s.filterBtn}
             onClick={() => setFilter('low-stock')}
           >
             <HiOutlineArrowTrendingDown size={13} /> Low Stock
             {summary && <span style={s.filterCount}>{summary.lowStockCount}</span>}
           </button>
           <button
-            style={filter === 'out-of-stock' ? s.filterBtnActive : s.filterBtn}
+            style={filter === 'out-of-stock' ? { ...s.filterBtnActive, background: 'linear-gradient(135deg, #dc2626, #991b1b)', boxShadow: '0 3px 14px rgba(220,38,38,0.3)' } : s.filterBtn}
             onClick={() => setFilter('out-of-stock')}
           >
             <HiOutlineXCircle size={13} /> Out of Stock
@@ -574,16 +577,16 @@ export default function LowStockOutOfStockPage() {
               <HiOutlineCheckCircle size={30} style={{ color: '#4ade80' }} />
             </div>
             <h3 style={s.emptyTitle}>
-              {searchTerm ? 'No matching products' : 'All stocked up!'}
+              {searchTerm ? 'No matching products' : filter === 'out-of-stock' ? 'No Out of Stock Items' : filter === 'low-stock' ? 'No Low Stock Items' : 'All stocked up!'}
             </h3>
             <p style={s.emptyText}>
               {searchTerm
                 ? 'Try adjusting your search terms'
                 : filter === 'out-of-stock'
-                  ? 'No products are currently out of stock.'
+                  ? 'Great! No products are currently out of stock. Stock levels are healthy across all warehouses.'
                   : filter === 'low-stock'
-                    ? 'No products are below their reorder level.'
-                    : 'All products have sufficient stock levels.'}
+                    ? 'Excellent! No products are below their reorder level. Inventory is well-stocked.'
+                    : 'All products have sufficient stock levels. No action needed.'}
             </p>
           </div>
         )}

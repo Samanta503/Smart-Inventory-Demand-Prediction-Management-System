@@ -30,6 +30,8 @@ import {
   HiOutlineCalendarDays,
   HiOutlineMagnifyingGlass,
   HiOutlineFunnel,
+  HiOutlineArchiveBox,
+  HiOutlineBanknotes,
 } from 'react-icons/hi2';
 
 // ─── Professional Dark Theme Styles ──────────────────────────────
@@ -159,13 +161,13 @@ const s = {
   badgeCritical: {
     display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
     padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
-    background: 'rgba(239,68,68,0.12)', color: '#f87171',
-    border: '1px solid rgba(239,68,68,0.25)',
+    background: 'rgba(220,38,38,0.12)', color: '#dc2626',
+    border: '1px solid rgba(220,38,38,0.25)',
   },
   badgeHigh: {
     display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
     padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
-    background: 'rgba(245,158,11,0.12)', color: '#fbbf24',
+    background: 'rgba(245,158,11,0.12)', color: '#f59e0b',
     border: '1px solid rgba(245,158,11,0.25)',
   },
   badgeMedium: {
@@ -182,13 +184,13 @@ const s = {
   badgeOutOfStock: {
     display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
     padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
-    background: 'rgba(239,68,68,0.12)', color: '#f87171',
-    border: '1px solid rgba(239,68,68,0.25)',
+    background: 'rgba(220,38,38,0.12)', color: '#dc2626',
+    border: '1px solid rgba(220,38,38,0.25)',
   },
   badgeLowStock: {
     display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
     padding: '4px 10px', borderRadius: '20px', fontSize: '11.5px', fontWeight: '600',
-    background: 'rgba(245,158,11,0.12)', color: '#fbbf24',
+    background: 'rgba(245,158,11,0.12)', color: '#f59e0b',
     border: '1px solid rgba(245,158,11,0.25)',
   },
   badgeRestocked: {
@@ -206,11 +208,21 @@ const s = {
     display: 'inline-block', marginTop: '3px',
   },
   // Stock display
-  stockDanger: { color: '#f87171', fontWeight: '700', fontSize: '14px' },
-  stockWarning: { color: '#fbbf24', fontWeight: '700', fontSize: '14px' },
+  stockDanger: { color: '#dc2626', fontWeight: '700', fontSize: '14px' },
+  stockWarning: { color: '#f59e0b', fontWeight: '700', fontSize: '14px' },
   stockGood: { color: '#4ade80', fontWeight: '700', fontSize: '14px' },
   stockSep: { color: 'rgba(148,163,184,0.4)', margin: '0 3px', fontWeight: '400', fontSize: '12px' },
   stockReorder: { color: 'rgba(148,163,184,0.6)', fontSize: '12px', fontWeight: '500' },
+  stockUnit: { color: 'rgba(148,163,184,0.5)', fontSize: '12px', fontWeight: '400', marginLeft: '3px' },
+  // Suggested order
+  orderQty: {
+    display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+    padding: '3px 10px', borderRadius: '8px', fontSize: '12px', fontWeight: '600',
+    background: 'rgba(34,197,94,0.1)', color: '#4ade80',
+    border: '1px solid rgba(34,197,94,0.2)',
+  },
+  // Cost
+  costText: { color: '#4ade80', fontWeight: '600', fontSize: '13.5px' },
   // Warehouse pill
   warehousePill: {
     display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
@@ -324,7 +336,7 @@ export default function AlertsPage() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filter, setFilter] = useState('unresolved');
+  const [filter, setFilter] = useState('all');
   const [summary, setSummary] = useState(null);
 
   useEffect(() => {
@@ -335,7 +347,8 @@ export default function AlertsPage() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`/api/alerts?status=${filter}`);
+      // Use the same API as Low-Stock page for consistency
+      const response = await fetch(`/api/products/low-stock?filter=${filter}`);
       const result = await response.json();
       if (!result.success) throw new Error(result.message);
       setAlerts(result.data || []);
@@ -347,43 +360,29 @@ export default function AlertsPage() {
     }
   }
 
-  /** Resolve an alert — FIX: send resolvedByUserId (not resolvedBy) */
-  async function resolveAlert(alertId) {
-    try {
-      const response = await fetch('/api/alerts', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alertId, resolvedByUserId: 1 }),
-      });
-      const result = await response.json();
-      if (!result.success) throw new Error(result.message);
-      fetchAlerts();
-    } catch (err) {
-      alert('Failed to resolve alert: ' + err.message);
-    }
+  function formatCurrency(value) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0);
   }
 
-  function getUrgencyBadge(urgency) {
-    if (urgency === 'CRITICAL') return s.badgeCritical;
-    if (urgency === 'HIGH') return s.badgeHigh;
-    return s.badgeMedium;
+  function getUrgencyBadge(level) {
+    if (level.includes('CRITICAL')) return { ...s.badgeCritical, background: 'rgba(220,38,38,0.15)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.3)' };
+    if (level.includes('HIGH')) return { ...s.badgeHigh, background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.3)' };
+    return { ...s.badgeMedium, background: 'rgba(59,130,246,0.15)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.3)' };
   }
 
-  function getUrgencyDotColor(urgency) {
-    if (urgency === 'CRITICAL') return '#f87171';
-    if (urgency === 'HIGH') return '#fbbf24';
+  function getUrgencyDotColor(level) {
+    if (level.includes('CRITICAL')) return '#dc2626';
+    if (level.includes('HIGH')) return '#f59e0b';
     return '#60a5fa';
   }
 
-  function getAlertTypeBadge(type) {
-    if (type === 'OUT_OF_STOCK') return s.badgeOutOfStock;
-    if (type === 'RESTOCKED') return s.badgeRestocked;
+  function getStockStatusBadge(status) {
+    if (status === 'OUT_OF_STOCK') return s.badgeOutOfStock;
     return s.badgeLowStock;
   }
 
-  function getAlertTypeLabel(type) {
-    if (type === 'OUT_OF_STOCK') return 'Out of Stock';
-    if (type === 'RESTOCKED') return 'Restocked';
+  function getStockStatusLabel(status) {
+    if (status === 'OUT_OF_STOCK') return 'Out of Stock';
     return 'Low Stock';
   }
 
@@ -415,10 +414,10 @@ export default function AlertsPage() {
   }
 
   const statItems = summary ? [
-    { label: 'Critical Alerts', value: summary.criticalCount, icon: HiOutlineExclamationCircle, color: '#f87171', bg: 'rgba(239,68,68,0.15)' },
-    { label: 'High Priority', value: summary.highCount, icon: HiOutlineExclamationTriangle, color: '#fbbf24', bg: 'rgba(245,158,11,0.15)' },
-    { label: 'Out of Stock', value: summary.outOfStockCount, icon: HiOutlineXCircle, color: '#f87171', bg: 'rgba(239,68,68,0.15)' },
+    { label: 'Total Products', value: summary.totalProducts, icon: HiOutlineCube, color: '#60a5fa', bg: 'rgba(59,130,246,0.15)' },
     { label: 'Low Stock', value: summary.lowStockCount, icon: HiOutlineArrowTrendingDown, color: '#f59e0b', bg: 'rgba(245,158,11,0.15)' },
+    { label: 'Out of Stock', value: summary.outOfStockCount, icon: HiOutlineXCircle, color: '#dc2626', bg: 'rgba(220,38,38,0.15)' },
+    { label: 'Est. Restock Cost', value: formatCurrency(summary.totalEstimatedRestockCost), icon: HiOutlineBanknotes, color: '#4ade80', bg: 'rgba(34,197,94,0.15)' },
   ] : [];
 
   return (
@@ -465,31 +464,25 @@ export default function AlertsPage() {
             <HiOutlineFunnel size={14} /> Filter:
           </span>
           <button
-            style={filter === 'unresolved' ? s.filterBtnActive : s.filterBtn}
-            onClick={() => setFilter('unresolved')}
-          >
-            Unresolved
-            {filter === 'unresolved' && (
-              <span style={s.filterCount}>{alerts.length}</span>
-            )}
-          </button>
-          <button
-            style={filter === 'resolved' ? s.filterBtnActive : s.filterBtn}
-            onClick={() => setFilter('resolved')}
-          >
-            Resolved
-            {filter === 'resolved' && (
-              <span style={s.filterCount}>{alerts.length}</span>
-            )}
-          </button>
-          <button
             style={filter === 'all' ? s.filterBtnActive : s.filterBtn}
             onClick={() => setFilter('all')}
           >
-            All Alerts
-            {filter === 'all' && (
-              <span style={s.filterCount}>{alerts.length}</span>
-            )}
+            All Products
+            {summary && <span style={s.filterCount}>{summary.totalProducts}</span>}
+          </button>
+          <button
+            style={filter === 'low-stock' ? { ...s.filterBtnActive, background: 'linear-gradient(135deg, #f59e0b, #f97316)', boxShadow: '0 3px 14px rgba(245,158,11,0.3)' } : s.filterBtn}
+            onClick={() => setFilter('low-stock')}
+          >
+            <HiOutlineArrowTrendingDown size={13} /> Low Stock
+            {summary && <span style={s.filterCount}>{summary.lowStockCount}</span>}
+          </button>
+          <button
+            style={filter === 'out-of-stock' ? { ...s.filterBtnActive, background: 'linear-gradient(135deg, #dc2626, #991b1b)', boxShadow: '0 3px 14px rgba(220,38,38,0.3)' } : s.filterBtn}
+            onClick={() => setFilter('out-of-stock')}
+          >
+            <HiOutlineXCircle size={13} /> Out of Stock
+            {summary && <span style={s.filterCount}>{summary.outOfStockCount}</span>}
           </button>
         </div>
       </div>
@@ -502,93 +495,82 @@ export default function AlertsPage() {
             <table style={s.table}>
               <thead>
                 <tr>
-                  {['Urgency', 'Type', 'Product', 'Category', 'Warehouse', 'Current Stock', 'Message', 'Supplier', 'Date', 'Action'].map(h => (
+                  {['Status', 'Urgency', 'Product', 'Category', 'Current Stock', 'Reorder Level', 'Units Needed', 'Suggested Order', 'Est. Cost', 'Supplier'].map(h => (
                     <th key={h} style={s.th}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {alerts.map((alertItem) => (
+                {alerts.map((product) => (
                   <tr
-                    key={alertItem.AlertID}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.04)'; }}
+                    key={product.ProductID}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.04)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
                   >
-                    {/* Urgency */}
+                    {/* Stock Status */}
                     <td style={s.td}>
-                      <span style={getUrgencyBadge(alertItem.Urgency)}>
-                        <span style={s.statusDot(getUrgencyDotColor(alertItem.Urgency))}></span>
-                        {alertItem.Urgency}
+                      <span style={product.StockStatus === 'OUT_OF_STOCK' ? s.badgeOutOfStock : s.badgeLowStock}>
+                        {product.StockStatus === 'OUT_OF_STOCK' ? (
+                          <><HiOutlineXCircle size={12} /> Out of Stock</>
+                        ) : (
+                          <><HiOutlineArrowTrendingDown size={12} /> Low Stock</>
+                        )}
                       </span>
                     </td>
-                    {/* Type */}
+                    {/* Urgency */}
                     <td style={s.td}>
-                      <span style={getAlertTypeBadge(alertItem.AlertType)}>
-                        {getAlertTypeLabel(alertItem.AlertType)}
+                      <span style={getUrgencyBadge(product.UrgencyLevel)}>
+                        <span style={s.statusDot(getUrgencyDotColor(product.UrgencyLevel))}></span>
+                        {product.UrgencyLevel.split(' - ')[0]}
                       </span>
                     </td>
                     {/* Product */}
                     <td style={s.td}>
-                      <div style={s.productName}>{alertItem.ProductName}</div>
-                      <span style={s.productCode}>{alertItem.ProductCode}</span>
+                      <div style={s.productName}>{product.ProductName}</div>
+                      <span style={s.productCode}>{product.ProductCode}</span>
                     </td>
                     {/* Category */}
-                    <td style={s.td}>{alertItem.CategoryName}</td>
-                    {/* Warehouse — FIX: show warehouse since alerts are per-warehouse */}
+                    <td style={s.td}>{product.CategoryName}</td>
+                    {/* Current Stock */}
                     <td style={s.td}>
-                      <span style={s.warehousePill}>
-                        <HiOutlineBuildingOffice size={12} />
-                        {alertItem.WarehouseName}
+                      <span style={product.CurrentStock === 0 ? s.stockDanger : s.stockWarning}>
+                        {product.CurrentStock}
+                      </span>
+                      <span style={s.stockUnit}>{product.Unit}</span>
+                    </td>
+                    {/* Reorder Level */}
+                    <td style={s.td}>
+                      <span style={{ color: '#e2e8f0', fontWeight: '500' }}>{product.ReorderLevel}</span>
+                    </td>
+                    {/* Units Needed */}
+                    <td style={s.td}>
+                      <span style={{ color: '#dc2626', fontWeight: '600' }}>
+                        {product.UnitsNeeded > 0 ? product.UnitsNeeded : 0}
                       </span>
                     </td>
-                    {/* Current Stock — uses live warehouse stock */}
+                    {/* Suggested Order */}
                     <td style={s.td}>
-                      <span style={alertItem.LatestStock === 0 ? s.stockDanger : alertItem.LatestStock > alertItem.ReorderLevel ? s.stockGood : s.stockWarning}>
-                        {alertItem.LatestStock}
+                      <span style={s.orderQty}>
+                        <HiOutlineArchiveBox size={12} />
+                        {product.SuggestedOrderQuantity} {product.Unit}
                       </span>
-                      <span style={s.stockSep}>/</span>
-                      <span style={s.stockReorder}>{alertItem.ReorderLevel}</span>
                     </td>
-                    {/* Message */}
+                    {/* Est. Cost */}
                     <td style={s.td}>
-                      <span style={s.messageText}>{alertItem.Message}</span>
+                      <span style={s.costText}>{formatCurrency(product.EstimatedRestockCost)}</span>
                     </td>
                     {/* Supplier */}
                     <td style={s.td}>
-                      <div style={s.supplierName}>{alertItem.SupplierName}</div>
-                      {alertItem.SupplierPhone && (
+                      <div style={s.supplierName}>{product.SupplierName}</div>
+                      {product.SupplierPhone && (
                         <div style={s.supplierDetail}>
-                          <HiOutlinePhone size={11} /> {alertItem.SupplierPhone}
+                          <HiOutlinePhone size={11} /> {product.SupplierPhone}
                         </div>
                       )}
-                      {alertItem.SupplierEmail && (
+                      {product.SupplierEmail && (
                         <div style={s.supplierDetail}>
-                          <HiOutlineEnvelope size={11} /> {alertItem.SupplierEmail}
+                          <HiOutlineEnvelope size={11} /> {product.SupplierEmail}
                         </div>
-                      )}
-                    </td>
-                    {/* Date */}
-                    <td style={s.td}>
-                      <span style={s.dateText}>
-                        <HiOutlineCalendarDays size={13} />
-                        {new Date(alertItem.CreatedAt).toLocaleDateString('en-US', {
-                          month: 'short', day: 'numeric', year: 'numeric',
-                        })}
-                      </span>
-                    </td>
-                    {/* Action */}
-                    <td style={s.td}>
-                      {alertItem.IsResolved ? (
-                        <span style={s.resolvedBadge}>
-                          <HiOutlineCheckCircle size={13} /> Resolved
-                        </span>
-                      ) : (
-                        <button
-                          style={s.resolveBtn}
-                          onClick={() => resolveAlert(alertItem.AlertID)}
-                        >
-                          <HiOutlineCheckCircle size={14} /> Resolve
-                        </button>
                       )}
                     </td>
                   </tr>
@@ -599,15 +581,17 @@ export default function AlertsPage() {
         ) : (
           <div style={s.empty}>
             <div style={s.emptyIconWrap}>
-              <HiOutlineSparkles size={30} style={{ color: '#4ade80' }} />
+              <HiOutlineCheckCircle size={30} style={{ color: '#4ade80' }} />
             </div>
             <h3 style={s.emptyTitle}>
-              {filter === 'unresolved' ? 'All clear!' : `No ${filter} alerts`}
+              {filter === 'all' ? 'All stocked up!' : filter === 'out-of-stock' ? 'No Out of Stock Items' : 'No Low Stock Items'}
             </h3>
             <p style={s.emptyText}>
-              {filter === 'unresolved'
-                ? 'All inventory alerts have been resolved!'
-                : 'No alerts found with this filter.'}
+              {filter === 'all'
+                ? 'All products have sufficient stock levels. No action needed.'
+                : filter === 'out-of-stock'
+                  ? 'Great! No products are currently out of stock. Stock levels are healthy.'
+                  : 'Excellent! No products are below their reorder level. Inventory is well-stocked.'}
             </p>
           </div>
         )}

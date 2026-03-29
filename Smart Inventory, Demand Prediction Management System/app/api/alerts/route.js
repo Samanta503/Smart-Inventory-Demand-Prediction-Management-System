@@ -33,84 +33,78 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status') || 'unresolved';
 
-    // Build filter for the dedup sub-query
-    let subWhereClause = '';
-    if (status === 'unresolved') {
-      subWhereClause = 'WHERE sub.IsResolved = 0';
-    } else if (status === 'resolved') {
-      subWhereClause = 'WHERE sub.IsResolved = 1';
-    }
+    /**
+     * SIMPLIFIED APPROACH: Query all products that are currently low/out of stock
+     * This ensures all low-stock/out-of-stock situations are visible on the alerts page,
+     * regardless of whether they have InventoryAlerts records.
+     */
 
     const query = `
       SELECT
-        a.AlertID,
-        a.ProductID,
+        NULL AS AlertID,
+        p.ProductID,
         p.ProductCode,
         p.ProductName,
         c.CategoryName,
         sup.SupplierName,
         sup.Email  AS SupplierEmail,
         sup.Phone  AS SupplierPhone,
-        a.WarehouseID,
+        w.WarehouseID,
         w.WarehouseName,
 
-        -- ▸ Current status based on LIVE stock (not stale AlertType)
         CASE
           WHEN IFNULL(ps.OnHandQty, 0) = 0              THEN 'OUT_OF_STOCK'
           WHEN IFNULL(ps.OnHandQty, 0) <= p.ReorderLevel THEN 'LOW_STOCK'
           ELSE 'RESTOCKED'
         END AS AlertType,
 
-        a.AlertType AS OriginalAlertType,
-        a.Message,
-        a.CurrentStock  AS OriginalStock,
-        p.ReorderLevel  AS ReorderLevel,
-        a.IsResolved,
-        a.ResolvedAt,
-        a.ResolvedByUserID,
-        u.FullName AS ResolvedByName,
-        a.CreatedAt,
-
-        -- Live warehouse stock
+        'LIVE' AS OriginalAlertType,
+        CASE
+          WHEN IFNULL(ps.OnHandQty, 0) = 0
+            THEN CONCAT('Product "', p.ProductName, '" is OUT OF STOCK in ', w.WarehouseName, '!')
+          ELSE CONCAT('Product "', p.ProductName, '" is LOW STOCK in ', w.WarehouseName, 
+                      '. Stock: ', IFNULL(ps.OnHandQty, 0), ', Reorder: ', p.ReorderLevel)
+        END AS Message,
+        
+        IFNULL(ps.OnHandQty, 0) AS OriginalStock,
+        p.ReorderLevel,
+        0 AS IsResolved,
+        NULL AS ResolvedAt,
+        NULL AS ResolvedByUserID,
+        NULL AS ResolvedByName,
+        NOW() AS CreatedAt,
         IFNULL(ps.OnHandQty, 0) AS LatestStock,
 
-        -- ▸ Urgency based on LIVE stock
         CASE
           WHEN IFNULL(ps.OnHandQty, 0) = 0                          THEN 'CRITICAL'
           WHEN IFNULL(ps.OnHandQty, 0) <= FLOOR(p.ReorderLevel / 2) THEN 'HIGH'
           ELSE 'MEDIUM'
         END AS Urgency
 
-      FROM InventoryAlerts a
-      INNER JOIN Products   p   ON a.ProductID  = p.ProductID
-      INNER JOIN Categories c   ON p.CategoryID = c.CategoryID
-      INNER JOIN Suppliers  sup ON p.SupplierID  = sup.SupplierID
-      INNER JOIN Warehouses w   ON a.WarehouseID = w.WarehouseID
-      LEFT  JOIN ProductStocks ps ON a.ProductID = ps.ProductID
-                                  AND a.WarehouseID = ps.WarehouseID
-      LEFT  JOIN Users u ON a.ResolvedByUserID = u.UserID
-
-      /* ── Deduplicate: keep only the latest alert per product + warehouse ── */
-      WHERE a.AlertID IN (
-        SELECT MAX(sub.AlertID)
-        FROM InventoryAlerts sub
-        ${subWhereClause}
-        GROUP BY sub.ProductID, sub.WarehouseID
-      )
+      FROM Products p
+      INNER JOIN Categories c ON p.CategoryID = c.CategoryID
+      INNER JOIN Suppliers sup ON p.SupplierID = sup.SupplierID
+      CROSS JOIN Warehouses w
+      LEFT JOIN ProductStocks ps ON p.ProductID = ps.ProductID
+                                 AND w.WarehouseID = ps.WarehouseID
+      
+      WHERE p.IsActive = 1
+        AND IFNULL(ps.OnHandQty, 0) <= p.ReorderLevel
 
       ORDER BY
         CASE
-          WHEN IFNULL(ps.OnHandQty, 0) = 0                          THEN 1
+          WHEN IFNULL(ps.OnHandQty, 0) = 0 THEN 1
           WHEN IFNULL(ps.OnHandQty, 0) <= FLOOR(p.ReorderLevel / 2) THEN 2
           ELSE 3
         END,
-        a.CreatedAt DESC
+        IFNULL(ps.OnHandQty, 0) ASC,
+        p.ProductName ASC
     `;
 
     const result = await executeQuery(query);
     const data = result.recordset;
 
-    // Summary – all counts now use LIVE-stock-based AlertType & Urgency
+    // Summary counts
     const summary = {
       totalAlerts: data.length,
       criticalCount: data.filter(a => a.Urgency === 'CRITICAL').length,
