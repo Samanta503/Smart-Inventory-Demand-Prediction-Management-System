@@ -1,17 +1,6 @@
 'use client';
 
-/**
- * Dashboard Page
- * ==============
- * 
- * The main dashboard showing overview statistics, recent activity,
- * and key metrics for the inventory management system.
- * 
- * 'use client' - This makes the component run on the client side,
- * which is required when using React hooks like useState and useEffect.
- */
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   HiOutlineChartBar,
@@ -31,979 +20,1734 @@ import {
   HiOutlineTrophy,
   HiOutlineInboxStack,
   HiOutlineFolderOpen,
+  HiOutlineChevronRight,
+  HiOutlineSignal,
+  HiOutlineClock,
+  HiOutlineSparkles,
+  HiOutlineArrowTrendingDown,
+  HiOutlineArchiveBox,
+  HiOutlineRocketLaunch,
+  HiOutlineFire,
+  HiOutlineCheckBadge,
 } from 'react-icons/hi2';
 
-// Month names for display
+/* ─────────────────────────────────────────────
+   CONSTANTS
+   ───────────────────────────────────────────── */
+
 const MONTHS = [
-  { value: 1, label: 'January' },
-  { value: 2, label: 'February' },
-  { value: 3, label: 'March' },
-  { value: 4, label: 'April' },
-  { value: 5, label: 'May' },
-  { value: 6, label: 'June' },
-  { value: 7, label: 'July' },
-  { value: 8, label: 'August' },
-  { value: 9, label: 'September' },
-  { value: 10, label: 'October' },
-  { value: 11, label: 'November' },
-  { value: 12, label: 'December' },
+  { value: 1, label: 'January' },   { value: 2, label: 'February' },
+  { value: 3, label: 'March' },     { value: 4, label: 'April' },
+  { value: 5, label: 'May' },       { value: 6, label: 'June' },
+  { value: 7, label: 'July' },      { value: 8, label: 'August' },
+  { value: 9, label: 'September' }, { value: 10, label: 'October' },
+  { value: 11, label: 'November' }, { value: 12, label: 'December' },
 ];
 
-// Generate year options (last 10 years to next year)
 const currentYear = new Date().getFullYear();
 const YEARS = Array.from({ length: 12 }, (_, i) => currentYear - 10 + i);
-
-// Generate week options (1-53)
 const WEEKS = Array.from({ length: 53 }, (_, i) => i + 1);
 
-// Professional Dark Dashboard Styles - Matching Sidebar Theme
-const styles = {
-  // Main container with dark gradient background
-  container: {
-    minHeight: '100vh',
-    background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
-    padding: '1.5rem 2rem 2rem',
-  },
-  // Header section
-  header: {
-    marginBottom: '2rem',
-    position: 'relative',
-  },
-  headerTop: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: '0.5rem',
-  },
-  headerTitle: {
-    fontSize: '2rem',
-    fontWeight: '700',
-    color: '#ffffff',
-    letterSpacing: '-0.5px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.75rem',
-  },
-  headerSubtitle: {
-    color: 'rgba(148, 163, 184, 0.8)',
-    fontSize: '0.95rem',
-    marginTop: '0.5rem',
-  },
-  refreshBtn: {
-    background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)',
-    border: 'none',
-    padding: '0.75rem 1.5rem',
-    borderRadius: '12px',
-    color: 'white',
-    fontWeight: '600',
-    fontSize: '14px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 4px 20px rgba(59, 130, 246, 0.35)',
-  },
-  // Financial Overview Card
-  financialCard: {
-    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)',
-    borderRadius: '20px',
-    padding: '1.5rem',
-    marginBottom: '1.5rem',
-    border: '1px solid rgba(59, 130, 246, 0.15)',
-    backdropFilter: 'blur(20px)',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  cardGlow: {
-    position: 'absolute',
-    top: '-50%',
-    left: '-50%',
-    width: '200%',
-    height: '200%',
-    background: 'radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 40%)',
-    pointerEvents: 'none',
-  },
-  financialHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1.25rem',
-    flexWrap: 'wrap',
-    gap: '1rem',
-    position: 'relative',
-    zIndex: 1,
-  },
-  sectionTitle: {
-    color: '#ffffff',
-    fontSize: '1.15rem',
-    fontWeight: '600',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.6rem',
-  },
-  // Controls
-  controlsRow: {
-    display: 'flex',
-    gap: '0.75rem',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  controlGroup: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.4rem',
-  },
-  controlLabel: {
-    fontSize: '12px',
-    color: 'rgba(148, 163, 184, 0.7)',
-    fontWeight: '500',
-  },
-  select: {
-    padding: '0.45rem 0.7rem',
-    borderRadius: '8px',
-    border: '1px solid rgba(59, 130, 246, 0.25)',
-    background: 'rgba(15, 23, 42, 0.6)',
-    color: '#e2e8f0',
-    fontSize: '13px',
-    cursor: 'pointer',
-    outline: 'none',
-    minWidth: '100px',
-    transition: 'all 0.2s ease',
-  },
-  resetBtn: {
-    padding: '0.45rem 0.9rem',
-    borderRadius: '8px',
-    border: '1px solid rgba(139, 92, 246, 0.3)',
-    background: 'rgba(139, 92, 246, 0.15)',
-    color: '#c4b5fd',
-    fontSize: '12px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  // Period Badge
-  periodBadge: {
-    background: 'linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%)',
-    padding: '0.5rem 1rem',
-    borderRadius: '8px',
-    fontSize: '12px',
-    color: 'rgba(226, 232, 240, 0.9)',
-    marginBottom: '1rem',
-    border: '1px solid rgba(59, 130, 246, 0.2)',
-    display: 'inline-block',
-    position: 'relative',
-    zIndex: 1,
-  },
-  // Period Stats Grid
-  periodGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '1rem',
-    position: 'relative',
-    zIndex: 1,
-  },
-  periodCard: {
-    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.7) 100%)',
-    borderRadius: '14px',
-    padding: '1.1rem',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
-    transition: 'all 0.3s ease',
-  },
-  periodTitle: {
-    fontSize: '12px',
-    fontWeight: '600',
-    marginBottom: '0.9rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.4rem',
-  },
-  periodRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '0.4rem',
-    fontSize: '12px',
-  },
-  periodLabel: {
-    color: 'rgba(148, 163, 184, 0.7)',
-  },
-  periodDivider: {
-    margin: '0.6rem 0',
-    border: 'none',
-    height: '1px',
-    background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-  },
-  // Metrics Grid
-  metricsGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(4, 1fr)',
-    gap: '1rem',
-    marginBottom: '1.5rem',
-  },
-  metricCard: {
-    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%)',
-    borderRadius: '16px',
-    padding: '1.25rem',
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-    transition: 'all 0.3s ease',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  metricGlow: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: '100px',
-    height: '100px',
-    borderRadius: '50%',
-    filter: 'blur(40px)',
-    opacity: 0.4,
-    pointerEvents: 'none',
-  },
-  metricIcon: {
-    width: '44px',
-    height: '44px',
-    borderRadius: '12px',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.35rem',
-    marginBottom: '0.9rem',
-    position: 'relative',
-    zIndex: 1,
-  },
-  metricValue: {
-    fontSize: '1.5rem',
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: '0.2rem',
-    position: 'relative',
-    zIndex: 1,
-  },
-  metricLabel: {
-    fontSize: '0.8rem',
-    color: 'rgba(148, 163, 184, 0.8)',
-    fontWeight: '500',
-    position: 'relative',
-    zIndex: 1,
-  },
-  // Two Column Grid
-  twoColGrid: {
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gap: '1.25rem',
-    marginBottom: '1.25rem',
-  },
-  // Cards
-  card: {
-    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%)',
-    borderRadius: '18px',
-    padding: '1.25rem',
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  cardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1rem',
-    paddingBottom: '0.9rem',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-  },
-  cardTitle: {
-    fontSize: '1rem',
-    fontWeight: '600',
-    color: '#ffffff',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-  },
-  viewBtn: {
-    padding: '0.4rem 0.9rem',
-    borderRadius: '8px',
-    background: 'rgba(59, 130, 246, 0.15)',
-    color: '#60a5fa',
-    fontSize: '12px',
-    fontWeight: '500',
-    border: '1px solid rgba(59, 130, 246, 0.25)',
-    textDecoration: 'none',
-    transition: 'all 0.2s ease',
-  },
-  badge: {
-    padding: '0.3rem 0.7rem',
-    borderRadius: '20px',
-    fontSize: '11px',
-    fontWeight: '500',
-    background: 'rgba(139, 92, 246, 0.15)',
-    color: '#a78bfa',
-    border: '1px solid rgba(139, 92, 246, 0.2)',
-  },
-  // Table
-  table: {
-    width: '100%',
-    borderCollapse: 'separate',
-    borderSpacing: '0',
-  },
-  th: {
-    textAlign: 'left',
-    padding: '0.7rem 0.9rem',
-    fontSize: '11px',
-    fontWeight: '600',
-    color: 'rgba(148, 163, 184, 0.7)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-    background: 'rgba(15, 23, 42, 0.4)',
-  },
-  td: {
-    padding: '0.75rem 0.9rem',
-    fontSize: '13px',
-    color: '#e2e8f0',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.04)',
-  },
-  // Quick Actions
-  quickActions: {
-    background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%)',
-    borderRadius: '18px',
-    padding: '1.25rem',
-    border: '1px solid rgba(255, 255, 255, 0.05)',
-    marginTop: '1.25rem',
-  },
-  quickTitle: {
-    color: '#ffffff',
-    fontSize: '1rem',
-    fontWeight: '600',
-    marginBottom: '1rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.5rem',
-  },
-  actionsGrid: {
-    display: 'flex',
-    gap: '0.75rem',
-    flexWrap: 'wrap',
-  },
-  actionBtn: {
-    padding: '0.7rem 1.1rem',
-    borderRadius: '10px',
-    border: 'none',
-    fontWeight: '600',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.4rem',
-    transition: 'all 0.3s ease',
-    textDecoration: 'none',
-    fontSize: '13px',
-  },
-  // Empty State
-  emptyState: {
-    padding: '2rem',
-    textAlign: 'center',
-    color: 'rgba(148, 163, 184, 0.6)',
-    fontSize: '13px',
-  },
-  // Loading
-  loadingContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '80vh',
-    gap: '1.5rem',
-  },
-  spinner: {
-    width: '50px',
-    height: '50px',
-    border: '3px solid rgba(59, 130, 246, 0.2)',
-    borderTop: '3px solid #3b82f6',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-  },
-  loadingText: {
-    color: 'rgba(148, 163, 184, 0.8)',
-    fontSize: '15px',
-    fontWeight: '500',
-  },
-  // Error
-  errorCard: {
-    background: 'linear-gradient(145deg, rgba(127, 29, 29, 0.3) 0%, rgba(15, 23, 42, 0.9) 100%)',
-    borderRadius: '16px',
-    padding: '1.5rem',
-    margin: '2rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    border: '1px solid rgba(239, 68, 68, 0.3)',
-  },
-  // Rank Badge
-  rankBadge: {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '22px',
-    height: '22px',
-    borderRadius: '50%',
-    fontSize: '11px',
-    fontWeight: '700',
-    marginRight: '0.5rem',
-  },
-  // Product Count Badge
-  countBadge: {
-    background: 'rgba(59, 130, 246, 0.2)',
-    color: '#60a5fa',
-    padding: '0.2rem 0.6rem',
-    borderRadius: '20px',
-    fontSize: '12px',
-    fontWeight: '600',
-  },
-};
+const CATEGORY_COLORS = [
+  '#3b82f6', '#8b5cf6', '#06b6d4', '#22c55e',
+  '#f59e0b', '#ef4444', '#ec4899', '#14b8a6',
+  '#f97316', '#6366f1',
+];
 
-/**
- * Dashboard Component
- * -------------------
- * Main dashboard view with:
- * - Inventory statistics
- * - Sales overview
- * - Alerts summary
- * - Recent sales
- * - Top products
- */
+const RANK_COLORS = [
+  'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+  'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)',
+  'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+  'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+  'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+];
+
+/* ─────────────────────────────────────────────
+   CSS STYLES (all animations, hover states, layouts)
+   ───────────────────────────────────────────── */
+
+const globalCSS = `
+  /* ===== KEYFRAMES ===== */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(40px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-40px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes orbDrift1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25%      { transform: translate(80px, -60px) scale(1.15); }
+    50%      { transform: translate(-40px, 40px) scale(0.9); }
+    75%      { transform: translate(60px, 30px) scale(1.05); }
+  }
+  @keyframes orbDrift2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25%      { transform: translate(-70px, 50px) scale(0.95); }
+    50%      { transform: translate(60px, -30px) scale(1.12); }
+    75%      { transform: translate(-30px, -50px) scale(1); }
+  }
+  @keyframes orbDrift3 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%      { transform: translate(50px, 70px) scale(1.08); }
+    66%      { transform: translate(-60px, -20px) scale(0.92); }
+  }
+  @keyframes breathe {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.3); opacity: 0.6; }
+  }
+  @keyframes pulseRing {
+    0%   { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes gradientFlow {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  @keyframes progressGrow {
+    from { width: 0%; }
+    to   { width: var(--target-width, 0%); }
+  }
+  @keyframes barRise {
+    from { height: 4px; }
+    to   { height: var(--target-height, 4px); }
+  }
+  @keyframes sparkBarGrow {
+    from { transform: scaleY(0); }
+    to   { transform: scaleY(1); }
+  }
+  @keyframes textShine {
+    0%   { background-position: -100% 0; }
+    100% { background-position: 200% 0; }
+  }
+  @keyframes dotPulse {
+    0%, 80%, 100% { transform: scale(0); opacity: 0; }
+    40%           { transform: scale(1); opacity: 1; }
+  }
+  @keyframes iconFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-6px) rotate(3deg); }
+  }
+  @keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(59,130,246,0.3); }
+    50%      { box-shadow: 0 0 30px rgba(59,130,246,0.6), 0 0 60px rgba(139,92,246,0.2); }
+  }
+  @keyframes cardShine {
+    0%   { left: -100%; }
+    100% { left: 200%; }
+  }
+  @keyframes slideReveal {
+    from { clip-path: inset(0 100% 0 0); }
+    to   { clip-path: inset(0 0 0 0); }
+  }
+  @keyframes counterPop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  @keyframes alertPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+    50%      { transform: scale(1.05); box-shadow: 0 0 0 8px rgba(239,68,68,0); }
+  }
+  @keyframes waveSlide {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  @keyframes entranceBlur {
+    from { opacity: 0; filter: blur(10px); transform: translateY(20px); }
+    to   { opacity: 1; filter: blur(0); transform: translateY(0); }
+  }
+  @keyframes borderDance {
+    0%   { border-color: rgba(59,130,246,0.3); }
+    33%  { border-color: rgba(139,92,246,0.3); }
+    66%  { border-color: rgba(6,182,212,0.3); }
+    100% { border-color: rgba(59,130,246,0.3); }
+  }
+
+  /* ===== ROOT ===== */
+  .db-root {
+    min-height: 100vh;
+    background: linear-gradient(160deg, #0a0f1e 0%, #0f172a 30%, #1a1040 60%, #0f172a 100%);
+    padding: 1.5rem 2rem 3rem;
+    position: relative;
+    overflow-x: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  }
+
+  /* ===== BACKGROUND ORBS ===== */
+  .db-orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .db-orb-1 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    top: -10%; left: -5%;
+    animation: orbDrift1 25s ease-in-out infinite;
+  }
+  .db-orb-2 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
+    top: 40%; right: -8%;
+    animation: orbDrift2 30s ease-in-out infinite;
+  }
+  .db-orb-3 {
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(6,182,212,0.08) 0%, transparent 70%);
+    bottom: -5%; left: 30%;
+    animation: orbDrift3 20s ease-in-out infinite;
+  }
+
+  /* ===== ANIMATED ENTRY ===== */
+  .anim-entry {
+    animation: entranceBlur 0.7s ease-out both;
+  }
+
+  /* ===== HEADER ===== */
+  .db-header {
+    position: relative; z-index: 2;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 2rem;
+    animation: fadeInDown 0.8s ease-out both;
+  }
+  .db-header-left { flex: 1; }
+  .db-greeting-row {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .db-greeting-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.4rem;
+    animation: iconFloat 3s ease-in-out infinite;
+    box-shadow: 0 8px 30px rgba(59,130,246,0.35);
+  }
+  .db-greeting-text {
+    font-size: 1.85rem; font-weight: 800; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff 0%, #94a3b8 50%, #ffffff 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: textShine 4s linear infinite;
+  }
+  .db-subtitle {
+    color: rgba(148,163,184,0.7); font-size: 0.9rem;
+    display: flex; align-items: center; gap: 0.6rem;
+    margin-left: 3.8rem;
+  }
+  .db-status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #22c55e; display: inline-block;
+    position: relative;
+  }
+  .db-status-dot::after {
+    content: ''; position: absolute; inset: -3px;
+    border-radius: 50%; border: none;
+    background: rgba(34,197,94,0.4);
+    animation: breathe 2s ease-in-out infinite;
+  }
+  .db-clock {
+    font-variant-numeric: tabular-nums;
+    color: rgba(148,163,184,0.6);
+    font-size: 0.85rem;
+    padding: 0.25rem 0.6rem;
+    background: rgba(30,41,59,0.5);
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .db-header-actions {
+    display: flex; gap: 0.75rem; align-items: center;
+  }
+  .db-refresh-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    border: none; padding: 0.7rem 1.3rem; border-radius: 12px;
+    color: white; font-weight: 600; font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; gap: 0.5rem;
+    box-shadow: 0 4px 20px rgba(59,130,246,0.35);
+    transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+    position: relative; overflow: hidden;
+  }
+  .db-refresh-btn::before {
+    content: ''; position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+  }
+  .db-refresh-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 30px rgba(59,130,246,0.5);
+  }
+  .db-refresh-btn:hover::before { left: 100%; }
+  .db-refresh-btn:active { transform: translateY(0) scale(0.98); }
+  .db-refresh-btn .db-spin-icon {
+    transition: transform 0.5s ease;
+  }
+  .db-refresh-btn:hover .db-spin-icon {
+    transform: rotate(180deg);
+  }
+
+  /* ===== WAVE DIVIDER ===== */
+  .db-wave-divider {
+    position: relative; height: 30px; margin: 0.5rem 0 1.5rem;
+    overflow: hidden; opacity: 0.15; z-index: 1;
+  }
+  .db-wave-svg {
+    position: absolute; bottom: 0; width: 200%; height: 100%;
+    animation: waveSlide 8s linear infinite;
+  }
+
+  /* ===== METRICS GRID ===== */
+  .db-metrics-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1rem; margin-bottom: 1.5rem;
+    position: relative; z-index: 2;
+  }
+  .db-metric-card {
+    background: linear-gradient(145deg, rgba(30,41,59,0.6) 0%, rgba(15,23,42,0.8) 100%);
+    border-radius: 18px; padding: 1.25rem;
+    border: 1px solid rgba(255,255,255,0.06);
+    position: relative; overflow: hidden; cursor: default;
+    transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+    backdrop-filter: blur(10px);
+  }
+  .db-metric-card::before {
+    content: ''; position: absolute;
+    top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+    transition: left 0.7s ease;
+  }
+  .db-metric-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  }
+  .db-metric-card:hover::before { left: 150%; }
+  .db-metric-card:hover .db-metric-icon-wrap {
+    transform: scale(1.1) rotate(-5deg);
+  }
+  .db-metric-glow {
+    position: absolute; top: -20px; right: -20px;
+    width: 100px; height: 100px; border-radius: 50%;
+    filter: blur(40px); opacity: 0.3; pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .db-metric-card:hover .db-metric-glow { opacity: 0.6; }
+  .db-metric-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+  .db-metric-icon-wrap {
+    width: 46px; height: 46px; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.3rem;
+    transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+  .db-metric-sparkline {
+    display: flex; align-items: flex-end; gap: 2px;
+    height: 28px; opacity: 0.5;
+  }
+  .db-spark-bar {
+    width: 4px; border-radius: 2px;
+    background: currentColor; transform-origin: bottom;
+    animation: sparkBarGrow 0.8s ease-out both;
+  }
+  .db-metric-value {
+    font-size: 1.6rem; font-weight: 800; color: #ffffff;
+    margin-bottom: 0.2rem; line-height: 1.2;
+    position: relative; z-index: 1;
+  }
+  .db-metric-label {
+    font-size: 0.78rem; color: rgba(148,163,184,0.7);
+    font-weight: 500; position: relative; z-index: 1;
+    letter-spacing: 0.2px;
+  }
+  .db-metric-footer {
+    display: flex; align-items: center; gap: 0.4rem;
+    margin-top: 0.7rem; position: relative; z-index: 1;
+  }
+  .db-trend-badge {
+    display: inline-flex; align-items: center; gap: 0.2rem;
+    padding: 0.2rem 0.5rem; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+  .db-trend-up {
+    background: rgba(34,197,94,0.15); color: #4ade80;
+    border: 1px solid rgba(34,197,94,0.2);
+  }
+  .db-trend-down {
+    background: rgba(239,68,68,0.15); color: #f87171;
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+  .db-trend-neutral {
+    background: rgba(148,163,184,0.15); color: #94a3b8;
+    border: 1px solid rgba(148,163,184,0.2);
+  }
+  .db-metric-card.db-alert-card {
+    animation: borderDance 3s ease infinite;
+  }
+  .db-metric-card.db-alert-critical {
+    animation: alertPulse 2s ease-in-out infinite;
+  }
+
+  /* ===== FINANCIAL SECTION ===== */
+  .db-financial-section {
+    background: linear-gradient(145deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.85) 100%);
+    border-radius: 22px; padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid rgba(59,130,246,0.12);
+    backdrop-filter: blur(20px);
+    position: relative; overflow: hidden; z-index: 2;
+    transition: border-color 0.5s ease;
+  }
+  .db-financial-section:hover {
+    border-color: rgba(59,130,246,0.25);
+  }
+  .db-financial-section::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
+    background-size: 300% 100%;
+    animation: gradientFlow 4s linear infinite;
+  }
+  .db-fin-glow {
+    position: absolute; top: -50%; left: -30%;
+    width: 200%; height: 200%;
+    background: radial-gradient(circle at 25% 25%, rgba(59,130,246,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .db-fin-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;
+    position: relative; z-index: 1;
+  }
+  .db-section-title {
+    display: flex; align-items: center; gap: 0.6rem;
+    color: #ffffff; font-size: 1.1rem; font-weight: 700;
+  }
+  .db-section-title-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 1.1rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+  }
+  .db-controls-row {
+    display: flex; gap: 0.65rem; align-items: center; flex-wrap: wrap;
+  }
+  .db-control-group {
+    display: flex; align-items: center; gap: 0.35rem;
+  }
+  .db-control-label {
+    font-size: 11px; color: rgba(148,163,184,0.6); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .db-select {
+    padding: 0.45rem 0.7rem; border-radius: 9px;
+    border: 1px solid rgba(59,130,246,0.2);
+    background: rgba(15,23,42,0.7); color: #e2e8f0;
+    font-size: 13px; cursor: pointer; outline: none;
+    min-width: 100px; transition: all 0.3s ease;
+    font-weight: 500;
+  }
+  .db-select:hover { border-color: rgba(59,130,246,0.4); }
+  .db-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+  }
+  .db-select option { background: #0f172a; }
+  .db-reset-btn {
+    padding: 0.45rem 0.9rem; border-radius: 9px;
+    border: 1px solid rgba(139,92,246,0.25);
+    background: rgba(139,92,246,0.1); color: #c4b5fd;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex; align-items: center; gap: 0.3rem;
+  }
+  .db-reset-btn:hover {
+    background: rgba(139,92,246,0.2);
+    border-color: rgba(139,92,246,0.4);
+    transform: translateY(-1px);
+  }
+  .db-period-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: linear-gradient(90deg, rgba(59,130,246,0.12), rgba(139,92,246,0.12));
+    padding: 0.5rem 1rem; border-radius: 10px;
+    font-size: 12px; color: rgba(226,232,240,0.85);
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(59,130,246,0.15);
+    position: relative; z-index: 1;
+    animation: fadeInScale 0.5s ease-out both;
+  }
+  .db-period-badge strong { color: #ffffff; }
+
+  /* ===== PERIOD GRID ===== */
+  .db-period-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1rem; position: relative; z-index: 1;
+  }
+  .db-period-card {
+    background: linear-gradient(145deg, rgba(30,41,59,0.5) 0%, rgba(15,23,42,0.7) 100%);
+    border-radius: 16px; padding: 1.15rem;
+    border: 1px solid rgba(255,255,255,0.05);
+    position: relative; overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+  }
+  .db-period-card::after {
+    content: ''; position: absolute;
+    bottom: 0; left: 0; right: 0; height: 3px;
+    opacity: 0; transition: opacity 0.3s ease;
+  }
+  .db-period-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255,255,255,0.1);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  }
+  .db-period-card:hover::after { opacity: 1; }
+  .db-period-card-weekly::after { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+  .db-period-card-monthly::after { background: linear-gradient(90deg, #22c55e, #4ade80); }
+  .db-period-card-yearly::after { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .db-period-title {
+    font-size: 12px; font-weight: 700; margin-bottom: 0.9rem;
+    display: flex; align-items: center; gap: 0.4rem;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .db-period-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.4rem; font-size: 12.5px;
+  }
+  .db-period-label { color: rgba(148,163,184,0.65); }
+  .db-period-divider {
+    margin: 0.7rem 0; border: none; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  }
+  .db-profit-value {
+    font-weight: 700; font-size: 14px;
+    transition: color 0.3s ease;
+  }
+  .db-profit-positive { color: #4ade80; }
+  .db-profit-negative { color: #f87171; }
+
+  /* ===== VISUAL BAR CHART ===== */
+  .db-bar-chart {
+    display: flex; align-items: flex-end; gap: 0.5rem;
+    height: 60px; margin-top: 1rem;
+    padding: 0.5rem 0; position: relative;
+  }
+  .db-bar-chart::before {
+    content: ''; position: absolute;
+    bottom: 0; left: 0; right: 0; height: 1px;
+    background: rgba(255,255,255,0.06);
+  }
+  .db-bar-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 0.3rem;
+  }
+  .db-bar {
+    width: 100%; border-radius: 4px 4px 0 0;
+    min-height: 4px; max-height: 56px;
+    animation: barRise 1s ease-out both;
+    position: relative; overflow: hidden;
+  }
+  .db-bar::after {
+    content: ''; position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    animation: cardShine 2s ease-in-out 1s both;
+  }
+  .db-bar-label {
+    font-size: 9px; color: rgba(148,163,184,0.5);
+    text-transform: uppercase; letter-spacing: 0.3px;
+    font-weight: 600;
+  }
+
+  /* ===== TWO COL GRID ===== */
+  .db-two-col {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1.25rem; margin-bottom: 1.25rem;
+    position: relative; z-index: 2;
+  }
+
+  /* ===== CARDS ===== */
+  .db-card {
+    background: linear-gradient(145deg, rgba(30,41,59,0.65) 0%, rgba(15,23,42,0.8) 100%);
+    border-radius: 20px; padding: 1.25rem;
+    border: 1px solid rgba(255,255,255,0.05);
+    position: relative; overflow: hidden;
+    backdrop-filter: blur(10px);
+    transition: all 0.4s ease;
+    z-index: 2;
+  }
+  .db-card:hover {
+    border-color: rgba(255,255,255,0.1);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .db-card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1rem; padding-bottom: 0.9rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .db-card-title {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 1rem; font-weight: 700; color: #ffffff;
+  }
+  .db-card-title-icon {
+    color: #60a5fa;
+  }
+  .db-view-btn {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.4rem 0.85rem; border-radius: 9px;
+    background: rgba(59,130,246,0.1); color: #60a5fa;
+    font-size: 12px; font-weight: 600;
+    border: 1px solid rgba(59,130,246,0.2);
+    text-decoration: none;
+    transition: all 0.3s ease;
+  }
+  .db-view-btn:hover {
+    background: rgba(59,130,246,0.2);
+    border-color: rgba(59,130,246,0.4);
+    transform: translateX(2px);
+    color: #93c5fd;
+  }
+  .db-period-tag {
+    display: inline-flex; align-items: center;
+    padding: 0.3rem 0.7rem; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    background: rgba(139,92,246,0.12); color: #a78bfa;
+    border: 1px solid rgba(139,92,246,0.2);
+  }
+  .db-count-badge {
+    background: rgba(59,130,246,0.15); color: #60a5fa;
+    padding: 0.15rem 0.5rem; border-radius: 20px;
+    font-size: 11px; font-weight: 700;
+    border: 1px solid rgba(59,130,246,0.2);
+  }
+
+  /* ===== SALES TIMELINE ===== */
+  .db-timeline { position: relative; padding-left: 1.5rem; }
+  .db-timeline::before {
+    content: ''; position: absolute;
+    left: 7px; top: 0; bottom: 0; width: 2px;
+    background: linear-gradient(180deg, rgba(59,130,246,0.3), rgba(139,92,246,0.3), transparent);
+    border-radius: 2px;
+  }
+  .db-timeline-item {
+    position: relative; padding: 0.6rem 0; padding-left: 1.2rem;
+    animation: slideInRight 0.5s ease-out both;
+  }
+  .db-timeline-dot {
+    position: absolute; left: -1.5rem; top: 50%;
+    transform: translateY(-50%);
+    width: 14px; height: 14px; border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border: 2px solid rgba(15,23,42,0.8);
+    z-index: 1;
+    transition: all 0.3s ease;
+  }
+  .db-timeline-item:hover .db-timeline-dot {
+    transform: translateY(-50%) scale(1.3);
+    box-shadow: 0 0 12px rgba(59,130,246,0.5);
+  }
+  .db-timeline-content {
+    background: rgba(30,41,59,0.4); border-radius: 12px;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: all 0.3s ease;
+  }
+  .db-timeline-content:hover {
+    background: rgba(30,41,59,0.6);
+    border-color: rgba(59,130,246,0.15);
+    transform: translateX(4px);
+  }
+  .db-timeline-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.3rem;
+  }
+  .db-timeline-product {
+    font-size: 13px; font-weight: 600; color: #e2e8f0;
+  }
+  .db-timeline-amount {
+    font-size: 13px; font-weight: 700; color: #4ade80;
+  }
+  .db-timeline-meta {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 11px; color: rgba(148,163,184,0.6);
+  }
+  .db-qty-badge {
+    background: rgba(139,92,246,0.15); color: #c4b5fd;
+    padding: 0.1rem 0.4rem; border-radius: 6px;
+    font-weight: 600; font-size: 10px;
+  }
+  .db-empty-state {
+    padding: 2.5rem; text-align: center;
+    color: rgba(148,163,184,0.5); font-size: 13px;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.5rem;
+  }
+  .db-empty-icon {
+    font-size: 2rem; opacity: 0.3;
+    animation: iconFloat 3s ease-in-out infinite;
+  }
+
+  /* ===== TOP PRODUCTS ===== */
+  .db-top-list { display: flex; flex-direction: column; gap: 0.6rem; }
+  .db-top-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 0;
+    animation: slideInLeft 0.5s ease-out both;
+    transition: all 0.3s ease;
+  }
+  .db-top-item:hover { transform: translateX(4px); }
+  .db-rank-badge {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800; color: white;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+  }
+  .db-top-item:hover .db-rank-badge { transform: scale(1.15) rotate(-5deg); }
+  .db-top-info { flex: 1; min-width: 0; }
+  .db-top-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.4rem;
+  }
+  .db-top-name {
+    font-size: 13px; font-weight: 600; color: #e2e8f0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .db-top-revenue {
+    font-size: 13px; font-weight: 700; color: #4ade80;
+    flex-shrink: 0; margin-left: 0.5rem;
+  }
+  .db-top-bar-track {
+    height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,0.06);
+    overflow: hidden; margin-bottom: 0.25rem;
+  }
+  .db-top-bar-fill {
+    height: 100%; border-radius: 3px;
+    animation: progressGrow 1.2s ease-out both;
+    width: var(--target-width, 0%);
+    position: relative;
+  }
+  .db-top-bar-fill::after {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    animation: shimmer 2s linear infinite;
+    background-size: 200% 100%;
+  }
+  .db-top-units {
+    font-size: 11px; color: rgba(148,163,184,0.5); font-weight: 500;
+  }
+
+  /* ===== CATEGORIES ===== */
+  .db-categories-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem;
+  }
+  .db-category-item {
+    padding: 0.85rem; border-radius: 12px;
+    background: rgba(30,41,59,0.4);
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: all 0.35s ease;
+    animation: fadeInScale 0.5s ease-out both;
+  }
+  .db-category-item:hover {
+    background: rgba(30,41,59,0.6);
+    border-color: rgba(255,255,255,0.08);
+    transform: translateY(-2px);
+  }
+  .db-cat-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .db-cat-name {
+    font-size: 13px; font-weight: 700; color: #e2e8f0;
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .db-cat-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .db-cat-value {
+    font-size: 13px; font-weight: 700; color: #4ade80;
+  }
+  .db-cat-bar-track {
+    height: 5px; border-radius: 3px;
+    background: rgba(255,255,255,0.06);
+    overflow: hidden; margin-bottom: 0.4rem;
+  }
+  .db-cat-bar-fill {
+    height: 100%; border-radius: 3px;
+    animation: progressGrow 1.5s ease-out both;
+    width: var(--target-width, 0%);
+    transition: width 0.5s ease;
+  }
+  .db-cat-meta {
+    display: flex; justify-content: space-between;
+    font-size: 11px; color: rgba(148,163,184,0.5);
+  }
+
+  /* ===== QUICK ACTIONS ===== */
+  .db-quick-actions {
+    background: linear-gradient(145deg, rgba(30,41,59,0.6) 0%, rgba(15,23,42,0.75) 100%);
+    border-radius: 20px; padding: 1.25rem;
+    border: 1px solid rgba(255,255,255,0.05);
+    margin-top: 1.25rem;
+    position: relative; z-index: 2;
+    backdrop-filter: blur(10px);
+  }
+  .db-quick-title {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 1rem; font-weight: 700; color: #ffffff;
+    margin-bottom: 1rem;
+  }
+  .db-actions-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem;
+  }
+  .db-action-btn {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 0.5rem;
+    padding: 1rem; border-radius: 14px;
+    text-decoration: none; color: white;
+    font-weight: 600; font-size: 12px;
+    transition: all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+    position: relative; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .db-action-btn::before {
+    content: ''; position: absolute;
+    top: 50%; left: 50%; width: 0; height: 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transition: all 0.5s ease;
+    transform: translate(-50%, -50%);
+  }
+  .db-action-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px var(--shadow-color, rgba(0,0,0,0.3));
+  }
+  .db-action-btn:hover::before {
+    width: 200px; height: 200px;
+  }
+  .db-action-btn:active { transform: translateY(-2px) scale(0.97); }
+  .db-action-icon {
+    font-size: 1.5rem; position: relative; z-index: 1;
+    transition: transform 0.3s ease;
+  }
+  .db-action-btn:hover .db-action-icon {
+    transform: scale(1.2);
+  }
+  .db-action-label {
+    position: relative; z-index: 1;
+    text-align: center; line-height: 1.2;
+  }
+
+  /* ===== LOADING SCREEN ===== */
+  .db-loading-screen {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 80vh; gap: 1.5rem;
+  }
+  .db-loading-logo {
+    position: relative; width: 70px; height: 70px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .db-loading-ring {
+    position: absolute; inset: 0;
+    border: 3px solid rgba(59,130,246,0.15);
+    border-top-color: #3b82f6;
+    border-right-color: #8b5cf6;
+    border-radius: 50%;
+    animation: spin 1.2s cubic-bezier(0.5,0,0.5,1) infinite;
+  }
+  .db-loading-ring-inner {
+    position: absolute; inset: 8px;
+    border: 2px solid rgba(139,92,246,0.1);
+    border-bottom-color: #8b5cf6;
+    border-radius: 50%;
+    animation: spin 0.8s cubic-bezier(0.5,0,0.5,1) infinite reverse;
+  }
+  .db-loading-center-icon {
+    color: #60a5fa; font-size: 1.5rem;
+    animation: breathe 1.5s ease-in-out infinite;
+  }
+  .db-loading-dots {
+    display: flex; gap: 0.4rem;
+  }
+  .db-loading-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #3b82f6;
+    animation: dotPulse 1.4s ease-in-out infinite;
+  }
+  .db-loading-dot:nth-child(2) { animation-delay: 0.2s; background: #8b5cf6; }
+  .db-loading-dot:nth-child(3) { animation-delay: 0.4s; background: #06b6d4; }
+  .db-loading-text {
+    color: rgba(148,163,184,0.7); font-size: 14px; font-weight: 500;
+    animation: fadeInUp 0.5s ease-out 0.5s both;
+  }
+
+  /* ===== ERROR STATE ===== */
+  .db-error-card {
+    background: linear-gradient(145deg, rgba(127,29,29,0.25) 0%, rgba(15,23,42,0.85) 100%);
+    border-radius: 18px; padding: 1.5rem;
+    margin: 2rem auto; max-width: 600px;
+    display: flex; align-items: center; gap: 1rem;
+    border: 1px solid rgba(239,68,68,0.25);
+    animation: fadeInScale 0.5s ease-out both;
+  }
+  .db-error-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: rgba(239,68,68,0.2);
+    display: flex; align-items: center; justify-content: center;
+    color: #f87171; font-size: 1.4rem; flex-shrink: 0;
+    animation: alertPulse 2s ease-in-out infinite;
+  }
+  .db-error-title {
+    font-weight: 700; color: #fca5a5; font-size: 15px;
+    margin-bottom: 0.25rem;
+  }
+  .db-error-msg { color: #f87171; font-size: 13px; }
+  .db-retry-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: none; padding: 0.65rem 1.2rem; border-radius: 10px;
+    color: white; font-weight: 600; font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; gap: 0.4rem;
+    transition: all 0.3s ease; flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(239,68,68,0.3);
+  }
+  .db-retry-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(239,68,68,0.4);
+  }
+
+  /* ===== SUMMARY ROW (new component) ===== */
+  .db-summary-row {
+    display: flex; gap: 1rem; margin-bottom: 1.5rem;
+    position: relative; z-index: 2;
+  }
+  .db-summary-card {
+    flex: 1; border-radius: 16px; padding: 1rem 1.25rem;
+    display: flex; align-items: center; gap: 1rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: all 0.4s ease;
+    position: relative; overflow: hidden;
+  }
+  .db-summary-card::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, var(--card-color-a, transparent), var(--card-color-b, transparent));
+    opacity: 0.08; transition: opacity 0.3s ease;
+  }
+  .db-summary-card:hover::before { opacity: 0.15; }
+  .db-summary-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255,255,255,0.12);
+  }
+  .db-summary-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; flex-shrink: 0;
+    transition: transform 0.3s ease;
+  }
+  .db-summary-card:hover .db-summary-icon {
+    transform: scale(1.1);
+  }
+  .db-summary-info { flex: 1; }
+  .db-summary-label {
+    font-size: 11px; color: rgba(148,163,184,0.6);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 0.15rem;
+  }
+  .db-summary-value {
+    font-size: 1.1rem; font-weight: 700; color: #ffffff;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 1200px) {
+    .db-metrics-grid { grid-template-columns: repeat(2, 1fr); }
+    .db-period-grid { grid-template-columns: repeat(2, 1fr); }
+    .db-actions-grid { grid-template-columns: repeat(3, 1fr); }
+    .db-categories-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .db-root { padding: 1rem; }
+    .db-header { flex-direction: column; gap: 1rem; }
+    .db-metrics-grid { grid-template-columns: 1fr; }
+    .db-two-col { grid-template-columns: 1fr; }
+    .db-period-grid { grid-template-columns: 1fr; }
+    .db-actions-grid { grid-template-columns: repeat(2, 1fr); }
+    .db-fin-header { flex-direction: column; align-items: flex-start; }
+    .db-summary-row { flex-direction: column; }
+  }
+`;
+
+/* ─────────────────────────────────────────────
+   ANIMATED COUNTER COMPONENT
+   ───────────────────────────────────────────── */
+
+function AnimatedCounter({ value, prefix = '', suffix = '', isCurrency = false, duration = 1800 }) {
+  const [display, setDisplay] = useState(0);
+  const frameRef = useRef(null);
+
+  useEffect(() => {
+    const numVal = typeof value === 'number' ? value : parseFloat(value) || 0;
+    if (numVal === 0) { setDisplay(0); return; }
+
+    let start = null;
+    const animate = (ts) => {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 4);
+      setDisplay(eased * numVal);
+      if (progress < 1) frameRef.current = requestAnimationFrame(animate);
+    };
+    frameRef.current = requestAnimationFrame(animate);
+    return () => { if (frameRef.current) cancelAnimationFrame(frameRef.current); };
+  }, [value, duration]);
+
+  const formatted = isCurrency
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(display)
+    : new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Math.floor(display));
+
+  return <span>{prefix}{formatted}{suffix}</span>;
+}
+
+/* ─────────────────────────────────────────────
+   LIVE CLOCK COMPONENT
+   ───────────────────────────────────────────── */
+
+function LiveClock() {
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <span className="db-clock">
+      {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+    </span>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   GREETING HELPER
+   ───────────────────────────────────────────── */
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good Morning';
+  if (h < 18) return 'Good Afternoon';
+  return 'Good Evening';
+}
+
+/* ─────────────────────────────────────────────
+   MINI SPARKLINE (random visual for metric cards)
+   ───────────────────────────────────────────── */
+
+function MiniSparkline({ color, delay = 0 }) {
+  const bars = [35, 55, 40, 70, 45, 80, 60, 50, 75, 65];
+  return (
+    <div className="db-metric-sparkline" style={{ color }}>
+      {bars.map((h, i) => (
+        <div
+          key={i}
+          className="db-spark-bar"
+          style={{
+            height: `${h}%`,
+            background: color,
+            animationDelay: `${delay + i * 0.06}s`,
+            opacity: 0.3 + (h / 100) * 0.5,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   MAIN DASHBOARD COMPONENT
+   ───────────────────────────────────────────── */
+
 export default function Dashboard() {
-  // State to store dashboard data
   const [data, setData] = useState(null);
-  
-  // State to track loading status
   const [loading, setLoading] = useState(true);
-  
-  // State to store any errors
   const [error, setError] = useState(null);
-
-  // State for period selection
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedWeek, setSelectedWeek] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
-  /**
-   * useEffect Hook
-   * --------------
-   * Runs when the component mounts (loads)
-   * Fetches dashboard data from our API
-   */
-  useEffect(() => {
-    fetchDashboardData();
-  }, []); // Empty array means run once on mount
+  useEffect(() => { fetchDashboardData(); }, []);
 
-  /**
-   * Fetch Dashboard Data
-   * --------------------
-   * Makes an API call to get all dashboard statistics
-   */
   async function fetchDashboardData(year = selectedYear, month = selectedMonth, week = selectedWeek) {
     try {
-      setLoading(true);
+      setLoading(prev => !data ? true : prev);
+      setRefreshing(true);
       setError(null);
-
-      // Build URL with query parameters
       let url = `/api/analytics/dashboard?year=${year}&month=${month}`;
-      if (week) {
-        url += `&week=${week}`;
-      }
-
-      // Fetch data from our dashboard API
-      const response = await fetch(url);
-      
-      // Parse the JSON response
-      const result = await response.json();
-
-      // Check if the request was successful
-      if (!result.success) {
-        throw new Error(result.message || 'Failed to fetch dashboard data');
-      }
-
-      // Update state with the data
+      if (week) url += `&week=${week}`;
+      const res = await fetch(url);
+      const result = await res.json();
+      if (!result.success) throw new Error(result.message || 'Failed to fetch dashboard data');
       setData(result.data);
     } catch (err) {
-      // Store error message
       setError(err.message);
       console.error('Dashboard fetch error:', err);
     } finally {
-      // Always set loading to false when done
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
-  // Handle period selection changes
   function handleYearChange(e) {
-    const year = parseInt(e.target.value);
-    setSelectedYear(year);
-    fetchDashboardData(year, selectedMonth, selectedWeek);
+    const y = parseInt(e.target.value);
+    setSelectedYear(y);
+    fetchDashboardData(y, selectedMonth, selectedWeek);
   }
-
   function handleMonthChange(e) {
-    const month = parseInt(e.target.value);
-    setSelectedMonth(month);
-    fetchDashboardData(selectedYear, month, selectedWeek);
+    const m = parseInt(e.target.value);
+    setSelectedMonth(m);
+    fetchDashboardData(selectedYear, m, selectedWeek);
   }
-
   function handleWeekChange(e) {
-    const week = e.target.value ? parseInt(e.target.value) : '';
-    setSelectedWeek(week);
-    fetchDashboardData(selectedYear, selectedMonth, week);
+    const w = e.target.value ? parseInt(e.target.value) : '';
+    setSelectedWeek(w);
+    fetchDashboardData(selectedYear, selectedMonth, w);
   }
-
   function resetToCurrentPeriod() {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    setSelectedYear(year);
-    setSelectedMonth(month);
-    setSelectedWeek('');
-    fetchDashboardData(year, month, '');
+    const y = now.getFullYear(), m = now.getMonth() + 1;
+    setSelectedYear(y); setSelectedMonth(m); setSelectedWeek('');
+    fetchDashboardData(y, m, '');
   }
 
-  /**
-   * Format Currency
-   * ---------------
-   * Helper function to format numbers as currency
-   */
-  function formatCurrency(value) {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(value || 0);
+  function formatCurrency(v) {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v || 0);
+  }
+  function formatNumber(v) {
+    return new Intl.NumberFormat('en-US').format(v || 0);
   }
 
-  /**
-   * Format Number
-   * -------------
-   * Helper function to format large numbers with commas
-   */
-  function formatNumber(value) {
-    return new Intl.NumberFormat('en-US').format(value || 0);
-  }
-
-  // Show loading state
-  if (loading) {
+  /* ── LOADING STATE ── */
+  if (loading && !data) {
     return (
-      <div style={styles.container}>
-        <div style={styles.loadingContainer}>
-          <div style={styles.spinner}></div>
-          <p style={styles.loadingText}>Loading dashboard...</p>
+      <div className="db-root">
+        <style>{globalCSS}</style>
+        <div className="db-orb db-orb-1" />
+        <div className="db-orb db-orb-2" />
+        <div className="db-loading-screen">
+          <div className="db-loading-logo">
+            <div className="db-loading-ring" />
+            <div className="db-loading-ring-inner" />
+            <span className="db-loading-center-icon"><HiOutlineChartBar size={28} /></span>
+          </div>
+          <div className="db-loading-dots">
+            <span className="db-loading-dot" />
+            <span className="db-loading-dot" />
+            <span className="db-loading-dot" />
+          </div>
+          <p className="db-loading-text">Preparing your dashboard...</p>
         </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
-  // Show error state
-  if (error) {
+  /* ── ERROR STATE ── */
+  if (error && !data) {
     return (
-      <div style={styles.container}>
-        <div style={styles.errorCard}>
-          <span style={{ fontSize: '2rem', display: 'flex', alignItems: 'center' }}><HiOutlineExclamationTriangle size={32} /></span>
+      <div className="db-root">
+        <style>{globalCSS}</style>
+        <div className="db-orb db-orb-1" />
+        <div className="db-error-card">
+          <div className="db-error-icon"><HiOutlineExclamationTriangle size={24} /></div>
           <div style={{ flex: 1 }}>
-            <p style={{ fontWeight: '600', color: '#fca5a5', marginBottom: '0.25rem' }}>Error Loading Dashboard</p>
-            <p style={{ color: '#f87171', fontSize: '14px' }}>{error}</p>
+            <p className="db-error-title">Error Loading Dashboard</p>
+            <p className="db-error-msg">{error}</p>
           </div>
-          <button 
-            onClick={fetchDashboardData} 
-            style={{
-              ...styles.refreshBtn,
-              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-              boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
-            }}
-          >
-            <HiOutlineArrowPath size={16} style={{display:'inline', verticalAlign:'middle'}} /> Retry
+          <button className="db-retry-btn" onClick={() => fetchDashboardData()}>
+            <HiOutlineArrowPath size={16} /> Retry
           </button>
         </div>
       </div>
     );
   }
 
-  // Destructure data for easier access
   const { inventory, sales, purchases, periodStats, alerts, recentSales, topProducts, categories } = data || {};
 
+  /* ── METRIC CARDS DATA ── */
+  const metricsData = [
+    {
+      icon: <HiOutlineCube size={22} />, label: 'Total Products',
+      value: inventory?.TotalProducts, isCurrency: false,
+      gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+      color: '#3b82f6', sparkDelay: 0.6,
+    },
+    {
+      icon: <HiOutlineBanknotes size={22} />, label: 'Inventory Value',
+      value: inventory?.TotalInventoryValue, isCurrency: true,
+      gradient: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+      color: '#06b6d4', sparkDelay: 0.7,
+    },
+    {
+      icon: <HiOutlineArrowTrendingUp size={22} />, label: "Monthly Revenue",
+      value: sales?.TotalRevenue, isCurrency: true,
+      gradient: 'linear-gradient(135deg, #22c55e, #16a34a)',
+      color: '#22c55e', sparkDelay: 0.8,
+    },
+    {
+      icon: <HiOutlineShoppingCart size={22} />, label: 'Sales This Month',
+      value: sales?.TotalSales, isCurrency: false,
+      gradient: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+      color: '#8b5cf6', sparkDelay: 0.9,
+    },
+    {
+      icon: <HiOutlineExclamationTriangle size={22} />, label: 'Low Stock Items',
+      value: inventory?.LowStockProducts, isCurrency: false,
+      gradient: 'linear-gradient(135deg, #f59e0b, #d97706)',
+      color: '#f59e0b', sparkDelay: 1.0,
+      isAlert: (inventory?.LowStockProducts || 0) > 0,
+    },
+    {
+      icon: <HiOutlineXCircle size={22} />, label: 'Out of Stock',
+      value: inventory?.OutOfStockProducts, isCurrency: false,
+      gradient: 'linear-gradient(135deg, #ef4444, #dc2626)',
+      color: '#ef4444', sparkDelay: 1.1,
+      isCritical: (inventory?.OutOfStockProducts || 0) > 0,
+    },
+    {
+      icon: <HiOutlineBell size={22} />, label: 'Active Alerts',
+      value: alerts?.TotalUnresolvedAlerts, isCurrency: false,
+      gradient: 'linear-gradient(135deg, #f43f5e, #e11d48)',
+      color: '#f43f5e', sparkDelay: 1.2,
+      isCritical: (alerts?.TotalUnresolvedAlerts || 0) > 5,
+    },
+    {
+      icon: <HiOutlineInboxArrowDown size={22} />, label: 'Purchases This Month',
+      value: purchases?.TotalPurchaseCost, isCurrency: true,
+      gradient: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+      color: '#0ea5e9', sparkDelay: 1.3,
+    },
+  ];
+
+  /* ── QUICK ACTIONS DATA ── */
+  const actionsData = [
+    { href: '/products/add', icon: <HiOutlinePlusCircle size={22} />, label: 'Add Product', bg: 'linear-gradient(135deg, #3b82f6, #2563eb)', shadow: 'rgba(59,130,246,0.35)' },
+    { href: '/sales/add', icon: <HiOutlineShoppingCart size={22} />, label: 'New Sale', bg: 'linear-gradient(135deg, #22c55e, #16a34a)', shadow: 'rgba(34,197,94,0.35)' },
+    { href: '/purchases/add', icon: <HiOutlineInboxArrowDown size={22} />, label: 'New Purchase', bg: 'linear-gradient(135deg, #06b6d4, #0891b2)', shadow: 'rgba(6,182,212,0.35)' },
+    { href: '/alerts/low-stock', icon: <HiOutlineExclamationTriangle size={22} />, label: 'Low Stock', bg: 'linear-gradient(135deg, #f59e0b, #d97706)', shadow: 'rgba(245,158,11,0.35)' },
+    { href: '/alerts', icon: <HiOutlineBell size={22} />, label: 'View Alerts', bg: 'linear-gradient(135deg, #ef4444, #dc2626)', shadow: 'rgba(239,68,68,0.35)' },
+  ];
+
+  const monthLabel = MONTHS.find(m => m.value === selectedMonth)?.label || '';
+
   return (
-    <div style={styles.container}>
-      {/* Header Section */}
-      <div style={styles.header}>
-        <div style={styles.headerTop}>
-          <div>
-            <h1 style={styles.headerTitle}>
-              <span style={{ 
-                background: 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%)', 
-                padding: '0.4rem', 
-                borderRadius: '10px',
-                display: 'inline-flex',
-                marginRight: '0.5rem'
-              }}><HiOutlineChartBar size={24} /></span>
-              Dashboard
-            </h1>
-            <p style={styles.headerSubtitle}>
-              Welcome to Smart Inventory Management System
-            </p>
+    <div className="db-root">
+      <style>{globalCSS}</style>
+
+      {/* ── Background Orbs ── */}
+      <div className="db-orb db-orb-1" />
+      <div className="db-orb db-orb-2" />
+      <div className="db-orb db-orb-3" />
+
+      {/* ══════════ HEADER ══════════ */}
+      <header className="db-header">
+        <div className="db-header-left">
+          <div className="db-greeting-row">
+            <div className="db-greeting-icon"><HiOutlineSparkles size={24} /></div>
+            <h1 className="db-greeting-text">{getGreeting()}</h1>
           </div>
-          <button 
-            style={styles.refreshBtn} 
+          <div className="db-subtitle">
+            <span className="db-status-dot" />
+            <span>System Online</span>
+            <span style={{ color: 'rgba(148,163,184,0.3)' }}>•</span>
+            <LiveClock />
+          </div>
+        </div>
+        <div className="db-header-actions">
+          <button
+            className="db-refresh-btn"
             onClick={() => fetchDashboardData(selectedYear, selectedMonth, selectedWeek)}
+            disabled={refreshing}
           >
-            <HiOutlineArrowPath size={16} style={{display:'inline', verticalAlign:'middle'}} /> Refresh Data
+            <HiOutlineArrowPath
+              size={16}
+              className="db-spin-icon"
+              style={refreshing ? { animation: 'spin 1s linear infinite' } : {}}
+            />
+            {refreshing ? 'Refreshing...' : 'Refresh Data'}
           </button>
+        </div>
+      </header>
+
+      {/* ── Wave Divider ── */}
+      <div className="db-wave-divider">
+        <svg className="db-wave-svg" viewBox="0 0 1000 30" preserveAspectRatio="none">
+          <path d="M0,15 C150,30 350,0 500,15 C650,30 850,0 1000,15 L1000,30 L0,30 Z" fill="rgba(59,130,246,0.3)" />
+          <path d="M0,20 C200,5 300,25 500,20 C700,15 800,28 1000,20 L1000,30 L0,30 Z" fill="rgba(139,92,246,0.2)" />
+        </svg>
+      </div>
+
+      {/* ══════════ SUMMARY ROW (NEW) ══════════ */}
+      <div className="db-summary-row">
+        <div className="db-summary-card anim-entry" style={{ '--card-color-a': '#3b82f6', '--card-color-b': '#8b5cf6', animationDelay: '0.1s' }}>
+          <div className="db-summary-icon" style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)' }}>
+            <HiOutlineRocketLaunch size={20} />
+          </div>
+          <div className="db-summary-info">
+            <div className="db-summary-label">Today's Status</div>
+            <div className="db-summary-value" style={{ color: '#4ade80' }}>
+              {(alerts?.TotalUnresolvedAlerts || 0) === 0 ? 'All Clear' : `${alerts?.TotalUnresolvedAlerts} Alert${alerts?.TotalUnresolvedAlerts > 1 ? 's' : ''}`}
+            </div>
+          </div>
+        </div>
+        <div className="db-summary-card anim-entry" style={{ '--card-color-a': '#22c55e', '--card-color-b': '#06b6d4', animationDelay: '0.2s' }}>
+          <div className="db-summary-icon" style={{ background: 'linear-gradient(135deg, #22c55e, #06b6d4)' }}>
+            <HiOutlineFire size={20} />
+          </div>
+          <div className="db-summary-info">
+            <div className="db-summary-label">Monthly Profit</div>
+            <div className="db-summary-value" style={{ color: (periodStats?.monthly?.grossProfit || 0) >= 0 ? '#4ade80' : '#f87171' }}>
+              {formatCurrency(periodStats?.monthly?.grossProfit)}
+            </div>
+          </div>
+        </div>
+        <div className="db-summary-card anim-entry" style={{ '--card-color-a': '#f59e0b', '--card-color-b': '#ef4444', animationDelay: '0.3s' }}>
+          <div className="db-summary-icon" style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)' }}>
+            <HiOutlineArchiveBox size={20} />
+          </div>
+          <div className="db-summary-info">
+            <div className="db-summary-label">Total Stock Units</div>
+            <div className="db-summary-value">
+              <AnimatedCounter value={categories?.reduce((a, c) => a + (c.TotalStock || 0), 0) || 0} />
+            </div>
+          </div>
+        </div>
+        <div className="db-summary-card anim-entry" style={{ '--card-color-a': '#8b5cf6', '--card-color-b': '#ec4899', animationDelay: '0.4s' }}>
+          <div className="db-summary-icon" style={{ background: 'linear-gradient(135deg, #8b5cf6, #ec4899)' }}>
+            <HiOutlineCheckBadge size={20} />
+          </div>
+          <div className="db-summary-info">
+            <div className="db-summary-label">Categories</div>
+            <div className="db-summary-value">
+              <AnimatedCounter value={categories?.length || 0} />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Financial Overview Card */}
-      <div style={styles.financialCard}>
-        <div style={styles.cardGlow}></div>
-        
-        <div style={styles.financialHeader}>
-          <h2 style={styles.sectionTitle}>
-            <HiOutlineArrowTrendingUp size={20} style={{display:'inline', verticalAlign:'middle'}} /> Financial Overview
-          </h2>
-          
-          {/* Date Selection Controls */}
-          <div style={styles.controlsRow}>
-            <div style={styles.controlGroup}>
-              <label style={styles.controlLabel}>Year:</label>
-              <select value={selectedYear} onChange={handleYearChange} style={styles.select}>
-                {YEARS.map(year => (
-                  <option key={year} value={year} style={{ background: '#0f172a' }}>{year}</option>
-                ))}
+      {/* ══════════ METRICS GRID ══════════ */}
+      <div className="db-metrics-grid">
+        {metricsData.map((m, i) => (
+          <div
+            key={i}
+            className={`db-metric-card anim-entry ${m.isAlert ? 'db-alert-card' : ''} ${m.isCritical ? 'db-alert-critical' : ''}`}
+            style={{ animationDelay: `${0.15 + i * 0.08}s` }}
+          >
+            <div className="db-metric-glow" style={{ background: m.color }} />
+            <div className="db-metric-top">
+              <div className="db-metric-icon-wrap" style={{ background: m.gradient }}>
+                {m.icon}
+              </div>
+              <MiniSparkline color={m.color} delay={m.sparkDelay} />
+            </div>
+            <div className="db-metric-value">
+              <AnimatedCounter value={m.value} isCurrency={m.isCurrency} duration={1500 + i * 150} />
+            </div>
+            <div className="db-metric-label">{m.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ══════════ FINANCIAL OVERVIEW ══════════ */}
+      <section className="db-financial-section anim-entry" style={{ animationDelay: '0.6s' }}>
+        <div className="db-fin-glow" />
+
+        <div className="db-fin-header">
+          <div className="db-section-title">
+            <div className="db-section-title-icon">
+              <HiOutlineArrowTrendingUp size={18} />
+            </div>
+            <span>Financial Overview</span>
+          </div>
+
+          <div className="db-controls-row">
+            <div className="db-control-group">
+              <label className="db-control-label">Year</label>
+              <select value={selectedYear} onChange={handleYearChange} className="db-select">
+                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
-
-            <div style={styles.controlGroup}>
-              <label style={styles.controlLabel}>Month:</label>
-              <select value={selectedMonth} onChange={handleMonthChange} style={styles.select}>
-                {MONTHS.map(month => (
-                  <option key={month.value} value={month.value} style={{ background: '#0f172a' }}>{month.label}</option>
-                ))}
+            <div className="db-control-group">
+              <label className="db-control-label">Month</label>
+              <select value={selectedMonth} onChange={handleMonthChange} className="db-select">
+                {MONTHS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
             </div>
-
-            <div style={styles.controlGroup}>
-              <label style={styles.controlLabel}>Week:</label>
-              <select value={selectedWeek} onChange={handleWeekChange} style={styles.select}>
-                <option value="" style={{ background: '#0f172a' }}>All Weeks</option>
-                {WEEKS.map(week => (
-                  <option key={week} value={week} style={{ background: '#0f172a' }}>Week {week}</option>
-                ))}
+            <div className="db-control-group">
+              <label className="db-control-label">Week</label>
+              <select value={selectedWeek} onChange={handleWeekChange} className="db-select">
+                <option value="">All</option>
+                {WEEKS.map(w => <option key={w} value={w}>Week {w}</option>)}
               </select>
             </div>
-
-            <button style={styles.resetBtn} onClick={resetToCurrentPeriod}>
-              <HiOutlineArrowPath size={14} style={{display:'inline', verticalAlign:'middle'}} /> Current Period
+            <button className="db-reset-btn" onClick={resetToCurrentPeriod}>
+              <HiOutlineArrowPath size={13} /> Current
             </button>
           </div>
         </div>
 
-        {/* Period Badge */}
-        <div style={styles.periodBadge}>
-          <HiOutlineCalendarDays size={16} style={{display:'inline', verticalAlign:'middle'}} /> Showing data for: <strong>{MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}</strong>
+        <div className="db-period-badge">
+          <HiOutlineCalendarDays size={14} />
+          Showing: <strong>{monthLabel} {selectedYear}</strong>
           {selectedWeek && <span> • <strong>Week {selectedWeek}</strong></span>}
         </div>
 
-        {/* Period Stats Grid */}
-        <div style={styles.periodGrid}>
-          {/* Weekly Stats */}
-          <div style={{ ...styles.periodCard, borderLeft: '3px solid #3b82f6' }}>
-            <h3 style={{ ...styles.periodTitle, color: '#60a5fa' }}>
-              <HiOutlineCalendarDays size={16} style={{display:'inline', verticalAlign:'middle'}} /> Week {periodStats?.weekly?.weekNumber || periodStats?.currentWeek || 'Current'} {selectedWeek ? '' : '(Current)'}
+        {/* Period Grid */}
+        <div className="db-period-grid">
+          {/* Weekly Card */}
+          <div className="db-period-card db-period-card-weekly anim-entry" style={{ animationDelay: '0.7s', borderLeft: '3px solid #3b82f6' }}>
+            <h3 className="db-period-title" style={{ color: '#60a5fa' }}>
+              <HiOutlineCalendarDays size={14} />
+              Week {periodStats?.weekly?.weekNumber || periodStats?.currentWeek || '—'} {!selectedWeek && '(Current)'}
             </h3>
             <div>
-              <div style={styles.periodRow}>
-                <span style={styles.periodLabel}>Sales ({periodStats?.weekly?.salesCount || 0} orders)</span>
+              <div className="db-period-row">
+                <span className="db-period-label">Sales ({periodStats?.weekly?.salesCount || 0})</span>
                 <strong style={{ color: '#4ade80' }}>{formatCurrency(periodStats?.weekly?.sales)}</strong>
               </div>
-              <div style={styles.periodRow}>
-                <span style={styles.periodLabel}>Purchases</span>
+              <div className="db-period-row">
+                <span className="db-period-label">Purchases</span>
                 <strong style={{ color: '#38bdf8' }}>{formatCurrency(periodStats?.weekly?.purchases)}</strong>
               </div>
-              <div style={styles.periodRow}>
-                <span style={styles.periodLabel}>Cost of Goods</span>
-                <span style={{ color: 'rgba(226, 232, 240, 0.8)' }}>{formatCurrency(periodStats?.weekly?.cogs)}</span>
+              <div className="db-period-row">
+                <span className="db-period-label">COGS</span>
+                <span style={{ color: 'rgba(226,232,240,0.7)' }}>{formatCurrency(periodStats?.weekly?.cogs)}</span>
               </div>
-              <hr style={styles.periodDivider} />
-              <div style={styles.periodRow}>
+              <hr className="db-period-divider" />
+              <div className="db-period-row">
                 <strong style={{ color: '#e2e8f0' }}>Gross Profit</strong>
-                <strong style={{ color: (periodStats?.weekly?.grossProfit || 0) >= 0 ? '#4ade80' : '#f87171' }}>
+                <span className={`db-profit-value ${(periodStats?.weekly?.grossProfit || 0) >= 0 ? 'db-profit-positive' : 'db-profit-negative'}`}>
                   {(periodStats?.weekly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.weekly?.grossProfit)}
-                </strong>
+                </span>
               </div>
+            </div>
+            {/* Mini Bar Chart */}
+            <div className="db-bar-chart">
+              {[
+                { label: 'Sales', value: periodStats?.weekly?.sales || 0, color: '#4ade80' },
+                { label: 'Cost', value: periodStats?.weekly?.cogs || 0, color: '#f59e0b' },
+                { label: 'Profit', value: Math.abs(periodStats?.weekly?.grossProfit || 0), color: (periodStats?.weekly?.grossProfit || 0) >= 0 ? '#22c55e' : '#ef4444' },
+              ].map((b, i) => {
+                const maxVal = Math.max(periodStats?.weekly?.sales || 1, periodStats?.weekly?.cogs || 1, Math.abs(periodStats?.weekly?.grossProfit || 1));
+                const pct = maxVal > 0 ? Math.max((b.value / maxVal) * 50, 4) : 4;
+                return (
+                  <div key={i} className="db-bar-item">
+                    <div className="db-bar" style={{ '--target-height': `${pct}px`, background: b.color, animationDelay: `${0.8 + i * 0.15}s` }} />
+                    <span className="db-bar-label">{b.label}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Monthly Stats */}
-          <div style={{ ...styles.periodCard, borderLeft: '3px solid #22c55e' }}>
-            <h3 style={{ ...styles.periodTitle, color: '#4ade80' }}>
-              <HiOutlineCalendarDays size={16} style={{display:'inline', verticalAlign:'middle'}} /> {MONTHS.find(m => m.value === selectedMonth)?.label} {selectedYear}
+          {/* Monthly Card */}
+          <div className="db-period-card db-period-card-monthly anim-entry" style={{ animationDelay: '0.8s', borderLeft: '3px solid #22c55e' }}>
+            <h3 className="db-period-title" style={{ color: '#4ade80' }}>
+              <HiOutlineCalendarDays size={14} /> {monthLabel} {selectedYear}
             </h3>
             <div>
-              <div style={styles.periodRow}>
-                <span style={styles.periodLabel}>Sales ({periodStats?.monthly?.salesCount || 0} orders)</span>
+              <div className="db-period-row">
+                <span className="db-period-label">Sales ({periodStats?.monthly?.salesCount || 0})</span>
                 <strong style={{ color: '#4ade80' }}>{formatCurrency(periodStats?.monthly?.sales)}</strong>
               </div>
-              <div style={styles.periodRow}>
-                <span style={styles.periodLabel}>Purchases</span>
+              <div className="db-period-row">
+                <span className="db-period-label">Purchases</span>
                 <strong style={{ color: '#38bdf8' }}>{formatCurrency(periodStats?.monthly?.purchases)}</strong>
               </div>
-              <div style={styles.periodRow}>
-                <span style={styles.periodLabel}>Cost of Goods</span>
-                <span style={{ color: 'rgba(226, 232, 240, 0.8)' }}>{formatCurrency(periodStats?.monthly?.cogs)}</span>
+              <div className="db-period-row">
+                <span className="db-period-label">COGS</span>
+                <span style={{ color: 'rgba(226,232,240,0.7)' }}>{formatCurrency(periodStats?.monthly?.cogs)}</span>
               </div>
-              <hr style={styles.periodDivider} />
-              <div style={styles.periodRow}>
+              <hr className="db-period-divider" />
+              <div className="db-period-row">
                 <strong style={{ color: '#e2e8f0' }}>Gross Profit</strong>
-                <strong style={{ color: (periodStats?.monthly?.grossProfit || 0) >= 0 ? '#4ade80' : '#f87171' }}>
+                <span className={`db-profit-value ${(periodStats?.monthly?.grossProfit || 0) >= 0 ? 'db-profit-positive' : 'db-profit-negative'}`}>
                   {(periodStats?.monthly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.monthly?.grossProfit)}
-                </strong>
+                </span>
               </div>
+            </div>
+            <div className="db-bar-chart">
+              {[
+                { label: 'Sales', value: periodStats?.monthly?.sales || 0, color: '#4ade80' },
+                { label: 'Cost', value: periodStats?.monthly?.cogs || 0, color: '#f59e0b' },
+                { label: 'Profit', value: Math.abs(periodStats?.monthly?.grossProfit || 0), color: (periodStats?.monthly?.grossProfit || 0) >= 0 ? '#22c55e' : '#ef4444' },
+              ].map((b, i) => {
+                const maxVal = Math.max(periodStats?.monthly?.sales || 1, periodStats?.monthly?.cogs || 1, Math.abs(periodStats?.monthly?.grossProfit || 1));
+                const pct = maxVal > 0 ? Math.max((b.value / maxVal) * 50, 4) : 4;
+                return (
+                  <div key={i} className="db-bar-item">
+                    <div className="db-bar" style={{ '--target-height': `${pct}px`, background: b.color, animationDelay: `${0.9 + i * 0.15}s` }} />
+                    <span className="db-bar-label">{b.label}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Yearly Stats */}
-          <div style={{ ...styles.periodCard, borderLeft: '3px solid #f59e0b' }}>
-            <h3 style={{ ...styles.periodTitle, color: '#fbbf24' }}>
-              <HiOutlineCalendarDays size={16} style={{display:'inline', verticalAlign:'middle'}} /> Year {selectedYear}
+          {/* Yearly Card */}
+          <div className="db-period-card db-period-card-yearly anim-entry" style={{ animationDelay: '0.9s', borderLeft: '3px solid #f59e0b' }}>
+            <h3 className="db-period-title" style={{ color: '#fbbf24' }}>
+              <HiOutlineCalendarDays size={14} /> Year {selectedYear}
             </h3>
             <div>
-              <div style={styles.periodRow}>
-                <span style={styles.periodLabel}>Sales ({periodStats?.yearly?.salesCount || 0} orders)</span>
+              <div className="db-period-row">
+                <span className="db-period-label">Sales ({periodStats?.yearly?.salesCount || 0})</span>
                 <strong style={{ color: '#4ade80' }}>{formatCurrency(periodStats?.yearly?.sales)}</strong>
               </div>
-              <div style={styles.periodRow}>
-                <span style={styles.periodLabel}>Purchases</span>
+              <div className="db-period-row">
+                <span className="db-period-label">Purchases</span>
                 <strong style={{ color: '#38bdf8' }}>{formatCurrency(periodStats?.yearly?.purchases)}</strong>
               </div>
-              <div style={styles.periodRow}>
-                <span style={styles.periodLabel}>Cost of Goods</span>
-                <span style={{ color: 'rgba(226, 232, 240, 0.8)' }}>{formatCurrency(periodStats?.yearly?.cogs)}</span>
+              <div className="db-period-row">
+                <span className="db-period-label">COGS</span>
+                <span style={{ color: 'rgba(226,232,240,0.7)' }}>{formatCurrency(periodStats?.yearly?.cogs)}</span>
               </div>
-              <hr style={styles.periodDivider} />
-              <div style={styles.periodRow}>
+              <hr className="db-period-divider" />
+              <div className="db-period-row">
                 <strong style={{ color: '#e2e8f0' }}>Gross Profit</strong>
-                <strong style={{ color: (periodStats?.yearly?.grossProfit || 0) >= 0 ? '#4ade80' : '#f87171' }}>
+                <span className={`db-profit-value ${(periodStats?.yearly?.grossProfit || 0) >= 0 ? 'db-profit-positive' : 'db-profit-negative'}`}>
                   {(periodStats?.yearly?.grossProfit || 0) >= 0 ? '+' : ''}{formatCurrency(periodStats?.yearly?.grossProfit)}
-                </strong>
+                </span>
               </div>
             </div>
+            <div className="db-bar-chart">
+              {[
+                { label: 'Sales', value: periodStats?.yearly?.sales || 0, color: '#4ade80' },
+                { label: 'Cost', value: periodStats?.yearly?.cogs || 0, color: '#f59e0b' },
+                { label: 'Profit', value: Math.abs(periodStats?.yearly?.grossProfit || 0), color: (periodStats?.yearly?.grossProfit || 0) >= 0 ? '#22c55e' : '#ef4444' },
+              ].map((b, i) => {
+                const maxVal = Math.max(periodStats?.yearly?.sales || 1, periodStats?.yearly?.cogs || 1, Math.abs(periodStats?.yearly?.grossProfit || 1));
+                const pct = maxVal > 0 ? Math.max((b.value / maxVal) * 50, 4) : 4;
+                return (
+                  <div key={i} className="db-bar-item">
+                    <div className="db-bar" style={{ '--target-height': `${pct}px`, background: b.color, animationDelay: `${1.0 + i * 0.15}s` }} />
+                    <span className="db-bar-label">{b.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Metrics Grid - 8 Cards */}
-      <div style={styles.metricsGrid}>
-        {/* Total Products */}
-        <div style={styles.metricCard}>
-          <div style={{ ...styles.metricGlow, background: '#3b82f6' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}><HiOutlineCube size={24} /></div>
-          <div style={styles.metricValue}>{formatNumber(inventory?.TotalProducts)}</div>
-          <div style={styles.metricLabel}>Total Products</div>
-        </div>
-
-        {/* Inventory Value */}
-        <div style={styles.metricCard}>
-          <div style={{ ...styles.metricGlow, background: '#06b6d4' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)' }}><HiOutlineBanknotes size={24} /></div>
-          <div style={styles.metricValue}>{formatCurrency(inventory?.TotalInventoryValue)}</div>
-          <div style={styles.metricLabel}>Inventory Value</div>
-        </div>
-
-        {/* Monthly Revenue */}
-        <div style={styles.metricCard}>
-          <div style={{ ...styles.metricGlow, background: '#22c55e' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' }}><HiOutlineBanknotes size={24} /></div>
-          <div style={styles.metricValue}>{formatCurrency(sales?.TotalRevenue)}</div>
-          <div style={styles.metricLabel}>This Month's Revenue</div>
-        </div>
-
-        {/* Sales Count */}
-        <div style={styles.metricCard}>
-          <div style={{ ...styles.metricGlow, background: '#8b5cf6' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)' }}><HiOutlineShoppingCart size={24} /></div>
-          <div style={styles.metricValue}>{formatNumber(sales?.TotalSales)}</div>
-          <div style={styles.metricLabel}>Sales This Month</div>
-        </div>
-
-        {/* Low Stock */}
-        <div style={styles.metricCard}>
-          <div style={{ ...styles.metricGlow, background: '#f59e0b' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}><HiOutlineExclamationTriangle size={24} /></div>
-          <div style={styles.metricValue}>{formatNumber(inventory?.LowStockProducts)}</div>
-          <div style={styles.metricLabel}>Low Stock Items</div>
-        </div>
-
-        {/* Out of Stock */}
-        <div style={styles.metricCard}>
-          <div style={{ ...styles.metricGlow, background: '#ef4444' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}><HiOutlineXCircle size={24} /></div>
-          <div style={styles.metricValue}>{formatNumber(inventory?.OutOfStockProducts)}</div>
-          <div style={styles.metricLabel}>Out of Stock</div>
-        </div>
-
-        {/* Active Alerts */}
-        <div style={styles.metricCard}>
-          <div style={{ ...styles.metricGlow, background: '#f43f5e' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)' }}><HiOutlineBell size={24} /></div>
-          <div style={styles.metricValue}>{formatNumber(alerts?.TotalUnresolvedAlerts)}</div>
-          <div style={styles.metricLabel}>Active Alerts</div>
-        </div>
-
-        {/* Purchases */}
-        <div style={styles.metricCard}>
-          <div style={{ ...styles.metricGlow, background: '#0ea5e9' }}></div>
-          <div style={{ ...styles.metricIcon, background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}><HiOutlineInboxArrowDown size={24} /></div>
-          <div style={styles.metricValue}>{formatCurrency(purchases?.TotalPurchaseCost)}</div>
-          <div style={styles.metricLabel}>Purchases This Month</div>
-        </div>
-      </div>
-
-      {/* Two Column Grid - Recent Sales & Top Products */}
-      <div style={styles.twoColGrid}>
-        {/* Recent Sales */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <h2 style={styles.cardTitle}><HiOutlineArrowTrendingUp size={20} style={{display:'inline', verticalAlign:'middle'}} /> Recent Sales</h2>
-            <Link href="/sales" style={styles.viewBtn}>View All →</Link>
+      {/* ══════════ TWO COLUMN: RECENT SALES + TOP PRODUCTS ══════════ */}
+      <div className="db-two-col">
+        {/* ── Recent Sales (Timeline) ── */}
+        <div className="db-card anim-entry" style={{ animationDelay: '0.8s' }}>
+          <div className="db-card-header">
+            <div className="db-card-title">
+              <span className="db-card-title-icon"><HiOutlineShoppingCart size={18} /></span>
+              <span>Recent Sales</span>
+              {recentSales && <span className="db-count-badge">{recentSales.length}</span>}
+            </div>
+            <Link href="/sales" className="db-view-btn">
+              View All <HiOutlineChevronRight size={12} />
+            </Link>
           </div>
-          
+
           {recentSales && recentSales.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={{ ...styles.th, borderRadius: '8px 0 0 0' }}>Product</th>
-                    <th style={styles.th}>Qty</th>
-                    <th style={styles.th}>Amount</th>
-                    <th style={{ ...styles.th, borderRadius: '0 8px 0 0' }}>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentSales.map((sale) => (
-                    <tr key={sale.SaleID}>
-                      <td style={{ ...styles.td, fontWeight: '500' }}>{sale.ProductName}</td>
-                      <td style={styles.td}>{sale.Quantity}</td>
-                      <td style={{ ...styles.td, color: '#4ade80', fontWeight: '600' }}>{formatCurrency(sale.TotalAmount)}</td>
-                      <td style={{ ...styles.td, color: 'rgba(148, 163, 184, 0.8)' }}>{new Date(sale.SaleDate).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="db-timeline">
+              {recentSales.map((sale, i) => (
+                <div
+                  key={sale.SaleID}
+                  className="db-timeline-item"
+                  style={{ animationDelay: `${0.9 + i * 0.1}s` }}
+                >
+                  <div className="db-timeline-dot" />
+                  <div className="db-timeline-content">
+                    <div className="db-timeline-top">
+                      <span className="db-timeline-product">{sale.ProductName}</span>
+                      <span className="db-timeline-amount">{formatCurrency(sale.TotalAmount)}</span>
+                    </div>
+                    <div className="db-timeline-meta">
+                      <span className="db-qty-badge">×{sale.Quantity}</span>
+                      <span>{new Date(sale.SaleDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           ) : (
-            <div style={styles.emptyState}><HiOutlineInboxStack size={16} style={{display:'inline', verticalAlign:'middle'}} /> No recent sales</div>
+            <div className="db-empty-state">
+              <span className="db-empty-icon"><HiOutlineInboxStack size={32} /></span>
+              <span>No recent sales found</span>
+            </div>
           )}
         </div>
 
-        {/* Top Products */}
-        <div style={styles.card}>
-          <div style={styles.cardHeader}>
-            <h2 style={styles.cardTitle}><HiOutlineTrophy size={20} style={{display:'inline', verticalAlign:'middle'}} /> Top Selling Products</h2>
-            <span style={styles.badge}>This Month</span>
+        {/* ── Top Products (Ranked Bars) ── */}
+        <div className="db-card anim-entry" style={{ animationDelay: '0.9s' }}>
+          <div className="db-card-header">
+            <div className="db-card-title">
+              <span className="db-card-title-icon"><HiOutlineTrophy size={18} /></span>
+              <span>Top Selling Products</span>
+            </div>
+            <span className="db-period-tag">This Month</span>
           </div>
-          
+
           {topProducts && topProducts.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={{ ...styles.th, borderRadius: '8px 0 0 0' }}>Product</th>
-                    <th style={styles.th}>Units Sold</th>
-                    <th style={{ ...styles.th, borderRadius: '0 8px 0 0' }}>Revenue</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {topProducts.map((product, index) => (
-                    <tr key={product.ProductID}>
-                      <td style={{ ...styles.td, fontWeight: '500' }}>
-                        <span style={{ 
-                          ...styles.rankBadge,
-                          background: index === 0 ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' : 
-                                     index === 1 ? 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)' : 
-                                     index === 2 ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' : 'rgba(59, 130, 246, 0.3)',
-                          color: 'white',
-                        }}>
-                          {index + 1}
-                        </span>
-                        {product.ProductName}
-                      </td>
-                      <td style={styles.td}>{formatNumber(product.UnitsSold)}</td>
-                      <td style={{ ...styles.td, color: '#4ade80', fontWeight: '600' }}>{formatCurrency(product.Revenue)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="db-top-list">
+              {topProducts.map((product, i) => {
+                const maxRev = topProducts[0]?.Revenue || 1;
+                const pct = Math.max((product.Revenue / maxRev) * 100, 5);
+                return (
+                  <div
+                    key={product.ProductID}
+                    className="db-top-item"
+                    style={{ animationDelay: `${1.0 + i * 0.1}s` }}
+                  >
+                    <div
+                      className="db-rank-badge"
+                      style={{ background: RANK_COLORS[i] || RANK_COLORS[3] }}
+                    >
+                      {i + 1}
+                    </div>
+                    <div className="db-top-info">
+                      <div className="db-top-row">
+                        <span className="db-top-name">{product.ProductName}</span>
+                        <span className="db-top-revenue">{formatCurrency(product.Revenue)}</span>
+                      </div>
+                      <div className="db-top-bar-track">
+                        <div
+                          className="db-top-bar-fill"
+                          style={{
+                            '--target-width': `${pct}%`,
+                            background: RANK_COLORS[i] || RANK_COLORS[3],
+                            animationDelay: `${1.1 + i * 0.15}s`,
+                          }}
+                        />
+                      </div>
+                      <span className="db-top-units">{formatNumber(product.UnitsSold)} units sold</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ) : (
-            <div style={styles.emptyState}><HiOutlineChartBar size={16} style={{display:'inline', verticalAlign:'middle'}} /> No sales data for this month</div>
+            <div className="db-empty-state">
+              <span className="db-empty-icon"><HiOutlineChartBar size={32} /></span>
+              <span>No sales data for this month</span>
+            </div>
           )}
         </div>
       </div>
 
-      {/* Category Distribution */}
-      <div style={styles.card}>
-        <div style={styles.cardHeader}>
-          <h2 style={styles.cardTitle}><HiOutlineTag size={20} style={{display:'inline', verticalAlign:'middle'}} /> Category Distribution</h2>
-          <Link href="/categories" style={styles.viewBtn}>Manage Categories →</Link>
+      {/* ══════════ CATEGORY DISTRIBUTION ══════════ */}
+      <div className="db-card anim-entry" style={{ animationDelay: '1s', marginBottom: '1.25rem' }}>
+        <div className="db-card-header">
+          <div className="db-card-title">
+            <span className="db-card-title-icon"><HiOutlineTag size={18} /></span>
+            <span>Category Distribution</span>
+          </div>
+          <Link href="/categories" className="db-view-btn">
+            Manage <HiOutlineChevronRight size={12} />
+          </Link>
         </div>
-        
+
         {categories && categories.length > 0 ? (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th style={{ ...styles.th, borderRadius: '8px 0 0 0' }}>Category</th>
-                  <th style={styles.th}>Products</th>
-                  <th style={styles.th}>Total Stock</th>
-                  <th style={{ ...styles.th, borderRadius: '0 8px 0 0' }}>Inventory Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {categories.map((category, index) => (
-                  <tr key={index}>
-                    <td style={{ ...styles.td, fontWeight: '600' }}>{category.CategoryName}</td>
-                    <td style={styles.td}>
-                      <span style={styles.countBadge}>{formatNumber(category.ProductCount)}</span>
-                    </td>
-                    <td style={styles.td}>{formatNumber(category.TotalStock)} units</td>
-                    <td style={{ ...styles.td, color: '#4ade80', fontWeight: '600' }}>{formatCurrency(category.InventoryValue)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="db-categories-grid">
+            {categories.map((cat, i) => {
+              const maxVal = Math.max(...categories.map(c => c.InventoryValue || 0), 1);
+              const pct = Math.max(((cat.InventoryValue || 0) / maxVal) * 100, 3);
+              const clr = CATEGORY_COLORS[i % CATEGORY_COLORS.length];
+              return (
+                <div
+                  key={i}
+                  className="db-category-item"
+                  style={{ animationDelay: `${1.1 + i * 0.08}s` }}
+                >
+                  <div className="db-cat-header">
+                    <span className="db-cat-name">
+                      <span className="db-cat-dot" style={{ background: clr }} />
+                      {cat.CategoryName}
+                    </span>
+                    <span className="db-cat-value">{formatCurrency(cat.InventoryValue)}</span>
+                  </div>
+                  <div className="db-cat-bar-track">
+                    <div
+                      className="db-cat-bar-fill"
+                      style={{
+                        '--target-width': `${pct}%`,
+                        background: `linear-gradient(90deg, ${clr}, ${clr}88)`,
+                        animationDelay: `${1.2 + i * 0.1}s`,
+                      }}
+                    />
+                  </div>
+                  <div className="db-cat-meta">
+                    <span>{formatNumber(cat.ProductCount)} products</span>
+                    <span>{formatNumber(cat.TotalStock)} units</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
-          <div style={styles.emptyState}><HiOutlineFolderOpen size={16} style={{display:'inline', verticalAlign:'middle'}} /> No categories found</div>
+          <div className="db-empty-state">
+            <span className="db-empty-icon"><HiOutlineFolderOpen size={32} /></span>
+            <span>No categories found</span>
+          </div>
         )}
       </div>
 
-      {/* Quick Actions */}
-      <div style={styles.quickActions}>
-        <h2 style={styles.quickTitle}><HiOutlineBolt size={20} style={{display:'inline', verticalAlign:'middle'}} /> Quick Actions</h2>
-        <div style={styles.actionsGrid}>
-          <Link href="/products/add" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)', color: 'white', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.35)' }}>
-            <HiOutlinePlusCircle size={16} style={{display:'inline', verticalAlign:'middle'}} /> Add Product
-          </Link>
-          <Link href="/sales/add" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', color: 'white', boxShadow: '0 4px 15px rgba(34, 197, 94, 0.35)' }}>
-            <HiOutlineShoppingCart size={16} style={{display:'inline', verticalAlign:'middle'}} /> New Sale
-          </Link>
-          <Link href="/purchases/add" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)', color: 'white', boxShadow: '0 4px 15px rgba(6, 182, 212, 0.35)' }}>
-            <HiOutlineInboxArrowDown size={16} style={{display:'inline', verticalAlign:'middle'}} /> New Purchase
-          </Link>
-          <Link href="/alerts/low-stock" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', color: 'white', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.35)' }}>
-            <HiOutlineExclamationTriangle size={16} style={{display:'inline', verticalAlign:'middle'}} /> View Low Stock
-          </Link>
-          <Link href="/alerts" style={{ ...styles.actionBtn, background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', color: 'white', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.35)' }}>
-            <HiOutlineBell size={16} style={{display:'inline', verticalAlign:'middle'}} /> View Alerts
-          </Link>
+      {/* ══════════ QUICK ACTIONS ══════════ */}
+      <section className="db-quick-actions anim-entry" style={{ animationDelay: '1.1s' }}>
+        <h2 className="db-quick-title">
+          <HiOutlineBolt size={20} /> Quick Actions
+        </h2>
+        <div className="db-actions-grid">
+          {actionsData.map((action, i) => (
+            <Link
+              key={i}
+              href={action.href}
+              className="db-action-btn"
+              style={{
+                background: action.bg,
+                '--shadow-color': action.shadow,
+                animationDelay: `${1.2 + i * 0.08}s`,
+              }}
+            >
+              <div className="db-action-icon">{action.icon}</div>
+              <span className="db-action-label">{action.label}</span>
+            </Link>
+          ))}
         </div>
-      </div>
-      
-      {/* Keyframe animation */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </section>
     </div>
   );
 }
